@@ -109,6 +109,10 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
             add("docker:stale", "docker", "warn", f"Docker data is outdated (last update {ago(snap.get('collected_at'))})",
                 docker_link)
         manual = manual_stops()
+        # A container that runs again (however it was started) is no longer "stopped by you".
+        for name in manual & {c["name"] for c in all_containers(snap) if c.get("state") == "running"}:
+            mark_manual(name, stopped=False)
+            manual.discard(name)
         for c in all_containers(snap):
             level, label = container_state(c)
             if level == "up":

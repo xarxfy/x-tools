@@ -14,8 +14,11 @@ def check_alerts(now: float | None = None) -> dict | None:
     """One monitoring run. Returns the sent message (for tests) or None."""
     settings = notify.load()
     issues = find_issues()
-    history.record_events(issues)
-    history.record_metrics()
+    try:  # history must never stop notifications
+        history.record_events(issues)
+        history.record_metrics()
+    except Exception as error:  # noqa: BLE001
+        print(f"History: {error}", flush=True)
     current = {i["key"]: i for i in issues if settings["events"].get(i["kind"], True) and not i.get("manual")}
     now = now or time.time()
     active = bool(notify.active_channels(settings))
@@ -59,10 +62,21 @@ def check_alerts(now: float | None = None) -> dict | None:
 def _loop(name: str, delay: int, interval_fn, fn) -> None:
     time.sleep(delay)
     while True:
+        error_text = ""
         try:
             fn()
         except Exception as error:  # noqa: BLE001 – monitoring must never take the app down
-            print(f"{name}: {error}", flush=True)
+            error_text = f"{type(error).__name__}: {error}"[:300]
+            print(f"{name}: {error_text}", flush=True)
+        if name == "Monitoring":
+            try:
+                def mark(data):
+                    data["checked_at"] = time.time()
+                    data["error"] = error_text
+                    return data
+                state.update(ALERT_STATE, mark)
+            except Exception:  # noqa: BLE001
+                pass
         time.sleep(interval_fn())
 
 

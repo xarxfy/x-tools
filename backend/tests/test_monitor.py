@@ -234,3 +234,26 @@ def test_install_options_remembered(admin, tmp_path):
     admin.post("/api/auth/login", json={"username": "admin", "password": "correct horse battery"})
     assert admin.post(f"/api/agents/{r['id']}/install", json={**body, "proxmox_url": ""},
                       headers=csrf_headers(admin)).status_code == 422
+
+
+def test_manual_stop_cleared_when_running(admin, tmp_path, monkeypatch):
+    import json
+    import time as _t
+    from app.collector.exchange import exchange_dir, write_json
+    from app.monitor.issues import find_issues, manual_stops, mark_manual
+    snap = {"collected_at": _t.time(), "error": None, "system": {}, "containers": [],
+            "projects": [{"name": "p", "containers": [{"name": "web", "state": "exited", "health": ""}]}]}
+    write_json(exchange_dir() / "snapshot.json", snap)
+    mark_manual("web", stopped=True)
+    assert any(i.get("manual") for i in find_issues(ports={}))
+    # started outside of X-TOOLS …
+    snap["projects"][0]["containers"][0]["state"] = "running"
+    write_json(exchange_dir() / "snapshot.json", snap)
+    find_issues(ports={})
+    assert "web" not in manual_stops()
+    # … and stopped outside again: now it is a real problem
+    snap["projects"][0]["containers"][0]["state"] = "exited"
+    write_json(exchange_dir() / "snapshot.json", snap)
+    issue = next(i for i in find_issues(ports={}) if i["key"] == "container:web")
+    assert not issue.get("manual") and issue["level"] == "down"
+    _ = json, tmp_path, monkeypatch

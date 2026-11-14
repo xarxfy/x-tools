@@ -324,7 +324,14 @@
     "testHint": "Uses the saved settings.",
     "removeToken": "Remove token",
     "last": "Last message {{when}}: {{title}}",
-    "noBaseUrl": "Tip: set XT_BASE_URL so notifications contain a link to X-TOOLS."
+    "noBaseUrl": "Tip: set XT_BASE_URL so notifications contain a link to X-TOOLS.",
+    "masterOff": "Notifications are switched off – only test messages are sent. Turn on “Notifications” below and save.",
+    "monitorOk": "Monitoring checked {{when}}.",
+    "monitorWaiting": "Monitoring starts about 30 seconds after X-TOOLS starts.",
+    "monitorError": "The last monitoring run failed: {{error}}",
+    "sent": "notified",
+    "pending": "waiting for delay / off",
+    "manual": "Stopped through X-TOOLS, not reported until they run again: {{names}}"
   },
   "agents": {
     "intro": "Agents report other servers to X-TOOLS – outbound only, they never receive commands. Install one on the Proxmox host and one on every LXC/VM that runs Docker.",

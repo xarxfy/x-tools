@@ -85,9 +85,28 @@ function Notifications() {
       },
     });
   const last = settings.data.last;
+  const d = settings.data;
+  const channelOn = d.telegram.enabled || d.ntfy.enabled;
 
   return (
     <form className="settings" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+      {!d.enabled && channelOn && <p className="notice" style={{ marginTop: 0 }}>{t("notify.masterOff")}</p>}
+      <section className="card card-pad monitor-status">
+        <span>
+          {d.monitor_error ? <span className="error-text">{t("notify.monitorError", { error: d.monitor_error })}</span>
+            : d.checked_at ? t("notify.monitorOk", { when: ago(d.checked_at) }) : t("notify.monitorWaiting")}
+        </span>
+        {(d.open?.length ?? 0) > 0 && (
+          <ul className="plain-list">
+            {d.open!.map((o) => (
+              <li key={o.text}>
+                <span className={o.sent ? "state-up" : "muted"}>{o.sent ? t("notify.sent") : t("notify.pending")}</span> {o.text}
+              </li>
+            ))}
+          </ul>
+        )}
+        {(d.manual?.length ?? 0) > 0 && <span className="muted small-note">{t("notify.manual", { names: d.manual!.join(", ") })}</span>}
+      </section>
       <section className="card card-pad stack-lg">
         <Toggle checked={form.enabled} onChange={(v) => set({ enabled: v })} label={t("notify.enabled")} hint={t("notify.enabledHint")} />
         <div className="grid-2">

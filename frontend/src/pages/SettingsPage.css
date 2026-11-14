@@ -297,3 +297,13 @@
   color: var(--warn-text);
   font-size: 13.5px;
 }
+.monitor-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+.monitor-status .plain-list {
+  margin: 4px 0 0;
+}

@@ -49,7 +49,13 @@ def overview(db: Session = Depends(get_db)):
 @router.get("/settings/notifications", dependencies=[Depends(require("admin"))])
 def get_notifications():
     data = notify.public(notify.load())
-    data["last"] = (state.load(ALERT_STATE, {}) or {}).get("last")
+    alert_state = state.load(ALERT_STATE, {}) or {}
+    data["last"] = alert_state.get("last")
+    data["checked_at"] = alert_state.get("checked_at")
+    data["monitor_error"] = alert_state.get("error", "")
+    data["open"] = [{"text": v.get("text", ""), "since": v.get("since"), "sent": v.get("sent", False)}
+                    for v in (alert_state.get("open") or {}).values()]
+    data["manual"] = alert_state.get("manual", [])
     data["base_url"] = get_settings().base_url
     return data
 

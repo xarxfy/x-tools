@@ -54,6 +54,10 @@ export interface NotificationSettings {
   ntfy: Channel;
   base_url?: string;
   last?: { time: number; title: string; results: Record<string, string | null> } | null;
+  checked_at?: number | null;
+  monitor_error?: string;
+  open?: { text: string; since: number; sent: boolean }[];
+  manual?: string[];
 }
 
 export type AgentKind = "proxmox" | "docker";
