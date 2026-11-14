@@ -80,6 +80,10 @@ Tick a box when it works; for anything else, write a short report (template at t
 - [ ] With **Allow control** on a Proxmox host (token with PVEVMUser): start/shut down a **test** LXC; without the
       privilege a clear error is shown
 - [ ] As viewer: no control buttons; an agent without control shows no buttons for anyone
+- [ ] Proxmox: click a guest – resources, disks, network with current IPs, snapshots, backups and options are right
+- [ ] Node card shows Proxmox version, kernel and updates; *Host network* lists the bridges
+- [ ] With control (token with the XTools role from agents.md): change memory/cores of a **test** LXC, grow its disk
+      by 1 GB, change tags/notes – the detail page shows the new values shortly after
 
 ## 9. Cloudflare (if you use it)
 

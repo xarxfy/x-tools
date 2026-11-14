@@ -17,86 +17,39 @@ Environment:
 import json
 import os
 import socket
-import ssl
 import sys
 import threading
 import time
 import urllib.error
 import urllib.request
 
+from app.collector import proxmox
 from app.collector.collector import collect_snapshot, host_path, system_info
 from app.core.config import get_settings
 from app.collector.httpjson import post_json
 
-AGENT_VERSION = "3"
+AGENT_VERSION = "4"
+
+
+DETAILS_INTERVAL = max(120, int(os.environ.get("XT_PROXMOX_DETAILS_INTERVAL", "600")))
+_details: dict = {"data": None, "at": 0.0, "due": True}
 
 
 def proxmox_info() -> dict | None:
-    """Nodes, guests (LXC/VM) and storage via the Proxmox API – read-only (role PVEAuditor is enough)."""
-    url = os.environ.get("PROXMOX_URL", "").rstrip("/")
-    if not url:
-        return None
-    token_id = os.environ.get("PROXMOX_TOKEN_ID", "")
-    token_secret = os.environ.get("PROXMOX_TOKEN_SECRET", "")
-    ctx = ssl.create_default_context()
-    if os.environ.get("PROXMOX_VERIFY_TLS", "0") == "0":  # Proxmox usually has a self-signed certificate
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-    req = urllib.request.Request(url + "/api2/json/cluster/resources",
-                                 headers={"Authorization": f"PVEAPIToken={token_id}={token_secret}"})
-    try:
-        with urllib.request.urlopen(req, timeout=15, context=ctx) as res:
-            data = json.loads(res.read()).get("data") or []
-    except urllib.error.HTTPError as error:
-        return {"error": f"Proxmox API: HTTP {error.code} – check token and permissions"}
-    except (urllib.error.URLError, OSError, ValueError) as error:
-        return {"error": f"Proxmox API not reachable: {getattr(error, 'reason', error)}"}
-    keys = ("cpu", "maxcpu", "mem", "maxmem", "disk", "maxdisk", "uptime")
-    nodes = [{"name": r.get("node", ""), "status": r.get("status", ""), **{k: r.get(k, 0) for k in keys}}
-             for r in data if r.get("type") == "node"]
-    guests = [{"vmid": r.get("vmid"), "name": r.get("name", ""), "type": r.get("type"), "status": r.get("status", ""),
-               "node": r.get("node", ""), **{k: r.get(k, 0) for k in keys}}
-              for r in data if r.get("type") in ("lxc", "qemu") and not r.get("template")]
-    storage = [{"storage": r.get("storage", ""), "node": r.get("node", ""), "status": r.get("status", ""),
-                "disk": r.get("disk", 0), "maxdisk": r.get("maxdisk", 0)}
-               for r in data if r.get("type") == "storage" and r.get("maxdisk")]
-    return {"nodes": sorted(nodes, key=lambda n: n["name"]),
-            "guests": sorted(guests, key=lambda g: g["vmid"] or 0),
-            "storage": sorted(storage, key=lambda s: (s["node"], s["storage"]))}
+    """Overview every report; configuration details every few minutes (and right after changes)."""
+    overview = proxmox.info()
+    if not overview or overview.get("error"):
+        return overview
+    if _details["due"] or time.time() - _details["at"] > DETAILS_INTERVAL:
+        try:
+            _details["data"] = proxmox.details(overview)
+        except Exception as error:  # noqa: BLE001 – details must never stop the report
+            _details["data"] = {"error": str(error)[:300], "fetched_at": time.time()}
+        _details["at"], _details["due"] = time.time(), False
+    return {**overview, "details": _details["data"]}
 
 
-def _proxmox_ctx():
-    ctx = ssl.create_default_context()
-    if os.environ.get("PROXMOX_VERIFY_TLS", "0") == "0":
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-    return ctx
-
-
-PROXMOX_ACTIONS = ("start", "shutdown", "stop", "reboot")
 DOCKER_ACTIONS = ("start", "stop", "restart", "logs")
-
-
-def proxmox_action(action: str, params: dict) -> None:
-    """Power action for one guest. The API token needs VM.PowerMgmt for this."""
-    url = os.environ.get("PROXMOX_URL", "").rstrip("/")
-    if not url:
-        raise ValueError("Proxmox is not configured on this agent")
-    node, kind, vmid = str(params.get("node", "")), params.get("type"), params.get("vmid")
-    if action not in PROXMOX_ACTIONS or kind not in ("lxc", "qemu") or not str(vmid).isdigit() \
-            or not node.replace("-", "").replace(".", "").isalnum():
-        raise ValueError("Invalid Proxmox command")
-    token = f"PVEAPIToken={os.environ.get('PROXMOX_TOKEN_ID', '')}={os.environ.get('PROXMOX_TOKEN_SECRET', '')}"
-    req = urllib.request.Request(f"{url}/api2/json/nodes/{node}/{kind}/{int(vmid)}/status/{action}", data=b"",
-                                 method="POST", headers={"Authorization": token})
-    try:
-        with urllib.request.urlopen(req, timeout=30, context=_proxmox_ctx()):
-            pass
-    except urllib.error.HTTPError as error:
-        hint = " – the API token needs the privilege VM.PowerMgmt" if error.code in (401, 403) else ""
-        raise OSError(f"Proxmox API: HTTP {error.code}{hint}") from None
-    except (urllib.error.URLError, OSError) as error:
-        raise OSError(f"Proxmox API not reachable: {getattr(error, 'reason', error)}") from None
 
 
 def execute(command: dict) -> dict:
@@ -111,8 +64,15 @@ def execute(command: dict) -> dict:
             if verb == "logs":
                 return {"ok": True, "logs": docker_logs(target, params.get("lines"))}
             docker_action(verb, target)
-        elif area == "proxmox" and verb in PROXMOX_ACTIONS:
-            proxmox_action(verb, {**params, "vmid": target})
+        elif area == "proxmox" and verb in proxmox.POWER:
+            proxmox.power(verb, {**params, "vmid": target})
+            _details["due"] = True
+        elif action == "proxmox.config":
+            proxmox.change_config({**params, "vmid": target})
+            _details["due"] = True
+        elif action == "proxmox.resize":
+            proxmox.resize_disk({**params, "vmid": target})
+            _details["due"] = True
         else:
             raise ValueError("Unknown command")
         return {"ok": True}
@@ -175,7 +135,7 @@ def run() -> None:
         headers["CF-Access-Client-Secret"] = os.environ.get("CF_ACCESS_CLIENT_SECRET", "")
     control = os.environ.get("XT_AGENT_CONTROL", "0") == "1"
     print(f"X-TOOLS agent: reporting every {interval}s to {url} "
-          f"(Docker: {'yes' if os.path.exists(get_settings().docker_socket) else 'no'}, "
+          f"(Docker: {'yes' if os.environ.get('XT_AGENT_DOCKER', '1') != '0' and os.path.exists(get_settings().docker_socket) else 'no'}, "
           f"Proxmox: {'yes' if os.environ.get('PROXMOX_URL') else 'no'}, "
           f"control: {'on' if control else 'off'})", flush=True)
     report_now = threading.Event()

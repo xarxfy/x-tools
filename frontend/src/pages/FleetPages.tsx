@@ -68,7 +68,7 @@ function ProxmoxHost({ agent }: { agent: AgentSummary }) {
     <section className="host-section">
       <HostHead to={`/servers/${agent.id}`} name={agent.name} state={agentState(agent)}
                 sub={[agent.hostname, age !== null && t("servers.reported", { when: ago(Date.now() / 1000 - age) })].filter(Boolean).join(" · ")} />
-      {!detail.data ? <Loading error={detail.error} /> : px ? <ProxmoxTab px={px} agentId={agent.control ? agent.id : undefined} /> : <Empty>{t("fleet.noData")}</Empty>}
+      {!detail.data ? <Loading error={detail.error} /> : px ? <ProxmoxTab px={px} agentId={agent.id} control={agent.control} /> : <Empty>{t("fleet.noData")}</Empty>}
     </section>
   );
 }

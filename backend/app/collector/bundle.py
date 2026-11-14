@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-MODULES = ("__init__.py", "agent.py", "collector.py", "dockerapi.py", "exchange.py", "httpjson.py", "masking.py")
+MODULES = ("__init__.py", "agent.py", "collector.py", "dockerapi.py", "exchange.py", "httpjson.py", "masking.py", "proxmox.py")
 MAIN = "from app.collector.agent import run\n\nrun()\n"
 
 

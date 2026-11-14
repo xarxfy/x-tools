@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import require
+from app.collector.proxmox import DISK_KEY, validate_changes
 from app.core.audit import audit
 from app.core.db import get_db
 from app.models import Agent
@@ -22,7 +23,7 @@ from app.models import Agent
 COMMAND_TTL = 60
 WAIT_RESULT = 75
 ACTIONS = {"docker.start", "docker.stop", "docker.restart", "docker.logs",
-           "proxmox.start", "proxmox.shutdown", "proxmox.stop", "proxmox.reboot"}
+           "proxmox.start", "proxmox.shutdown", "proxmox.stop", "proxmox.reboot", "proxmox.config", "proxmox.resize"}
 
 
 class Queue:
@@ -77,6 +78,9 @@ class ActionIn(BaseModel):
     node: str = Field(default="", max_length=64, pattern=r"^[A-Za-z0-9.-]*$")
     type: str = Field(default="", pattern="^(|lxc|qemu)$")
     lines: int = Field(default=300, ge=10, le=1000)
+    changes: dict = Field(default_factory=dict)  # proxmox.config
+    disk: str = Field(default="", max_length=20)  # proxmox.resize
+    add_gb: int = Field(default=0, ge=0, le=4096)
 
 
 @router.post("/{aid}/action", dependencies=[Depends(require("operator"))])
@@ -98,6 +102,19 @@ def agent_action(aid: str, body: ActionIn, db: Session = Depends(get_db)):
             raise HTTPException(422, "Unknown guest")
         params = {"node": body.node, "type": body.type}
         what = f"{agent.name}: {body.type.upper()} {body.target}"
+        detail = ""
+        if body.action == "proxmox.config":
+            try:
+                validate_changes(body.changes, body.type)
+            except ValueError as error:
+                raise HTTPException(422, str(error)) from None
+            params["changes"] = body.changes
+            detail = ", ".join(f"{k}={'…' if k == 'description' else v}" for k, v in body.changes.items())
+        elif body.action == "proxmox.resize":
+            if not DISK_KEY.match(body.disk) or body.disk.startswith(("efidisk", "tpmstate")) or not body.add_gb:
+                raise HTTPException(422, "Disk and size needed")
+            params.update(disk=body.disk, add_gb=body.add_gb)
+            detail = f"{body.disk} +{body.add_gb} GB"
     else:
         names = {c.get("name") for p in (report.get("docker") or {}).get("projects", []) for c in p.get("containers", [])}
         names |= {c.get("name") for c in (report.get("docker") or {}).get("containers", [])}
@@ -105,6 +122,7 @@ def agent_action(aid: str, body: ActionIn, db: Session = Depends(get_db)):
             raise HTTPException(422, "Unknown container")
         params = {"lines": body.lines}
         what = f"{agent.name}: {body.target}"
+        detail = ""
     command = {"id": secrets.token_hex(12), "action": body.action, "target": body.target, "params": params,
                "expires_at": time.time() + COMMAND_TTL}
     queue.add(agent.id, command)
@@ -113,7 +131,7 @@ def agent_action(aid: str, body: ActionIn, db: Session = Depends(get_db)):
         queue.drop(agent.id, command["id"])
         audit(body.action, what, "no answer from the agent")
         raise HTTPException(504, "The agent did not answer – is it running (and on version 3 or newer)?")
-    audit(body.action, what, "" if result.get("ok") else f"failed: {result.get('error', '')}")
+    audit(body.action, what, detail if result.get("ok") else f"{detail} failed: {result.get('error', '')}".strip())
     if not result.get("ok"):
         raise HTTPException(502, result.get("error") or "The action failed")
     return result

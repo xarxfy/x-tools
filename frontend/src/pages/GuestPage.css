@@ -1,0 +1,80 @@
+.guest-power {
+  margin: -10px 0 14px;
+}
+.guest-power .list-side {
+  justify-content: flex-start;
+  padding-left: 0;
+}
+.guest-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.guest-grid h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+.guest-grid h4 {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.details.compact {
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 6px 12px;
+  font-size: 14px;
+}
+.kv-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+.kv-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  align-items: baseline;
+}
+.kv-list li + li {
+  border-top: 1px solid var(--separator);
+}
+.kv-list li > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.net-item .chips {
+  margin-top: 4px;
+}
+.disk-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.inline-bar {
+  display: inline-block;
+  width: 70px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--fill);
+  margin-left: 10px;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.inline-bar span {
+  display: block;
+  height: 100%;
+}
+.guest-notes {
+  white-space: pre-wrap;
+  margin: 0;
+  font-size: 14px;
+}
+@media (max-width: 860px) {
+  .guest-grid {
+    grid-template-columns: 1fr;
+  }
+}

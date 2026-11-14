@@ -35,7 +35,7 @@ role **operator** or **admin** can:
 
 | Docker host | Proxmox host |
 |---|---|
-| start, stop, restart containers, read their logs | start, shut down, stop, reboot LXCs and VMs |
+| start, stop, restart containers, read their logs | start, shut down, stop, reboot LXCs and VMs; change CPU cores, memory, swap, start at boot, tags and notes; grow disks |
 
 How it stays safe:
 
@@ -50,13 +50,35 @@ How it stays safe:
 To switch control off again: *Install command* without the switch, or set `XT_AGENT_CONTROL=0` and
 `systemctl restart x-tools-agent`.
 
+## Proxmox details
+
+Every 10 minutes (and right after a change) a Proxmox agent also reads, per LXC/VM: resources and disks, network
+cards (bridge, VLAN, MAC, configured and **current** IP addresses – for VMs via the QEMU guest agent), snapshots,
+backups on backup storages, OS, start at boot, features, tags and notes. Per node: Proxmox version, kernel, available
+updates and the host network (bridges, bonds, VLANs). Click a guest on the *Proxmox* page to see its detail page.
+
+Interval: `XT_PROXMOX_DETAILS_INTERVAL` (seconds, default 600, minimum 120) in `/etc/x-tools-agent/agent.env`.
+
 ## Proxmox API token
 
 1. Datacenter → Permissions → API Tokens → *Add*: user e.g. `root@pam`, token ID `xtools`, *Privilege Separation* on.
 2. Permissions → *Add → API Token Permission*: path `/`, token `root@pam!xtools`, role **PVEAuditor** (read-only).
-   For [control](#control) add a second permission with role **PVEVMUser** (includes `VM.PowerMgmt`), or create a
-   role with exactly `VM.Audit VM.PowerMgmt Sys.Audit Datastore.Audit`:
-   `pveum role add XTools -privs "VM.Audit VM.PowerMgmt Sys.Audit Datastore.Audit"`.
+   For [control](#control) create a role with exactly what X-TOOLS needs and give it to the token instead:
+
+   ```sh
+   pveum role add XTools -privs "VM.Audit VM.PowerMgmt VM.Config.CPU VM.Config.Memory VM.Config.Options VM.Config.Disk Datastore.Audit Datastore.AllocateSpace Sys.Audit"
+   pveum acl modify / --tokens 'root@pam!xtools' --roles XTools
+   ```
+
+   | Privilege | Needed for |
+   |---|---|
+   | `VM.Audit`, `Datastore.Audit`, `Sys.Audit` | reading guests, snapshots, backups, node status and network |
+   | `VM.PowerMgmt` | start, shut down, stop, reboot |
+   | `VM.Config.CPU`, `VM.Config.Memory`, `VM.Config.Options` | cores, memory/swap, start at boot, tags, notes |
+   | `VM.Config.Disk`, `Datastore.AllocateSpace` | growing disks |
+
+   Available updates are read through the API if the token may (`Sys.Modify`), otherwise – when the agent runs on
+   the host itself – from the local apt lists.
 3. Enter token ID (`root@pam!xtools`) and secret when adding the server. URL from the Proxmox host itself:
    `https://127.0.0.1:8006`.
 
@@ -95,5 +117,5 @@ journalctl -u x-tools-agent -n 50
 | `HTTP 403 … Agent is disabled` | enable it under *Settings → Agents* |
 | `HTTP 403` / not JSON | Cloudflare Access (or another proxy) blocks `/api/agent/` |
 | `Proxmox API: HTTP 401` | token ID/secret wrong or the token has no permission (role PVEAuditor on `/`) |
-| `… needs the privilege VM.PowerMgmt` | control is on, but the token may only read – add PVEVMUser |
+| `… needs the privilege …` | control is on, but the token lacks that privilege – use the XTools role above |
 | `The agent did not answer` (in X-TOOLS) | agent not running, too old (needs v3) or control off on the server |

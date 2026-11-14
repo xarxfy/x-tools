@@ -127,10 +127,19 @@ const DOCS: Doc[] = [
     doc("agents-control", "Control (start/stop)", <>
       <p>With <em>Allow control from X-TOOLS</em> (when adding the server or with a new install command), operators and
         admins can start, stop and restart containers and read logs on Docker hosts, and start, shut down, stop and
-        reboot LXCs/VMs on Proxmox hosts. The agent still opens no port – it asks X-TOOLS for commands and only runs
+        reboot LXCs/VMs on Proxmox hosts, change their CPU cores, memory, swap, start at boot, tags and notes, and
+        grow disks (detail page of a guest). The agent still opens no port – it asks X-TOOLS for commands and only runs
         this fixed list. Control must be switched on on the agent itself (<code>XT_AGENT_CONTROL=1</code>). Proxmox needs
-        a token with <code>VM.PowerMgmt</code> (e.g. role PVEVMUser). Every action is in the audit log.</p>
+        a token with the matching privileges – see docs/agents.md for a ready <code>pveum</code> command. Every action is
+        in the audit log.</p>
     </>, "control start stop restart reboot shutdown operator agent proxmox docker"),
+    doc("agents-proxmox-details", "Proxmox details", <>
+      <p>Click an LXC/VM on the <em>Proxmox</em> page: resources and disks, network cards with bridge, VLAN, MAC and the
+        current IP addresses (VMs need the QEMU guest agent), snapshots, backups (with a warning when the last one is
+        older than 3 days), OS, start at boot, features, tags and notes. Node cards show the Proxmox version, kernel
+        and available updates; the host network (bridges, bonds, VLANs) is listed below. Details are refreshed every
+        10 minutes and right after a change.</p>
+    </>, "proxmox details config lxc vm ip snapshot backup network bridge version updates"),
     doc("agents-access", "Behind Cloudflare Access", <>
       <p>If X-TOOLS is protected by Cloudflare Access, the agent cannot log in interactively. Create a service token
         (Zero Trust → Access → Service Auth), add a policy with action “Service Auth” for the path

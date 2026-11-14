@@ -22,6 +22,7 @@ import { ServerPage, ServersPage } from "./pages/ServersPage";
 import { DockerPage, ProxmoxPage } from "./pages/FleetPages";
 import { AssistantPage } from "./pages/AssistantPage";
 import { CloudflarePage } from "./pages/CloudflarePage";
+import { GuestPage } from "./pages/GuestPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: true, retry: 1 } },
@@ -49,6 +50,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/domains" element={<DomainsPage />} />
             <Route path="/servers" element={<ServersPage />} />
             <Route path="/servers/:id" element={<ServerPage />} />
+            <Route path="/servers/:id/guest/:node/:vmid" element={<GuestPage />} />
             <Route path="/proxmox" element={<ProxmoxPage />} />
             <Route path="/docker" element={<DockerPage />} />
             <Route path="/cloudflare" element={<CloudflarePage />} />

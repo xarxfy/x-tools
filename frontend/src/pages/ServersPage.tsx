@@ -9,7 +9,7 @@ import {
 } from "../api/docker";
 import {
   AGENT_STALE, agentAge, useAgent as useAgentQueryBase, useAgents,
-  type AgentReport, type AgentSummary, type Proxmox, type ProxmoxGuest,
+  type AgentReport, type AgentSummary, type Proxmox, type ProxmoxGuest, type PveNodeDetails,
 } from "../api/monitor";
 import { Icon } from "../components/Icon";
 import { Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
@@ -229,7 +229,7 @@ export function ServerPage() {
           {t("servers.agentPending")} <Link to="/settings?tab=agents">{t("servers.setupAgent")}</Link>
         </Empty>
       ) : tab === "proxmox" && srv.proxmox ? (
-        <ProxmoxTab px={srv.proxmox} agentId={srv.control ? srv.id : undefined} />
+        <ProxmoxTab px={srv.proxmox} agentId={srv.id} control={srv.control} />
       ) : !snap && tab === "docker" ? (
         <Empty>{t("servers.noSnapshotLong")}</Empty>
       ) : (
@@ -330,9 +330,10 @@ function Overview({ srv, onTab }: { srv: ServerView; onTab: (tab: string) => voi
   );
 }
 
-export function ProxmoxTab({ px, agentId }: { px: Proxmox; agentId?: string }) {
+export function ProxmoxTab({ px, agentId, control = false }: { px: Proxmox; agentId: string; control?: boolean }) {
   const { t } = useTranslation();
-  const canControl = useCan()("operator") && !!agentId;
+  const canControl = useCan()("operator") && control;
+  const [showUpdates, setShowUpdates] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   if (px.error) return <p className="notice">{px.error}</p>;
@@ -362,9 +363,42 @@ export function ProxmoxTab({ px, agentId }: { px: Proxmox; agentId?: string }) {
                 <Meter label="CPU" value={n.cpu * 100} detail={t("proxmox.cores", { count: n.maxcpu })} />
                 <Meter label={t("servers.memory")} value={pct(n.mem, n.maxmem)} detail={`${fmtBytes(n.mem)} / ${fmtBytes(n.maxmem)}`} />
               </div>
+              <NodeInfo info={px.details?.nodes?.[n.name]} onUpdates={() => setShowUpdates(n.name)} />
             </div>
           ))}
         </div>
+      )}
+      {px.details?.nodes && Object.entries(px.details.nodes).some(([, d]) => d.network?.length) && (
+        <>
+          <h2 className="section-title">{t("proxmox.hostNetwork")}</h2>
+          {Object.entries(px.details.nodes).map(([name, d]) => d.network?.length ? (
+            <div key={name} className="card list host-net">
+              {d.network.map((nw) => (
+                <div key={nw.iface} className="list-row static-row">
+                  <Dot state={nw.active ? "up" : "off"} />
+                  <div className="list-main">
+                    <div className="list-title">
+                      {nw.iface}<span className="badge">{nw.type}</span>
+                      {nw.vlan_aware && <span className="badge">{t("proxmox.vlanAware")}</span>}
+                      {Object.keys(px.details!.nodes).length > 1 && <span className="muted">{name}</span>}
+                    </div>
+                    <div className="list-sub">
+                      {[nw.cidr, nw.cidr6, nw.gateway && `→ ${nw.gateway}`, nw.ports && t("proxmox.ports", { ports: nw.ports }),
+                        nw.vlan_id && `VLAN ${nw.vlan_id}`, nw.comments].filter(Boolean).join(" · ") || "–"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null)}
+        </>
+      )}
+      {showUpdates && (
+        <Dialog title={t("proxmox.updatesTitle", { name: showUpdates })} onClose={() => setShowUpdates(null)}
+                footer={<><span className="spacer" /><button type="button" className="btn btn-primary" onClick={() => setShowUpdates(null)}>{t("common.done")}</button></>}>
+          <pre className="code">{(px.details?.nodes?.[showUpdates]?.updates ?? []).join("\n")}</pre>
+          <p className="muted small-note" style={{ margin: 0 }}>{t("proxmox.updatesHint")}</p>
+        </Dialog>
       )}
       <div className="toolbar">
         <div className="chips">
@@ -387,7 +421,9 @@ export function ProxmoxTab({ px, agentId }: { px: Proxmox; agentId?: string }) {
                 <Dot state={on ? "up" : "off"} />
                 <div className="list-main">
                   <div className="list-title">
-                    <span className="muted mono">{g.vmid}</span> {g.name}
+                    <Link to={`/servers/${agentId}/guest/${g.node}/${g.vmid}`} className="guest-link">
+                      <span className="muted mono">{g.vmid}</span> {g.name}
+                    </Link>
                     <span className="badge">{g.type === "lxc" ? "LXC" : "VM"}</span>
                   </div>
                   <div className="list-sub">
@@ -618,7 +654,7 @@ function LogsDialog({ container, control, onClose }: { container: string; contro
   );
 }
 
-function GuestActions({ agentId, guest }: { agentId: string; guest: ProxmoxGuest }) {
+export function GuestActions({ agentId, guest }: { agentId: string; guest: ProxmoxGuest }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [confirm, setConfirm] = useState<"" | "stop" | "reboot" | "shutdown">("");
@@ -650,6 +686,26 @@ function GuestActions({ agentId, guest }: { agentId: string; guest: ProxmoxGuest
         </>
       ) : (
         <button type="button" className="btn btn-small btn-start" onClick={() => run.mutate("start")}>{t("docker.start")}</button>
+      )}
+    </div>
+  );
+}
+
+function NodeInfo({ info, onUpdates }: { info?: PveNodeDetails; onUpdates: () => void }) {
+  const { t } = useTranslation();
+  if (!info) return null;
+  return (
+    <div className="node-info">
+      {info.version && <span>Proxmox VE {info.version}</span>}
+      {info.kernel && <span className="muted">{info.kernel.replace(/^Linux /, "Kernel ").split(" #")[0]}</span>}
+      {info.updates === null || info.updates === undefined ? (
+        <span className="muted" title={t("proxmox.updatesUnknownHint")}>{t("proxmox.updatesUnknown")}</span>
+      ) : info.updates.length ? (
+        <button type="button" className="badge badge-warn badge-btn" onClick={onUpdates}>
+          {t("proxmox.updates", { count: info.updates.length })}
+        </button>
+      ) : (
+        <span className="state-up">{t("proxmox.upToDate")}</span>
       )}
     </div>
   );

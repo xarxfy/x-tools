@@ -89,10 +89,103 @@ export interface ProxmoxGuest {
   mem: number;
   maxmem: number;
   uptime: number;
+  tags?: string;
+}
+
+export interface PveDisk {
+  key: string;
+  volume: string;
+  storage: string;
+  size: string;
+  size_bytes: number | null;
+  mountpoint: string;
+  backup: boolean;
+}
+
+export interface PveNet {
+  key: string;
+  name: string;
+  bridge: string;
+  mac: string;
+  model: string;
+  vlan: string;
+  ip: string;
+  gw: string;
+  ip6: string;
+  firewall: boolean;
+  rate: string;
+}
+
+export interface PveConfig {
+  cores: number;
+  sockets: number;
+  memory: number;
+  swap: number | null;
+  disks: PveDisk[];
+  nets: PveNet[];
+  ostype: string;
+  hostname: string;
+  onboot: boolean;
+  startup: string;
+  unprivileged: boolean | null;
+  features: Record<string, string>;
+  tags: string[];
+  description: string;
+  nameserver: string;
+  agent: boolean | null;
+}
+
+export interface PveGuestDetails {
+  fetched_at: number;
+  error?: string;
+  config?: PveConfig;
+  ips?: { interface: string; address: string }[];
+  snapshots?: { name: string; time: number | null; description: string; parent: string }[] | null;
+}
+
+export interface PveBackup {
+  vmid: number;
+  storage: string;
+  volid: string;
+  time: number | null;
+  size: number | null;
+  notes: string;
+  protected: boolean;
+}
+
+export interface PveNodeDetails {
+  error?: string;
+  pveversion?: string;
+  kernel?: string;
+  cpu_model?: string;
+  boot_mode?: string;
+  version?: string;
+  release?: string;
+  updates?: string[] | null;
+  network?: {
+    iface: string;
+    type: string;
+    active: boolean;
+    autostart: boolean;
+    cidr: string;
+    cidr6: string;
+    gateway: string;
+    ports: string;
+    vlan_aware: boolean;
+    vlan_id: string;
+    comments: string;
+  }[] | null;
 }
 
 export interface Proxmox {
   error?: string;
+  details?: {
+    fetched_at: number;
+    error?: string;
+    guests: Record<string, PveGuestDetails>;
+    backups: PveBackup[];
+    nodes: Record<string, PveNodeDetails>;
+  } | null;
   nodes?: { name: string; status: string; cpu: number; maxcpu: number; mem: number; maxmem: number; uptime: number }[];
   guests?: ProxmoxGuest[];
   storage?: { storage: string; node: string; disk: number; maxdisk: number }[];

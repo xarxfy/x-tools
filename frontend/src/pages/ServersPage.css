@@ -314,3 +314,32 @@
 .guest-actions {
   flex-wrap: wrap;
 }
+.node-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+  font-size: 13px;
+  align-items: center;
+}
+.badge-btn {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+}
+.guest-link {
+  color: var(--text);
+  display: inline-flex;
+  gap: 6px;
+}
+.guest-link:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+.host-net + .host-net {
+  margin-top: 12px;
+}
