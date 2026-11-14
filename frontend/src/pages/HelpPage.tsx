@@ -139,6 +139,14 @@ const DOCS: Doc[] = [
         command and are stored only on the Proxmox host.</p>
     </>, "proxmox token pveauditor lxc vm"),
   ]),
+  doc("cloudflare", "Cloudflare", <>
+    <p>Read-only: under <Link to="/settings?tab=cloudflare">Settings → Cloudflare</Link> you store an API token with read
+      permissions (Zone, DNS, Cloudflare Tunnel, Access: Apps and Policies). The <em>Cloudflare</em> page then shows
+      per hostname the chain DNS record → tunnel → route → Access app and the service using it, and marks problems:
+      no DNS record, a tunnel without route for the hostname, a route to a different port than the service uses,
+      DNS not pointing to the tunnel. Unhealthy tunnels appear on the overview. X-TOOLS never changes anything at
+      Cloudflare; data is refreshed every 10 minutes.</p>
+  </>, "cloudflare dns tunnel route access token"),
   doc("notifications", "Notifications", <>
     <p>Every minute X-TOOLS compares the list of issues with the previous run. New problems are sent once they
       last longer than the delay; with “Back to normal” you also hear when they are solved. You can switch
