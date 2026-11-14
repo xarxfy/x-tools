@@ -21,6 +21,8 @@ alerts when something breaks.
 - **Notifications** – Telegram and ntfy.
 - **History** – what went wrong when (with duration), uptime per service, load/memory/disk curves for 30 days.
 - **Account** – change password, two-factor login (TOTP) with recovery codes, encrypted backups from the UI.
+- **Users & roles** – viewer (read only), operator (maintain services, control containers), admin; audit log of
+  who did what.
 
 ## How it is built
 
@@ -242,7 +244,8 @@ keep working once their URL points to X-TOOLS. Running it twice does not duplica
 ## Security
 
 - Admin account protected by a one-time setup code; Argon2 password hashes, session tokens stored hashed, CSRF
-  protection, login throttling.
+  protection, login throttling, optional two-factor login.
+- Roles are enforced by the API (not only hidden in the UI); every relevant action lands in the audit log.
 - The web process has no Docker access; the collector only allows start/stop/restart/logs of known, unprotected
   containers and has no network.
 - Compose files, Dockerfiles and logs are shown with passwords, tokens and keys masked; `.env` files are never read.

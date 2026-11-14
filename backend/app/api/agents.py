@@ -12,7 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.agent_install import InstallOptions, bundle_response, create_install, install_script
-from app.api.deps import current_user
+from app.api.deps import current_user, require
+from app.core.audit import audit
 from app.collector.agent import AGENT_VERSION
 from app.core.db import get_db
 from app.core.security import token_hash
@@ -67,7 +68,7 @@ def read_agent(aid: str, db: Session = Depends(get_db)):
     return {**summary(agent), "report": agent.last_report}
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, dependencies=[Depends(require("admin"))])
 def create_agent(body: AgentIn, request: Request, db: Session = Depends(get_db)):
     name = body.name.strip()
     if not name:
@@ -80,10 +81,11 @@ def create_agent(body: AgentIn, request: Request, db: Session = Depends(get_db))
     db.commit()
     # The key is shown exactly once; only its hash is stored.
     opts = InstallOptions(**body.model_dump(exclude={"name"}))
+    audit("agent.created", agent.name, agent.kind)
     return {**summary(agent), "key": key, "install": create_install(request, agent.id, key, opts)}
 
 
-@router.post("/{aid}/install")
+@router.post("/{aid}/install", dependencies=[Depends(require("admin"))])
 def new_install(aid: str, body: InstallOptions, request: Request, db: Session = Depends(get_db)):
     """New install command (e.g. to reinstall or add Proxmox later). Replaces the agent key."""
     agent = get_agent(db, aid)
@@ -91,10 +93,11 @@ def new_install(aid: str, body: InstallOptions, request: Request, db: Session = 
     agent.key_hash = token_hash(key)
     agent.kind = body.kind
     db.commit()
+    audit("agent.install_command", agent.name, f"{agent.kind}, new key")
     return {"key": key, "install": create_install(request, agent.id, key, body)}
 
 
-@router.put("/{aid}")
+@router.put("/{aid}", dependencies=[Depends(require("admin"))])
 def update_agent(aid: str, body: AgentUpdate, db: Session = Depends(get_db)):
     agent = get_agent(db, aid)
     if body.name is not None:
@@ -106,16 +109,22 @@ def update_agent(aid: str, body: AgentUpdate, db: Session = Depends(get_db)):
         agent.name = name
     if body.kind is not None:
         agent.kind = body.kind
+    old_name = agent.name
     if body.disabled is not None:
         agent.disabled = body.disabled
     db.commit()
+    changes = [f"renamed from {old_name}" if body.name is not None and old_name != agent.name else "",
+               "disabled" if body.disabled else "enabled" if body.disabled is False else ""]
+    audit("agent.updated", agent.name, ", ".join(c for c in changes if c))
     return summary(agent)
 
 
-@router.delete("/{aid}", status_code=204)
+@router.delete("/{aid}", status_code=204, dependencies=[Depends(require("admin"))])
 def delete_agent(aid: str, db: Session = Depends(get_db)):
-    db.delete(get_agent(db, aid))
+    agent = get_agent(db, aid)
+    db.delete(agent)
     db.commit()
+    audit("agent.deleted", agent.name)
     return Response(status_code=204)
 
 

@@ -7,7 +7,8 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user
+from app.api.deps import current_user, require
+from app.core.audit import audit
 from app.collector.exchange import load_snapshot
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
@@ -45,7 +46,7 @@ def overview(db: Session = Depends(get_db)):
 # --- Notifications ------------------------------------------------------------------
 
 
-@router.get("/settings/notifications")
+@router.get("/settings/notifications", dependencies=[Depends(require("admin"))])
 def get_notifications():
     data = notify.public(notify.load())
     data["last"] = (state.load(ALERT_STATE, {}) or {}).get("last")
@@ -53,10 +54,12 @@ def get_notifications():
     return data
 
 
-@router.put("/settings/notifications")
+@router.put("/settings/notifications", dependencies=[Depends(require("admin"))])
 def put_notifications(body: dict):
     try:
-        return notify.public(notify.save(body))
+        saved = notify.public(notify.save(body))
+        audit("settings.notifications")
+        return saved
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
 
@@ -65,7 +68,7 @@ class TestIn(BaseModel):
     channel: str
 
 
-@router.post("/settings/notifications/test")
+@router.post("/settings/notifications/test", dependencies=[Depends(require("admin"))])
 def test_notification(body: TestIn):
     if body.channel not in ("telegram", "ntfy"):
         raise HTTPException(422, "Unknown channel")
@@ -93,7 +96,7 @@ class SiteCheckIn(BaseModel):
     customer_id: str | None = None
 
 
-@router.post("/sitechecks")
+@router.post("/sitechecks", dependencies=[Depends(require("operator"))])
 def run_sitechecks(body: SiteCheckIn, db: Session = Depends(get_db)):
     """Check now – the domains of one customer, or all customer domains."""
     if body.customer_id:
@@ -108,7 +111,7 @@ def run_sitechecks(body: SiteCheckIn, db: Session = Depends(get_db)):
     return sites.load_results()
 
 
-@router.get("/about")
+@router.get("/about", dependencies=[Depends(require("admin"))])
 def about():
     s = get_settings()
     snap = load_snapshot()

@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import func, select
 
-from app.api.deps import current_user
+from app.api.deps import current_user, require
+from app.core.audit import audit
 from app.core.db import session_scope
 from app.models import Customer
 from app.monitor import state
@@ -31,7 +32,8 @@ def get_features():
     return load()
 
 
-@router.put("", response_model=Features)
+@router.put("", response_model=Features, dependencies=[Depends(require("admin"))])
 def put_features(body: Features):
     state.save(KEY, body.model_dump())
+    audit("settings.features", "", f"customers={'on' if body.customers else 'off'}")
     return body

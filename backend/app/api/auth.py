@@ -12,6 +12,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import client_ip, current_session, current_user
+from app.core.audit import audit
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
 from app.core.security import (
@@ -124,6 +125,7 @@ def setup(body: SetupRequest, request: Request, response: Response, db: Session 
         db.add(user)
         db.flush()
         _start_session(db, user, request, response)
+    audit("setup", user=user)
     return UserOut(id=user.id, username=user.username, role=user.role)
 
 
@@ -166,8 +168,10 @@ def login(body: Credentials, request: Request, response: Response, db: Session =
     user = db.scalar(select(User).where(func.lower(User.username) == body.username.lower()))
     # Verify against a dummy hash when the user does not exist to keep timing similar.
     ok = verify_password(user.password_hash if user else _DUMMY_HASH, body.password) and user is not None
-    if not ok:
+    if not ok or user.disabled:
         login_throttle.failed(body.username, ip)
+        audit("login.failed", "", "disabled account" if ok else "wrong password",
+              username=body.username[:64])
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong username or password")
     login_throttle.succeeded(body.username, ip)
     if user.totp_enabled:
@@ -179,6 +183,7 @@ def login(body: Credentials, request: Request, response: Response, db: Session =
             _tickets[token_hash(ticket)] = (user.id, now + TICKET_SECONDS, 0)
         return {"totp_required": True, "ticket": ticket}
     _start_session(db, user, request, response)
+    audit("login", user=user)
     return UserOut(id=user.id, username=user.username, role=user.role)
 
 
@@ -190,7 +195,8 @@ def login_second_factor(body: SecondFactor, request: Request, response: Response
     if entry is None or entry[1] < time.time():
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Login expired – enter your password again")
     user = db.get(User, entry[0])
-    if user is None or not check_second_factor(user, body.code):
+    if user is None or user.disabled or not check_second_factor(user, body.code):
+        audit("login.failed", "", "wrong two-factor code", user=user)
         with _tickets_lock:
             attempts = entry[2] + 1
             if attempts >= TICKET_ATTEMPTS:
@@ -201,11 +207,13 @@ def login_second_factor(body: SecondFactor, request: Request, response: Response
     with _tickets_lock:
         _tickets.pop(key, None)
     _start_session(db, user, request, response)
+    audit("login", "", "with two-factor code", user=user)
     return UserOut(id=user.id, username=user.username, role=user.role)
 
 
 @router.post("/auth/logout", status_code=204)
 def logout(response: Response, session: UserSession = Depends(current_session), db: Session = Depends(get_db)):
+    audit("logout", user=session.user)
     db.delete(db.merge(session))
     db.commit()
     response.delete_cookie(SESSION_COOKIE, path="/")

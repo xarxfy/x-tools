@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user
+from app.api.deps import current_user, require
+from app.core.audit import audit
 from app.core.db import get_db
 from app.models import Customer, Service
 from app.schemas import CustomerIn, CustomerOut
@@ -44,25 +45,29 @@ def read_customer(cid: str, db: Session = Depends(get_db)):
     return to_out(get_customer(db, cid))
 
 
-@router.post("", response_model=CustomerOut, status_code=201)
+@router.post("", response_model=CustomerOut, status_code=201, dependencies=[Depends(require("operator"))])
 def create_customer(body: CustomerIn, db: Session = Depends(get_db)):
     customer = Customer()
     db.add(customer)
     apply(customer, body, db)
     db.commit()
+    audit("customer.created", customer.name)
     return to_out(customer)
 
 
-@router.put("/{cid}", response_model=CustomerOut)
+@router.put("/{cid}", response_model=CustomerOut, dependencies=[Depends(require("operator"))])
 def update_customer(cid: str, body: CustomerIn, db: Session = Depends(get_db)):
     customer = get_customer(db, cid)
     apply(customer, body, db)
     db.commit()
+    audit("customer.updated", customer.name)
     return to_out(customer)
 
 
-@router.delete("/{cid}", status_code=204)
+@router.delete("/{cid}", status_code=204, dependencies=[Depends(require("operator"))])
 def delete_customer(cid: str, db: Session = Depends(get_db)):
-    db.delete(get_customer(db, cid))  # services stay, customer_id becomes NULL
+    customer = get_customer(db, cid)
+    db.delete(customer)  # services stay, customer_id becomes NULL
     db.commit()
+    audit("customer.deleted", customer.name)
     return Response(status_code=204)

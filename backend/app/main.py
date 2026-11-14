@@ -7,7 +7,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import account, agents, auth, backup, customers, docker, features, history, monitor, services
+from app.api import account, agents, auth, backup, customers, docker, features, history, monitor, services, users
+from app.core.audit import current_request as audit_request
 from app.core.config import VERSION, get_settings
 from app.core.db import run_migrations, session_scope
 from app.core.security import secret_key
@@ -39,10 +40,15 @@ def create_app() -> FastAPI:
     app.include_router(account.router)
     app.include_router(backup.router)
     app.include_router(history.router)
+    app.include_router(users.router)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
-        response = await call_next(request)
+        token = audit_request.set(request)
+        try:
+            response = await call_next(request)
+        finally:
+            audit_request.reset(token)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "no-referrer")

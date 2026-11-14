@@ -5,6 +5,7 @@ import { Icon, type IconName } from "./Icon";
 import { useAppStatus, useLogout, useMe } from "../api/auth";
 import { useFeatures } from "../api/monitor";
 import { useDockerHosts, useProxmoxHosts } from "../pages/FleetPages";
+import { useCan } from "../api/users";
 import "./Layout.css";
 
 const MAIN: { to: string; key: string; icon: IconName }[] = [
@@ -35,8 +36,10 @@ export function Layout() {
   const dockerHosts = useDockerHosts();
   const docker = dockerHosts.local || dockerHosts.hosts.length > 0;
   // Optional entries: customers when switched on, Proxmox/Docker only when such a server reports.
+  const can = useCan();
   const main = MAIN.filter((item) =>
     (item.key !== "customers" || features.data?.customers) &&
+    (item.key !== "credentials" || can("operator")) &&
     (item.key !== "proxmox" || proxmox) &&
     (item.key !== "docker" || docker));
 

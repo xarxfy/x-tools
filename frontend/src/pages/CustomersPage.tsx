@@ -12,6 +12,7 @@ import { ServiceDialog, serviceState } from "./ServicesPage";
 import type { Service } from "../api/data";
 import { useRunSiteChecks, useSiteChecks, type SiteCheck } from "../api/monitor";
 import { ago } from "../components/format";
+import { useCan } from "../api/users";
 
 function worst(checks: (SiteCheck | undefined)[]): "up" | "warn" | "down" | "off" {
   const levels = checks.map((c) => c?.level).filter(Boolean);
@@ -31,6 +32,7 @@ export function CustomersPage() {
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
   const navigate = useNavigate();
+  const edit = useCan()("operator");
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const byId = new Map((services.data ?? []).map((s) => [s.id, s]));
@@ -42,10 +44,12 @@ export function CustomersPage() {
     <>
       <PageHead title={t("nav.customers")} sub={t("customers.sub", { count: customers.data.length })}>
         <SearchField value={query} onChange={setQuery} />
-        <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
-          <Icon name="plus" size={16} />
-          {t("customers.add")}
-        </button>
+        {edit && (
+          <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={16} />
+            {t("customers.add")}
+          </button>
+        )}
       </PageHead>
       {list.length === 0 ? (
         <Empty>{customers.data.length ? t("common.noMatch") : t("customers.empty")}</Empty>
@@ -90,6 +94,7 @@ export function CustomerPage() {
   const [keys, setKeys] = useState<Service | null>(null);
   const checks = useSiteChecks();
   const runChecks = useRunSiteChecks();
+  const edit = useCan()("operator");
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const customer = customers.data.find((c) => c.id === id);
@@ -119,10 +124,12 @@ export function CustomerPage() {
         <Link to="/customers">‹ {t("nav.customers")}</Link>
       </p>
       <PageHead title={customer.name}>
-        <button type="button" className="btn" onClick={() => setEditing(true)}>
-          <Icon name="edit" size={16} />
-          {t("common.edit")}
-        </button>
+        {edit && (
+          <button type="button" className="btn" onClick={() => setEditing(true)}>
+            <Icon name="edit" size={16} />
+            {t("common.edit")}
+          </button>
+        )}
       </PageHead>
 
       <h2 className="section-title">{t("customers.contactTitle")}</h2>
@@ -150,8 +157,9 @@ export function CustomerPage() {
       ) : (
         <div className="card list">
           {own.map((s) => (
-            <div key={s.id} className="list-row" role="button" tabIndex={0} onClick={() => setService(s)}
-                 onKeyDown={(e) => e.key === "Enter" && setService(s)}>
+            <div key={s.id} className={`list-row${edit ? "" : " static-row"}`} role={edit ? "button" : undefined}
+                 tabIndex={edit ? 0 : undefined} onClick={() => edit && setService(s)}
+                 onKeyDown={(e) => edit && e.key === "Enter" && setService(s)}>
               <Dot state={serviceState(s, ports.data)} />
               <div className="list-main">
                 <div className="list-title">{s.name}</div>
@@ -165,11 +173,13 @@ export function CustomerPage() {
                   ))}
                 </div>
               </div>
-              <button type="button" className="btn btn-ghost" title={t("credentials.show")}
-                      onClick={(e) => { e.stopPropagation(); setKeys(s); }}>
-                <Icon name="credentials" size={16} />
-                {s.credential_count > 0 ? s.credential_count : ""}
-              </button>
+              {edit && (
+                <button type="button" className="btn btn-ghost" title={t("credentials.show")}
+                        onClick={(e) => { e.stopPropagation(); setKeys(s); }}>
+                  <Icon name="credentials" size={16} />
+                  {s.credential_count > 0 ? s.credential_count : ""}
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -179,11 +189,11 @@ export function CustomerPage() {
         <>
           <div className="section-row">
             <h2 className="section-title">{t("sites.title")}</h2>
-            <button type="button" className="btn btn-ghost btn-small" disabled={runChecks.isPending}
+            {edit && <button type="button" className="btn btn-ghost btn-small" disabled={runChecks.isPending}
                     onClick={() => runChecks.mutate(customer.id)}>
               <Icon name="refresh" size={14} />
               {runChecks.isPending ? t("sites.checking") : t("sites.checkNow")}
-            </button>
+            </button>}
           </div>
           <div className="card list">
             {[...new Set(own.flatMap((s) => s.domains))].map((d) => {

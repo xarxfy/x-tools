@@ -147,6 +147,22 @@ const DOCS: Doc[] = [
         server, add an access token.</p>
     </>, "ntfy topic push"),
   ]),
+  doc("users", "Users & roles", <>
+    <p>Under <Link to="/settings?tab=users">Settings → Users</Link> admins add users and give them a role:</p>
+    <ul>
+      <li><strong>Viewer</strong> – sees everything, changes nothing; no credentials, no container logs.</li>
+      <li><strong>Operator</strong> – maintains services, customers and credentials, starts/stops containers.</li>
+      <li><strong>Admin</strong> – everything, including users, settings, agents, backups and the audit log.</li>
+    </ul>
+    <p>Disabling a user or resetting the password logs them out everywhere. There is always at least one active
+      admin. Users change their own password and two-factor login under Settings → Account.</p>
+  </>, "users roles viewer operator admin", [
+    doc("users-audit", "Audit log", <>
+      <p><Link to="/settings?tab=audit">Settings → Audit log</Link> shows who did what and when, with IP address:
+        logins (also failed ones), viewed and changed credentials, container actions, changes to services,
+        customers, users, agents and settings, backups. Entries are kept for one year. Passwords never appear in it.</p>
+    </>, "audit log who what when"),
+  ]),
   doc("history", "History", <>
     <p>Every problem from the overview is recorded with start and end. The overview shows recent events, services show
       their uptime of the last 7 days, and server pages show load, memory and disk for up to 30 days (one sample every

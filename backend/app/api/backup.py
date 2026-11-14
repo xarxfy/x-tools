@@ -21,12 +21,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from app.api.deps import current_user
+from app.api.deps import require
+from app.core.audit import audit
 from app.core import db as dbmod
 from app.core import security
 from app.core.config import VERSION, get_settings
 
-router = APIRouter(prefix="/api/backup", tags=["backup"], dependencies=[Depends(current_user)])
+router = APIRouter(prefix="/api/backup", tags=["backup"], dependencies=[Depends(require("admin"))])
 
 MAGIC = b"XTB1"
 MAX_BACKUP = 200 * 1024 * 1024
@@ -87,6 +88,7 @@ def read_backup(raw: bytes, passphrase: str) -> dict[str, bytes]:
 @router.post("")
 def download_backup(body: BackupIn):
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
+    audit("backup.downloaded")
     return Response(create_backup(body.passphrase), media_type="application/octet-stream",
                     headers={"Content-Disposition": f'attachment; filename="x-tools-backup-{stamp}.xtb"'})
 
@@ -100,6 +102,10 @@ def restore_backup(body: RestoreIn):
     if len(raw) > MAX_BACKUP:
         raise HTTPException(413, "The backup is too large")
     files = read_backup(raw, body.passphrase)
+    from app.core.audit import current_request
+    request = current_request.get()
+    actor = getattr(getattr(request, "state", None), "user", None)
+    actor_name = getattr(actor, "username", "")
     settings = get_settings()
     key = files["secret.key"].decode().strip()
     if settings.secret_key and settings.secret_key != key:
@@ -128,4 +134,5 @@ def restore_backup(body: RestoreIn):
     with dbmod.session_scope() as s:
         s.execute(delete(UserSession))
         s.commit()
+    audit("backup.restored", "", f"meta: {files['meta.json'].decode()[:200]}", username=actor_name, user=False)
     return Response(status_code=204)

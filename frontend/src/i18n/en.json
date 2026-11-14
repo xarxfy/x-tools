@@ -270,7 +270,9 @@
       "about": "About",
       "general": "General",
       "account": "Account",
-      "backup": "Backup"
+      "backup": "Backup",
+      "users": "Users",
+      "audit": "Audit log"
     }
   },
   "notify": {
@@ -459,5 +461,89 @@
     "confirmTitle": "Restore backup?",
     "confirmText": "All current data is replaced by {{name}}. This cannot be undone.",
     "restoring": "Restoring …"
+  },
+  "users": {
+    "intro": "Who may log in and what they may do.",
+    "add": "Add user",
+    "create": "Create user",
+    "you": "you",
+    "disabled": "disabled",
+    "role": "Role",
+    "lastLogin": "last login {{when}}",
+    "neverLoggedIn": "never logged in",
+    "resetPassword": "Reset password",
+    "reset2fa": "Reset 2FA",
+    "resetTitle": "New password for {{name}}",
+    "resetHint": "The user is logged out everywhere and logs in with this password.",
+    "initialPassword": "Initial password",
+    "initialPasswordHint": "Tell it to the user – they can change it under Settings → Account.",
+    "roles": {
+      "viewer": "Viewer",
+      "operator": "Operator",
+      "admin": "Admin"
+    },
+    "rolesHint": {
+      "viewer": "Sees everything, changes nothing – no credentials, no logs.",
+      "operator": "Maintains services, customers and credentials, starts and stops containers.",
+      "admin": "Everything, including users, settings, agents, backups and the audit log."
+    }
+  },
+  "audit": {
+    "intro": "Who did what – kept for one year.",
+    "user": "User",
+    "area": "Area",
+    "allUsers": "All users",
+    "allAreas": "All areas",
+    "none": "No entries.",
+    "more": "Load more",
+    "actions": {
+      "setup": "Set up",
+      "login": "Logged in",
+      "login.failed": "Login failed",
+      "logout": "Logged out",
+      "account.password_changed": "Changed own password",
+      "account.2fa_enabled": "Turned on two-factor login",
+      "account.2fa_disabled": "Turned off two-factor login",
+      "account.recovery_codes": "New recovery codes",
+      "user.created": "User created",
+      "user.updated": "User changed",
+      "user.password_reset": "Password reset",
+      "user.2fa_reset": "Two-factor login reset",
+      "user.deleted": "User deleted",
+      "service.created": "Service created",
+      "service.updated": "Service changed",
+      "service.deleted": "Service deleted",
+      "credentials.viewed": "Credentials viewed",
+      "credentials.changed": "Credentials changed",
+      "customer.created": "Customer created",
+      "customer.updated": "Customer changed",
+      "customer.deleted": "Customer deleted",
+      "container.start": "Container started",
+      "container.stop": "Container stopped",
+      "container.restart": "Container restarted",
+      "container.logs": "Container logs viewed",
+      "agent.created": "Agent created",
+      "agent.updated": "Agent changed",
+      "agent.deleted": "Agent deleted",
+      "agent.install_command": "Agent install command created",
+      "settings.notifications": "Notification settings changed",
+      "settings.features": "Features changed",
+      "backup.downloaded": "Backup downloaded",
+      "backup.restored": "Backup restored"
+    },
+    "areas": {
+      "login": "Logins",
+      "logout": "Logouts",
+      "setup": "Setup",
+      "account": "Own account",
+      "user": "Users",
+      "service": "Services",
+      "credentials": "Credentials",
+      "customer": "Customers",
+      "container": "Containers",
+      "agent": "Agents",
+      "settings": "Settings",
+      "backup": "Backups"
+    }
   }
 }

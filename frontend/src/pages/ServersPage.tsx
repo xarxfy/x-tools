@@ -15,6 +15,7 @@ import { Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../
 import { ago, fmtBytes, fmtDuration, level, pct } from "../components/format";
 import { ServiceDialog } from "./ServicesPage";
 import { MetricsChart } from "../components/history";
+import { useCan } from "../api/users";
 import "./ServersPage.css";
 
 const useAgentQuery = (id: string, enabled: boolean) => useAgentQueryBase(id, enabled);
@@ -404,8 +405,14 @@ export function ProxmoxTab({ px }: { px: Proxmox }) {
   );
 }
 
-export function DockerTab({ snap, protectedNames, readonly }: { snap: Snapshot; protectedNames: string[]; readonly: boolean }) {
+export function DockerTab({ snap, protectedNames, readonly: agentReadonly }: {
+  snap: Snapshot;
+  protectedNames: string[];
+  readonly: boolean;
+}) {
   const { t } = useTranslation();
+  const canOperate = useCan()("operator");
+  const readonly = agentReadonly || !canOperate;
   const [file, setFile] = useState<ProjectFile | null>(null);
   const [logs, setLogs] = useState<string | null>(null);
   const [adopt, setAdopt] = useState<Project | null>(null);
@@ -467,7 +474,7 @@ export function DockerTab({ snap, protectedNames, readonly }: { snap: Snapshot; 
         </section>
       )}
       <p className="muted small-note">
-        {readonly && `${t("docker.readonlyNote")} `}
+        {agentReadonly && `${t("docker.readonlyNote")} `}
         {t("docker.maskedNote")}
       </p>
 

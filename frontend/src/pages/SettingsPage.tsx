@@ -10,29 +10,34 @@ import { Icon } from "../components/Icon";
 import { ConfirmDelete, CopyButton, Dialog, Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago } from "../components/format";
 import { AccountSettings, BackupSettings } from "./SettingsAccount";
+import { AuditSettings, UsersSettings } from "./SettingsUsers";
+import { useCan } from "../api/users";
 import "./SettingsPage.css";
 
-const TABS = ["general", "account", "notifications", "agents", "backup", "about"] as const;
+const TABS = ["general", "account", "notifications", "agents", "users", "audit", "backup", "about"] as const;
 const EVENTS = ["port", "container", "docker", "system", "site", "agent"];
 
 export function SettingsPage() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
-  const tab = TABS.find((k) => k === params.get("tab")) ?? "general";
+  const can = useCan();
+  const tabs = can("admin") ? TABS : (["account"] as const);
+  const tab = tabs.find((k) => k === params.get("tab")) ?? tabs[0];
   return (
     <>
       <PageHead title={t("nav.settings")} />
       <div className="tabs" role="tablist">
-        {TABS.map((k) => (
+        {tabs.map((k) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "active" : ""}
-                  onClick={() => setParams(k === "general" ? {} : { tab: k })}>
+                  onClick={() => setParams(k === tabs[0] ? {} : { tab: k })}>
             {t(`settings.tab.${k}`)}
           </button>
         ))}
       </div>
       {tab === "general" ? <General /> : tab === "account" ? <AccountSettings />
         : tab === "notifications" ? <Notifications /> : tab === "agents" ? <Agents />
-          : tab === "backup" ? <BackupSettings /> : <About />}
+          : tab === "users" ? <UsersSettings /> : tab === "audit" ? <AuditSettings />
+            : tab === "backup" ? <BackupSettings /> : <About />}
     </>
   );
 }

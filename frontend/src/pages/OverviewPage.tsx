@@ -5,12 +5,14 @@ import { Icon, type IconName } from "../components/Icon";
 import { Dot, Loading, PageHead } from "../components/ui";
 import { level, pct } from "../components/format";
 import { EventList } from "../components/history";
+import { useCan } from "../api/users";
 import "./OverviewPage.css";
 
 export function OverviewPage() {
   const { t } = useTranslation();
   const overview = useOverview();
   const customersOn = useFeatures().data?.customers ?? false;
+  const isAdmin = useCan()("admin");
   if (!overview.data) return <Loading error={overview.error} retry={() => overview.refetch()} />;
   const { issues, counts, system, notifications } = overview.data;
   const open = issues.filter((i) => !i.manual);
@@ -47,7 +49,7 @@ export function OverviewPage() {
           <div>
             <h2>{open.length ? t("overview.needsAttention") : t("overview.nothingToDo")}</h2>
             <p className="muted">
-              {notifications ? t("overview.notifyOn") : (
+              {notifications ? t("overview.notifyOn") : !isAdmin ? t("overview.notifyOff") : (
                 <>
                   {t("overview.notifyOff")} <Link to="/settings?tab=notifications">{t("overview.setUp")}</Link>
                 </>

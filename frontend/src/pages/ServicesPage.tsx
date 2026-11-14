@@ -10,6 +10,7 @@ import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matc
 import { CredentialsDialog } from "./CredentialsPage";
 import { useFeatures } from "../api/monitor";
 import { useUptime } from "../api/account";
+import { useCan } from "../api/users";
 
 const EMPTY: ServiceInput = { name: "", host: "", domains: [], ports: [], folder: "", type: "", notes: "", customer_id: null };
 
@@ -25,6 +26,8 @@ export function ServicesPage() {
   const services = useServices();
   const ports = usePortStatus();
   const uptime = useUptime();
+  const can = useCan();
+  const edit = can("operator");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Service | "new" | null>(null);
   const [keys, setKeys] = useState<Service | null>(null);
@@ -39,10 +42,12 @@ export function ServicesPage() {
     <>
       <PageHead title={t("nav.services")} sub={t("services.sub", { count: services.data.length })}>
         <SearchField value={query} onChange={setQuery} />
-        <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>
-          <Icon name="plus" size={16} />
-          {t("services.add")}
-        </button>
+        {edit && (
+          <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>
+            <Icon name="plus" size={16} />
+            {t("services.add")}
+          </button>
+        )}
       </PageHead>
 
       {list.length === 0 ? (
@@ -50,8 +55,9 @@ export function ServicesPage() {
       ) : (
         <div className="card list">
           {list.map((s) => (
-            <div key={s.id} className="list-row" role="button" tabIndex={0} onClick={() => setEditing(s)}
-                 onKeyDown={(e) => e.key === "Enter" && setEditing(s)}>
+            <div key={s.id} className={`list-row${edit ? "" : " static-row"}`} role={edit ? "button" : undefined}
+                 tabIndex={edit ? 0 : undefined} onClick={() => edit && setEditing(s)}
+                 onKeyDown={(e) => edit && e.key === "Enter" && setEditing(s)}>
               <Dot state={serviceState(s, ports.data)} />
               <div className="list-main">
                 <div className="list-title">
@@ -89,11 +95,13 @@ export function ServicesPage() {
                     {uptime.data[s.id] >= 99.995 ? "100" : uptime.data[s.id].toFixed(2)} %
                   </span>
                 )}
-                <button type="button" className="btn btn-ghost" title={t("credentials.show")}
-                        onClick={(e) => { e.stopPropagation(); setKeys(s); }}>
-                  <Icon name="credentials" size={16} />
-                  {s.credential_count > 0 ? s.credential_count : ""}
-                </button>
+                {edit && (
+                  <button type="button" className="btn btn-ghost" title={t("credentials.show")}
+                          onClick={(e) => { e.stopPropagation(); setKeys(s); }}>
+                    <Icon name="credentials" size={16} />
+                    {s.credential_count > 0 ? s.credential_count : ""}
+                  </button>
+                )}
               </div>
             </div>
           ))}

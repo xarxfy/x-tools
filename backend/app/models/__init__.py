@@ -28,7 +28,8 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     # v1 has a single admin; the role column makes more users/roles a UI-only change later.
-    role: Mapped[str] = mapped_column(String(20), default="admin")
+    role: Mapped[str] = mapped_column(String(20), default="admin")  # admin | operator | viewer
+    disabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Two-factor login (TOTP). The secret is encrypted with the instance key; recovery codes are hashed.
@@ -153,3 +154,18 @@ class Metric(Base):
     load: Mapped[float | None] = mapped_column(Float, nullable=True)
     mem: Mapped[float | None] = mapped_column(Float, nullable=True)
     disk: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class AuditLog(Base):
+    """Who did what and when (logins, changes, container actions, viewed credentials …)."""
+
+    __tablename__ = "audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    username: Mapped[str] = mapped_column(String(64), default="")
+    action: Mapped[str] = mapped_column(String(60), index=True)
+    target: Mapped[str] = mapped_column(String(200), default="")
+    detail: Mapped[str] = mapped_column(String(500), default="")
+    ip: Mapped[str] = mapped_column(String(64), default="")

@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user
+from app.api.deps import current_user, require
+from app.core.audit import audit
 from app.collector.exchange import ActionError, load_snapshot, request
 from app.core.config import get_settings
 from app.core.db import get_db
@@ -60,13 +61,20 @@ def run(action: str, container: str, lines: int | None = None) -> dict:
     return result
 
 
-@router.post("/action")
+@router.post("/action", dependencies=[Depends(require("operator"))])
 def container_action(body: ActionIn):
-    run(body.action, body.container)
+    try:
+        run(body.action, body.container)
+    except HTTPException as error:
+        audit(f"container.{body.action}", body.container, f"failed: {error.detail}")
+        raise
+    audit(f"container.{body.action}", body.container)
     mark_manual(body.container, stopped=body.action == "stop")
     return {"ok": True}
 
 
-@router.post("/logs")
+@router.post("/logs", dependencies=[Depends(require("operator"))])
 def container_logs(body: LogsIn):
-    return {"logs": run("logs", body.container, body.lines).get("logs", "")}
+    logs = run("logs", body.container, body.lines).get("logs", "")
+    audit("container.logs", body.container)
+    return {"logs": logs}

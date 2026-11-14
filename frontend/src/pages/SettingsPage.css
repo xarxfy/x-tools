@@ -246,3 +246,41 @@
   line-height: 1.8;
   columns: 2;
 }
+.role-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  font-size: 13.5px;
+}
+.role-legend div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.role-select,
+.filter-select {
+  width: auto;
+  padding: 5px 10px;
+  font-size: 13.5px;
+}
+.audit-row {
+  align-items: flex-start;
+}
+.audit-time {
+  font-size: 13px;
+  width: 130px;
+  flex: none;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.audit-target {
+  font-weight: 400;
+}
+@media (max-width: 640px) {
+  .role-legend {
+    grid-template-columns: 1fr;
+  }
+  .audit-time {
+    width: 100%;
+  }
+}

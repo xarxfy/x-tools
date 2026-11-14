@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user
+from app.api.deps import current_user, require
+from app.core.audit import audit
 from app.core.db import get_db
 from app.core.security import decrypt_json, encrypt_json
 from app.models import CredentialSet, Customer, Service
@@ -44,27 +45,31 @@ def list_services(db: Session = Depends(get_db)):
     return [to_out(s) for s in db.scalars(select(Service).order_by(Service.name))]
 
 
-@router.post("", response_model=ServiceOut, status_code=201)
+@router.post("", response_model=ServiceOut, status_code=201, dependencies=[Depends(require("operator"))])
 def create_service(body: ServiceIn, db: Session = Depends(get_db)):
     service = Service()
     apply(service, body, db)
     db.add(service)
     db.commit()
+    audit("service.created", service.name)
     return to_out(service)
 
 
-@router.put("/{sid}", response_model=ServiceOut)
+@router.put("/{sid}", response_model=ServiceOut, dependencies=[Depends(require("operator"))])
 def update_service(sid: str, body: ServiceIn, db: Session = Depends(get_db)):
     service = get_service(db, sid)
     apply(service, body, db)
     db.commit()
+    audit("service.updated", service.name)
     return to_out(service)
 
 
-@router.delete("/{sid}", status_code=204)
+@router.delete("/{sid}", status_code=204, dependencies=[Depends(require("operator"))])
 def delete_service(sid: str, db: Session = Depends(get_db)):
-    db.delete(get_service(db, sid))
+    service = get_service(db, sid)
+    db.delete(service)
     db.commit()
+    audit("service.deleted", service.name)
     return Response(status_code=204)
 
 
@@ -80,18 +85,19 @@ def port_status(db: Session = Depends(get_db)):
 # --- Credentials ----------------------------------------------------------------
 
 
-@router.get("/{sid}/credentials", response_model=list[Credential])
+@router.get("/{sid}/credentials", response_model=list[Credential], dependencies=[Depends(require("operator"))])
 def get_credentials(sid: str, db: Session = Depends(get_db)):
     service = get_service(db, sid)
     if not service.credentials:
         return []
+    audit("credentials.viewed", service.name)
     try:
         return decrypt_json(service.credentials.data)
     except InvalidToken:
         raise HTTPException(500, "Credentials cannot be decrypted – was the secret key changed?") from None
 
 
-@router.put("/{sid}/credentials", response_model=list[Credential])
+@router.put("/{sid}/credentials", response_model=list[Credential], dependencies=[Depends(require("operator"))])
 def set_credentials(sid: str, body: list[Credential], db: Session = Depends(get_db)):
     service = get_service(db, sid)
     items = [c.model_dump() for c in body if any(c.model_dump().values())]
@@ -105,4 +111,5 @@ def set_credentials(sid: str, body: list[Credential], db: Session = Depends(get_
     elif service.credentials:
         db.delete(service.credentials)
     db.commit()
+    audit("credentials.changed", service.name, f"{len(items)} login(s)")
     return items

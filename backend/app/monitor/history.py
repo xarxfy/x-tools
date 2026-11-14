@@ -71,6 +71,8 @@ def record_metrics(force: bool = False) -> None:
         db.execute(delete(Metric).where(Metric.ts < now - timedelta(days=KEEP_METRICS_DAYS)))
         db.execute(delete(Event).where(Event.ended_at < now - timedelta(days=KEEP_EVENTS_DAYS)))
         db.commit()
+    from app.core.audit import cleanup
+    cleanup()
 
 
 def uptime(service_ids: list[str], days: int = 7) -> dict[str, float]:

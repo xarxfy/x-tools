@@ -6,6 +6,7 @@ from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_session
+from app.core.audit import audit
 from app.core.db import get_db
 from app.core.security import (
     decrypt_json, encrypt_json, hash_password, new_recovery_codes, new_totp_secret, recovery_hash, totp_uri,
@@ -55,6 +56,7 @@ def change_password(body: PasswordChange, session: UserSession = Depends(current
     # Log out everywhere else.
     db.execute(delete(UserSession).where(UserSession.user_id == user.id, UserSession.id != session.id))
     db.commit()
+    audit("account.password_changed", user.username)
     return Response(status_code=204)
 
 
@@ -83,6 +85,7 @@ def enable_2fa(body: Code, session: UserSession = Depends(current_session), db: 
     user.recovery_codes = [recovery_hash(c) for c in codes]
     db.execute(delete(UserSession).where(UserSession.user_id == user.id, UserSession.id != session.id))
     db.commit()
+    audit("account.2fa_enabled", user.username)
     return {"recovery_codes": codes}  # shown once
 
 
@@ -96,6 +99,7 @@ def disable_2fa(body: Disable, session: UserSession = Depends(current_session), 
         raise HTTPException(403, "Password or code is wrong")
     user.totp_enabled, user.totp_secret, user.recovery_codes, user.totp_last_step = False, None, [], 0
     db.commit()
+    audit("account.2fa_disabled", user.username)
     return Response(status_code=204)
 
 
@@ -110,4 +114,5 @@ def new_codes(body: Code, session: UserSession = Depends(current_session), db: S
     codes = new_recovery_codes()
     user.recovery_codes = [recovery_hash(c) for c in codes]
     db.commit()
+    audit("account.recovery_codes", user.username)
     return {"recovery_codes": codes}
