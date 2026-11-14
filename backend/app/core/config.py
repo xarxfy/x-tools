@@ -39,6 +39,16 @@ class Settings(BaseSettings):
     # Seconds between two Docker snapshots.
     collect_interval: int = 60
 
+    # Background monitoring (port/site checks, notifications). Off in tests.
+    monitor: bool = True
+
+    # Seconds between two monitoring runs / two rounds of website checks.
+    alert_interval: int = 60
+    site_interval: int = 300
+
+    # Telegram Bot API base URL (only changed for tests or a local bot API server).
+    telegram_api: str = "https://api.telegram.org"
+
     # Home folder shown as "~" in paths (optional, e.g. /home/alice).
     home_dir: str = ""
 

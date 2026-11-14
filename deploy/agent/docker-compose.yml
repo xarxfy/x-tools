@@ -1,0 +1,36 @@
+# X-TOOLS agent for another server (e.g. an LXC with Docker or a Proxmox host).
+#
+# Reports Docker containers, compose files, host metrics and optionally Proxmox
+# to X-TOOLS every minute – outbound HTTPS only, no open ports, never receives
+# commands. Passwords in files are masked before they leave the machine.
+#
+#   cp .env.example .env   # values from X-TOOLS → Settings → Agents
+#   docker compose up -d --build
+#
+# Note: ":ro" on the Docker socket does not restrict the Docker API; the agent
+# only sends read requests. The root file system is mounted read-only so compose
+# files and Dockerfiles are found everywhere.
+services:
+  x-tools-agent:
+    build: ../..
+    image: x-tools:local
+    container_name: x-tools-agent
+    restart: unless-stopped
+    command: ["x-tools", "agent"]
+    # root to read the Docker socket and compose folders; in exchange the file
+    # system is read-only and of all capabilities only DAC_READ_SEARCH remains.
+    user: "0:0"
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [DAC_READ_SEARCH]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    healthcheck:
+      disable: true
+    env_file: .env
+    environment:
+      XT_HOST_ROOT: /host
+      XT_MONITOR: "false"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/host:ro

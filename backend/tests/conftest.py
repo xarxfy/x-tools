@@ -9,6 +9,7 @@ def client(tmp_path, monkeypatch):
     """A fresh app with its own empty data directory."""
     monkeypatch.setenv("XT_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("XT_SECRET_KEY", "")
+    monkeypatch.setenv("XT_MONITOR", "false")
     config.get_settings.cache_clear()
     db.reset_engine()
     security.reset_fernet()

@@ -1,18 +1,15 @@
 """Services (what runs where), their port status and their encrypted credentials."""
 
-import socket
-from concurrent.futures import ThreadPoolExecutor
-
 from cryptography.fernet import InvalidToken
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user
-from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.security import decrypt_json, encrypt_json
 from app.models import CredentialSet, Customer, Service
+from app.monitor.ports import port_status as check_ports
 from app.schemas import Credential, ServiceIn, ServiceOut
 
 router = APIRouter(prefix="/api/services", tags=["services"], dependencies=[Depends(current_user)])
@@ -74,20 +71,10 @@ def delete_service(sid: str, db: Session = Depends(get_db)):
 # --- Port status ---------------------------------------------------------------
 
 
-def port_open(port: int) -> bool:
-    try:
-        with socket.create_connection((get_settings().check_host, port), timeout=1):
-            return True
-    except OSError:
-        return False
-
-
 @router.get("/ports", response_model=dict[int, bool])
 def port_status(db: Session = Depends(get_db)):
     """Whether each port used by a service answers on the check host."""
-    ports = sorted({p["port"] for s in db.scalars(select(Service)) for p in (s.ports or [])})
-    with ThreadPoolExecutor(max_workers=16) as pool:
-        return dict(zip(ports, pool.map(port_open, ports)))
+    return check_ports(p["port"] for s in db.scalars(select(Service)) for p in (s.ports or []))
 
 
 # --- Credentials ----------------------------------------------------------------

@@ -1,4 +1,4 @@
-"""Command line: ``x-tools serve`` (default) and ``x-tools collect`` (Docker collector)."""
+"""Command line: ``x-tools serve`` (default), ``x-tools collect`` (Docker collector), ``x-tools agent``."""
 
 import argparse
 import os
@@ -13,8 +13,14 @@ def main() -> None:
     serve.add_argument("--host", default=os.environ.get("XT_HOST", "0.0.0.0"))
     serve.add_argument("--port", type=int, default=int(os.environ.get("XT_PORT", "8080")))
     sub.add_parser("collect", help="run the Docker collector (needs the Docker socket)")
+    sub.add_parser("agent", help="report this server to an X-TOOLS instance (see deploy/agent)")
     args = parser.parse_args()
 
+    if args.command == "agent":
+        from app.collector.agent import run as run_agent
+
+        run_agent()
+        return
     if args.command == "collect":
         from app.collector.collector import run
 

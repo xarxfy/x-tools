@@ -12,6 +12,7 @@ from app.collector.exchange import ActionError, load_snapshot, request
 from app.core.config import get_settings
 from app.core.db import get_db
 from app.models import Service
+from app.monitor.issues import mark_manual
 
 router = APIRouter(prefix="/api/docker", tags=["docker"], dependencies=[Depends(current_user)])
 
@@ -62,6 +63,7 @@ def run(action: str, container: str, lines: int | None = None) -> dict:
 @router.post("/action")
 def container_action(body: ActionIn):
     run(body.action, body.container)
+    mark_manual(body.container, stopped=body.action == "stop")
     return {"ok": True}
 
 
