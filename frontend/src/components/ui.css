@@ -389,3 +389,16 @@ a.list-title svg,
   background: color-mix(in srgb, var(--down) 14%, transparent);
   color: var(--down-text);
 }
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 400;
+  background: var(--inset);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.inline-check.done {
+  color: var(--muted);
+  text-decoration: line-through;
+}

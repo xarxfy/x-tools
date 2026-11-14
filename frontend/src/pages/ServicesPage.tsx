@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   portKey, useCustomers, useDeleteService, usePortStatus, useSaveService, useServices,
@@ -8,6 +8,7 @@ import {
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { CredentialsDialog } from "./CredentialsPage";
+import { ConfigDialog } from "./AssistantPage";
 import { useFeatures } from "../api/monitor";
 import { useUptime } from "../api/account";
 import { useCan } from "../api/users";
@@ -28,6 +29,7 @@ export function ServicesPage() {
   const uptime = useUptime();
   const can = useCan();
   const edit = can("operator");
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Service | "new" | null>(null);
   const [keys, setKeys] = useState<Service | null>(null);
@@ -43,10 +45,16 @@ export function ServicesPage() {
       <PageHead title={t("nav.services")} sub={t("services.sub", { count: services.data.length })}>
         <SearchField value={query} onChange={setQuery} />
         {edit && (
-          <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>
-            <Icon name="plus" size={16} />
-            {t("services.add")}
-          </button>
+          <>
+            <button type="button" className="btn" onClick={() => navigate("/services/new")}>
+              <Icon name="wand" size={16} />
+              {t("services.assistant")}
+            </button>
+            <button type="button" className="btn btn-primary" onClick={() => setEditing("new")}>
+              <Icon name="plus" size={16} />
+              {t("services.add")}
+            </button>
+          </>
         )}
       </PageHead>
 
@@ -63,6 +71,11 @@ export function ServicesPage() {
                 <div className="list-title">
                   {s.name}
                   {s.type && <span className="badge">{s.type}</span>}
+                  {s.checklist.some((c) => !c.done) && (
+                    <span className="badge badge-warn">
+                      {t("services.setupProgress", { done: s.checklist.filter((c) => c.done).length, total: s.checklist.length })}
+                    </span>
+                  )}
                 </div>
                 <div className="list-sub">
                   {[s.host, s.folder, customersOn && s.customer_name && t("services.forCustomer", { name: s.customer_name })]
@@ -128,6 +141,7 @@ export function ServiceDialog({
   const customersOn = useFeatures().data?.customers ?? false;
   const save = useSaveService();
   const remove = useDeleteService();
+  const [configs, setConfigs] = useState(false);
   const start: ServiceInput = { ...EMPTY, ...initial, ...service };
   const [form, setForm] = useState<ServiceInput>(start);
   const [domains, setDomains] = useState(() => start.domains.join("\n"));
@@ -156,6 +170,12 @@ export function ServiceDialog({
           {service && (
             <ConfirmDelete busy={remove.isPending}
                            onConfirm={() => remove.mutate(service.id, { onSuccess: onClose })} />
+          )}
+          {service && (
+            <button type="button" className="btn btn-ghost" onClick={() => setConfigs(true)}>
+              <Icon name="wand" size={16} />
+              {t("assistant.configs")}
+            </button>
           )}
           <span className="spacer" />
           <button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
@@ -229,6 +249,20 @@ export function ServiceDialog({
           )}
         </div>
       </div>
+      {(form.checklist?.length ?? 0) > 0 && (
+        <div className="field">
+          {t("services.checklist")}
+          <div className="checklist">
+            {form.checklist!.map((item, i) => (
+              <label key={i} className={`inline-check${item.done ? " done" : ""}`}>
+                <input type="checkbox" checked={item.done}
+                       onChange={(e) => setForm((f) => ({ ...f, checklist: f.checklist!.map((c, j) => (j === i ? { ...c, done: e.target.checked } : c)) }))} />
+                {item.text}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
       <label className="field">
         {t("services.notes")}
         <textarea className="input" maxLength={300} value={form.notes} onChange={set("notes")} />
@@ -238,6 +272,7 @@ export function ServiceDialog({
       )}
       {save.error && <p className="error-text">{save.error.message}</p>}
       {remove.error && <p className="error-text">{remove.error.message}</p>}
+      {configs && service && <ConfigDialog service={service} onClose={() => setConfigs(false)} />}
     </Dialog>
   );
 }

@@ -85,6 +85,8 @@ class Service(Base):
     host: Mapped[str] = mapped_column(String(255), default="", server_default="")
     type: Mapped[str] = mapped_column(String(60), default="")
     notes: Mapped[str] = mapped_column(String(300), default="")
+    # Setup checklist from the assistant: [{"text": "...", "done": false}]
+    checklist: Mapped[list] = mapped_column(JSON, default=list)
     # A service belongs to at most one customer.
     customer_id: Mapped[str | None] = mapped_column(ForeignKey("customers.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

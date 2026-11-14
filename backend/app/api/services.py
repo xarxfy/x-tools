@@ -22,7 +22,7 @@ def to_out(s: Service) -> ServiceOut:
     return ServiceOut(id=s.id, name=s.name, host=s.host, domains=s.domains or [], ports=s.ports or [], folder=s.folder,
                       type=s.type, notes=s.notes, customer_id=s.customer_id,
                       customer_name=s.customer.name if s.customer else None,
-                      credential_count=s.credentials.count if s.credentials else 0)
+                      credential_count=s.credentials.count if s.credentials else 0, checklist=s.checklist or [])
 
 
 def get_service(db: Session, sid: str) -> Service:
@@ -38,6 +38,8 @@ def apply(service: Service, body: ServiceIn, db: Session) -> None:
     service.name, service.domains, service.folder, service.host = body.name, body.domains, body.folder, body.host
     service.ports = [p.model_dump() for p in body.ports]
     service.type, service.notes, service.customer_id = body.type, body.notes, body.customer_id
+    if body.checklist is not None:
+        service.checklist = [item.model_dump() for item in body.checklist]
 
 
 @router.get("", response_model=list[ServiceOut])

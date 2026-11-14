@@ -38,6 +38,16 @@ const DOCS: Doc[] = [
     <p>A service is anything that runs somewhere: a compose project, a systemd unit, an LXC. Ports are checked
       every minute on the host X-TOOLS runs on (green = answers).</p>
   </>, "services ports domains folder type", [
+    doc("services-assistant", "Assistant for new services", <>
+      <p><Link to="/services/new">Services → Assistant</Link> walks you through a new service: pick a template (web app,
+        Node.js, static site, WordPress, PostgreSQL or only a proxy config), name, host, folder and a free port (ports
+        already used on that host are detected), then how it is published – Cloudflare Tunnel, Caddy, nginx, Traefik or
+        only in the LAN.</p>
+      <p>It generates <code>docker-compose.yml</code>, a <code>.env</code> with random passwords (optionally saved as
+        credentials), the reverse proxy or tunnel configuration and the commands – to copy or download. The service
+        is created with a checklist of the remaining steps, which you tick off in the service dialog. For existing
+        services, <em>Configs</em> in the service dialog generates the proxy configuration.</p>
+    </>, "assistant wizard template compose caddy nginx traefik tunnel checklist config"),
     doc("services-host", "Host", <>
       <p>By default ports are checked on the machine X-TOOLS runs on. For a service on another machine (e.g. an LXC
         at home) enter its IP address or host name under <em>Host</em> – the ports are then checked there.</p>

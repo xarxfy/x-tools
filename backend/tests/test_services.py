@@ -84,3 +84,16 @@ def test_customers(admin):
     assert admin.delete(f"/api/customers/{cid}", headers=h).status_code == 204
     assert all(s["customer_id"] is None for s in admin.get("/api/services").json())
     assert admin.get(f"/api/customers/{cid}").status_code == 404
+
+
+def test_checklist(admin):
+    h = csrf_headers(admin)
+    items = [{"text": "Start the container", "done": False}, {"text": "Add tunnel route"}]
+    s = admin.post("/api/services", json={**SERVICE, "checklist": items}, headers=h).json()
+    assert [i["done"] for i in s["checklist"]] == [False, False]
+    # normal edit without checklist keeps it
+    s = admin.put(f"/api/services/{s['id']}", json={**SERVICE, "name": "Renamed"}, headers=h).json()
+    assert len(s["checklist"]) == 2
+    s = admin.put(f"/api/services/{s['id']}", json={**SERVICE, "checklist": [{**items[0], "done": True}]},
+                  headers=h).json()
+    assert s["checklist"] == [{"text": "Start the container", "done": True}]

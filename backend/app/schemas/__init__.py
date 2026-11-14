@@ -25,6 +25,11 @@ class Port(BaseModel):
     _strip = field_validator("label", mode="before")(strip)
 
 
+class ChecklistItem(BaseModel):
+    text: str = Field(min_length=1, max_length=300)
+    done: bool = False
+
+
 HOST_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.\-]{0,253})$|^\[?[0-9A-Fa-f:]+\]?$")
 
 
@@ -37,6 +42,8 @@ class ServiceIn(BaseModel):
     type: str = Field(default="", max_length=60)
     notes: str = Field(default="", max_length=300)
     customer_id: str | None = None
+    # None keeps the stored checklist (the normal edit dialog does not send it).
+    checklist: list[ChecklistItem] | None = Field(default=None, max_length=40)
 
     _strip = field_validator("name", "folder", "type", "notes", mode="before")(strip)
 
@@ -76,6 +83,7 @@ class ServiceOut(BaseModel):
     customer_id: str | None
     customer_name: str | None = None
     credential_count: int = 0
+    checklist: list[ChecklistItem] = []
 
 
 class Credential(BaseModel):

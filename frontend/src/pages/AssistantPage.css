@@ -1,0 +1,103 @@
+.stepper {
+  list-style: none;
+  display: flex;
+  gap: 6px;
+  padding: 0;
+  margin: 0 0 16px;
+  flex-wrap: wrap;
+}
+.stepper button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 6px 10px 6px 6px;
+  border-radius: 980px;
+  cursor: pointer;
+}
+.stepper button:disabled {
+  cursor: default;
+}
+.stepper li.current button {
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+.stepper li.done button {
+  color: var(--text);
+}
+.step-no {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--fill);
+}
+.stepper li.current .step-no {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.stepper li.done .step-no {
+  background: var(--up);
+  color: #fff;
+}
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.wizard-foot {
+  display: flex;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--separator);
+}
+.wizard-foot .spacer {
+  flex: 1;
+}
+.assistant-files {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+.stack-lg .assistant-files {
+  margin-top: 0;
+}
+.file-block {
+  border: 1px solid var(--separator);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card);
+}
+.file-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px 6px 14px;
+  border-bottom: 1px solid var(--separator);
+}
+.file-head code {
+  font-size: 13px;
+  font-weight: 600;
+}
+.file-head .spacer {
+  flex: 1;
+}
+.file-block .code {
+  border-radius: 0;
+  max-height: 420px;
+}
+.file-note {
+  margin: 0;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--separator);
+}

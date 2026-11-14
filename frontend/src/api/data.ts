@@ -6,7 +6,13 @@ export interface Port {
   label: string;
 }
 
+export interface ChecklistItem {
+  text: string;
+  done: boolean;
+}
+
 export interface ServiceInput {
+  checklist?: ChecklistItem[];
   name: string;
   host: string;
   domains: string[];
@@ -19,6 +25,7 @@ export interface ServiceInput {
 
 export interface Service extends ServiceInput {
   id: string;
+  checklist: ChecklistItem[];
   customer_name: string | null;
   credential_count: number;
 }

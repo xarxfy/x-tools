@@ -10,7 +10,9 @@ alerts when something breaks.
 
 - **Overview** – everything that needs attention on one page: ports not answering, stopped containers, unreachable
   websites, silent servers, full disks.
-- **Services** – what runs where: host, ports (checked every minute), domains, folders.
+- **Services** – what runs where: host, ports (checked every minute), domains, folders. An **assistant** creates new
+  services from templates (web app, Node.js, static site, WordPress, PostgreSQL) with compose file, `.env`, reverse
+  proxy / tunnel configuration (Caddy, nginx, Traefik, Cloudflare Tunnel) and a setup checklist.
 - **Servers & Docker** – containers grouped by compose project, start/stop/restart, logs, compose files and
   Dockerfiles (secrets masked), git status of the project folder.
 - **Agents** – connect more servers (e.g. a Proxmox host at home). Agents only report outbound over HTTPS; no open

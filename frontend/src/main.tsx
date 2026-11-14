@@ -20,6 +20,7 @@ import { CustomerPage, CustomersPage } from "./pages/CustomersPage";
 import { DomainsPage } from "./pages/DomainsPage";
 import { ServerPage, ServersPage } from "./pages/ServersPage";
 import { DockerPage, ProxmoxPage } from "./pages/FleetPages";
+import { AssistantPage } from "./pages/AssistantPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: true, retry: 1 } },
@@ -41,6 +42,7 @@ createRoot(document.getElementById("root")!).render(
           >
             <Route index element={<OverviewPage />} />
             <Route path="/services" element={<ServicesPage />} />
+            <Route path="/services/new" element={<AssistantPage />} />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerPage />} />
             <Route path="/domains" element={<DomainsPage />} />
