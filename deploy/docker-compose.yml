@@ -1,0 +1,23 @@
+# X-TOOLS – example deployment.
+#
+#   cp .env.example .env    # adjust
+#   docker compose up -d --build
+#
+# Then open the UI and create the administrator account.
+# The port is bound to localhost only: put a reverse proxy or tunnel
+# (Caddy, Traefik, nginx, Cloudflare Tunnel …) in front of it for HTTPS.
+services:
+  x-tools:
+    build: ..
+    image: x-tools:local
+    container_name: x-tools
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # Database, generated secret key – back this up.
+      - x-tools-data:/data
+
+volumes:
+  x-tools-data:

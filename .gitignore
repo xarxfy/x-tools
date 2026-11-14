@@ -24,3 +24,6 @@ secret.key
 .vscode/
 .idea/
 .DS_Store
+
+# TypeScript build info
+*.tsbuildinfo

@@ -1,1 +1,0 @@
-{"root":["./src/main.tsx","./src/api/auth.ts","./src/api/client.ts","./src/components/AuthGate.tsx","./src/components/Icon.tsx","./src/components/Layout.tsx","./src/i18n/index.ts","./src/pages/AuthPages.tsx","./src/pages/SimplePages.tsx","./vite.config.ts"],"version":"5.6.3"}

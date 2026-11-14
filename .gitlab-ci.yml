@@ -1,0 +1,22 @@
+# Runs on every push. Needs a GitLab runner (docker executor).
+stages:
+  - test
+
+backend:
+  stage: test
+  image: python:3.13-slim
+  script:
+    - pip install --no-cache-dir "./backend[dev]"
+    - cd backend && pytest -q
+
+frontend:
+  stage: test
+  image: node:22-alpine
+  script:
+    - cd frontend
+    - npm ci --no-audit --no-fund
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist
+    expire_in: 1 week
