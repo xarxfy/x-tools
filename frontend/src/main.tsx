@@ -10,7 +10,10 @@ import "./styles/base.css";
 import { AuthGate } from "./components/AuthGate";
 import { Layout } from "./components/Layout";
 import { LoginPage, SetupPage } from "./pages/AuthPages";
-import { ComingSoonPage, NotFoundPage, OverviewPage } from "./pages/SimplePages";
+import { NotFoundPage } from "./pages/SimplePages";
+import { OverviewPage } from "./pages/OverviewPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { HelpPage } from "./pages/HelpPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { CredentialsPage } from "./pages/CredentialsPage";
 import { CustomerPage, CustomersPage } from "./pages/CustomersPage";
@@ -20,8 +23,6 @@ import { ServerPage, ServersPage } from "./pages/ServersPage";
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: true, retry: 1 } },
 });
-
-const SOON = ["settings", "help"];
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -45,9 +46,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/servers" element={<ServersPage />} />
             <Route path="/servers/:id" element={<ServerPage />} />
             <Route path="/credentials" element={<CredentialsPage />} />
-            {SOON.map((key) => (
-              <Route key={key} path={`/${key}`} element={<ComingSoonPage titleKey={`nav.${key}`} />} />
-            ))}
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/help" element={<HelpPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

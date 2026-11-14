@@ -1,0 +1,95 @@
+.doc-tree,
+.doc-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.doc-children {
+  margin-left: 11px;
+  padding-left: 18px;
+  border-left: 1.5px solid var(--separator);
+}
+.doc-node {
+  position: relative;
+}
+.doc-children > .doc-node::before {
+  /* horizontal branch line from the vertical line to the item */
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 19px;
+  width: 14px;
+  border-top: 1.5px solid var(--separator);
+}
+.doc-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  padding: 8px 8px 8px 0;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 8px;
+}
+.doc-title:hover {
+  color: var(--accent);
+}
+.doc-tree > .doc-node > .doc-title {
+  font-size: 17px;
+}
+.doc-caret {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+  margin: 0 4px 0 2px;
+  flex: none;
+}
+.doc-caret.open {
+  transform: rotate(45deg);
+}
+.doc-body {
+  margin: 0 0 8px 22px;
+  color: var(--text);
+  font-size: 14.5px;
+  max-width: 760px;
+}
+.doc-body p,
+.doc-hit p {
+  margin: 0 0 8px;
+}
+.doc-body ol,
+.doc-body ul,
+.doc-hit ol,
+.doc-hit ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+.doc-body code,
+.doc-hit code {
+  background: var(--fill);
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 0.85em;
+}
+.doc-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+}
+.doc-hit h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+.doc-path {
+  font-size: 13px;
+  margin-bottom: 2px;
+}

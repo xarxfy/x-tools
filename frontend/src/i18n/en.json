@@ -58,7 +58,8 @@
     "done": "Done",
     "remove": "Remove",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied",
+    "saved": "Saved"
   },
   "services": {
     "sub_one": "{{count}} service",
@@ -144,12 +145,13 @@
     "updated": "updated {{when}}",
     "containersRunning": "{{running}} of {{total}} containers running",
     "moreTitle": "More servers",
-    "moreText": "Servers at home (e.g. Proxmox) will report through a small agent – outbound only, no open ports. Coming in the next step.",
+    "moreText": "Servers at home (e.g. Proxmox) report through a small agent – outbound only, no open ports.",
     "notFound": "Server not found",
     "back": "Back to servers",
     "tab": {
       "overview": "Overview",
-      "docker": "Docker"
+      "docker": "Docker",
+      "proxmox": "Proxmox"
     },
     "noSnapshotLong": "No Docker data yet. The collector container (x-tools-collector) writes it within a minute after starting.",
     "stale": "The Docker data is outdated (last update {{when}}). Is the x-tools-collector container running?",
@@ -157,7 +159,18 @@
     "uptime": "Up for {{duration}}",
     "containersUp": "containers running",
     "projects": "compose projects",
-    "allContainers": "All containers"
+    "allContainers": "All containers",
+    "count_one": "{{count}} server",
+    "count_other": "{{count}} servers",
+    "setupAgent": "Set up an agent →",
+    "neverReported": "has never reported",
+    "reported": "reported {{when}}",
+    "silent": "no report since {{when}}",
+    "guestsRunning": "{{running}} of {{total}} LXCs/VMs running",
+    "guestsUp": "LXCs/VMs running",
+    "nodes": "nodes",
+    "allGuests": "All LXCs and VMs",
+    "agentPending": "The agent is created but has not sent any data yet."
   },
   "docker": {
     "none": "No containers found.",
@@ -188,6 +201,124 @@
       "paused": "paused",
       "created": "created",
       "stopped": "stopped"
+    },
+    "readonlyNote": "Agents only report – containers on this server cannot be controlled from here."
+  },
+  "proxmox": {
+    "all": "All {{count}}",
+    "running": "Running {{count}}",
+    "stopped": "Stopped {{count}}",
+    "node": "Node {{name}}",
+    "cores_one": "{{count}} core",
+    "cores_other": "{{count}} cores",
+    "upFor": "up for {{duration}}",
+    "status": {
+      "stopped": "stopped",
+      "paused": "paused",
+      "running": "running"
     }
+  },
+  "overview": {
+    "attention_one": "{{count}} thing needs attention",
+    "attention_other": "{{count}} things need attention",
+    "allGood": "Everything is running",
+    "needsAttention": "Needs attention",
+    "nothingToDo": "All good",
+    "notifyOn": "You will be notified about new problems.",
+    "notifyOff": "Notifications are off.",
+    "setUp": "Set up →",
+    "manual": "Stopped by you (not reported): {{names}}",
+    "containers": "Containers",
+    "running": "running",
+    "sitesUp": "{{up}}/{{total}} sites up",
+    "startTitle": "Get started",
+    "start1": "Add your services",
+    "start2": "Add customers and assign their sites",
+    "start3": "Set up notifications"
+  },
+  "sites": {
+    "title": "Website checks",
+    "checkNow": "Check now",
+    "checking": "Checking …",
+    "certUntil": "certificate until {{date}}",
+    "viaCloudflare": "via Cloudflare",
+    "checked": "checked {{when}}",
+    "notChecked": "Not checked yet – runs every 5 minutes."
+  },
+  "settings": {
+    "tab": {
+      "notifications": "Notifications",
+      "agents": "Agents",
+      "about": "About"
+    }
+  },
+  "notify": {
+    "enabled": "Notifications",
+    "enabledHint": "Send a message when something needs attention.",
+    "delay": "Delay (minutes)",
+    "delayHint": "Only report problems that last at least this long.",
+    "recovery": "Back to normal",
+    "recoveryHint": "Also notify when a problem is solved",
+    "events": "Report",
+    "event": {
+      "port": "Ports not answering",
+      "container": "Containers stopped or unhealthy",
+      "docker": "Docker data missing or outdated",
+      "system": "Disk from 80 % / memory from 90 %",
+      "site": "Customer websites not reachable",
+      "agent": "Agents not reporting"
+    },
+    "useTelegram": "Send via Telegram",
+    "botToken": "Bot token",
+    "botTokenHint": "From @BotFather",
+    "tokenStored": "Stored – leave empty to keep it",
+    "chatId": "Chat ID",
+    "chatIdHint": "Your user ID, a group ID (-100…) or @channel",
+    "useNtfy": "Send via ntfy",
+    "server": "Server",
+    "topic": "Topic",
+    "accessToken": "Access token",
+    "optional": "Optional",
+    "test": "Send test",
+    "testSent": "Sent ✓",
+    "testHint": "Uses the saved settings.",
+    "removeToken": "Remove token",
+    "last": "Last message {{when}}: {{title}}",
+    "noBaseUrl": "Tip: set XT_BASE_URL so notifications contain a link to X-TOOLS."
+  },
+  "agents": {
+    "intro": "Agents report other servers (e.g. at home) to X-TOOLS – outbound only, they never receive commands.",
+    "name": "Name",
+    "namePlaceholder": "e.g. Proxmox at home",
+    "create": "Create agent",
+    "none": "No agents yet.",
+    "disabled": "disabled",
+    "enable": "Enable",
+    "disable": "Disable",
+    "version": "agent v{{version}}",
+    "createdTitle": "Agent “{{name}}” created",
+    "keyOnce": "Copy the key now – it is shown only once. Only a hash is stored.",
+    "key": "Agent key",
+    "steps": "Setup on the other server",
+    "step1": "Get X-TOOLS:",
+    "step2": "Create .env with these values:",
+    "step3": "Start the agent:",
+    "step4": "Behind Cloudflare Access: add a service token and a “Service Auth” rule for /api/agent/report (see Help)."
+  },
+  "about": {
+    "version": "Version",
+    "baseUrl": "Public address",
+    "notSet": "not set (XT_BASE_URL)",
+    "timezone": "Time zone",
+    "dataDir": "Data directory",
+    "composeRoots": "Compose folders",
+    "protected": "Protected containers",
+    "collector": "Collector last seen",
+    "never": "never",
+    "backupTitle": "Backup",
+    "keyEnv": "The secret key comes from XT_SECRET_KEY – keep a copy of it.",
+    "keyFile": "The secret key is stored in {{dir}}/secret.key.",
+    "backupHint": "Back up the whole data volume including the key. Without it stored credentials and tokens cannot be decrypted.",
+    "config": "These values are set through environment variables (deploy/.env)."
   }
 }

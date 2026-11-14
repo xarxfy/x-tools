@@ -10,6 +10,14 @@ import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matc
 import { CredentialsDialog } from "./CredentialsPage";
 import { ServiceDialog, serviceState } from "./ServicesPage";
 import type { Service } from "../api/data";
+import { useRunSiteChecks, useSiteChecks, type SiteCheck } from "../api/monitor";
+import { ago } from "../components/format";
+
+function worst(checks: (SiteCheck | undefined)[]): "up" | "warn" | "down" | "off" {
+  const levels = checks.map((c) => c?.level).filter(Boolean);
+  if (!levels.length) return "off";
+  return levels.includes("down") ? "down" : levels.includes("warn") ? "warn" : "up";
+}
 
 const EMPTY: CustomerInput = {
   name: "", contact: "", email: "", phone: "", owner: "", agreements: "", notes: "", service_ids: [],
@@ -19,6 +27,7 @@ export function CustomersPage() {
   const { t } = useTranslation();
   const customers = useCustomers();
   const services = useServices();
+  const checks = useSiteChecks();
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
   const navigate = useNavigate();
@@ -46,6 +55,7 @@ export function CustomersPage() {
             const domains = c.service_ids.flatMap((id) => byId.get(id)?.domains ?? []);
             return (
               <Link key={c.id} to={`/customers/${c.id}`} className="list-row">
+                <Dot state={worst(domains.map((d) => checks.data?.[d]))} />
                 <span className="list-main">
                   <span className="list-title">{c.name}</span>
                   <span className="list-sub">
@@ -78,6 +88,8 @@ export function CustomerPage() {
   const [editing, setEditing] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [keys, setKeys] = useState<Service | null>(null);
+  const checks = useSiteChecks();
+  const runChecks = useRunSiteChecks();
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const customer = customers.data.find((c) => c.id === id);
@@ -161,6 +173,44 @@ export function CustomerPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {own.some((s) => s.domains.length) && (
+        <>
+          <div className="section-row">
+            <h2 className="section-title">{t("sites.title")}</h2>
+            <button type="button" className="btn btn-ghost btn-small" disabled={runChecks.isPending}
+                    onClick={() => runChecks.mutate(customer.id)}>
+              <Icon name="refresh" size={14} />
+              {runChecks.isPending ? t("sites.checking") : t("sites.checkNow")}
+            </button>
+          </div>
+          <div className="card list">
+            {[...new Set(own.flatMap((s) => s.domains))].map((d) => {
+              const ch = checks.data?.[d];
+              return (
+                <div key={d} className="list-row container-row">
+                  <Dot state={ch?.level ?? "off"} />
+                  <div className="list-main">
+                    <div className="list-title">
+                      <a href={`https://${d}`} target="_blank" rel="noreferrer">{d}</a>
+                      {ch && <span className={`state-text state-${ch.level}`}>{ch.label}</span>}
+                    </div>
+                    <div className="list-sub">
+                      {ch ? [
+                        ch.ms !== undefined && `${ch.ms} ms`,
+                        ch.cert_expires && t("sites.certUntil", { date: new Date(ch.cert_expires * 1000).toLocaleDateString() }),
+                        ch.cloudflare ? t("sites.viaCloudflare") : ch.ips.slice(0, 2).join(", "),
+                        t("sites.checked", { when: ago(ch.checked_at) }),
+                      ].filter(Boolean).join(" · ") : t("sites.notChecked")}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {runChecks.error && <p className="error-text">{runChecks.error.message}</p>}
+        </>
       )}
 
       {(customer.agreements || customer.notes) && (

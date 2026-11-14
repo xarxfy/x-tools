@@ -99,6 +99,14 @@ const PATHS = {
   external: <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
   chevron: <path d="m9 6 6 6-6 6" />,
   check: <path d="M20 6 9 17l-5-5" />,
+  alert: <path d="M12 8v5M12 17h.01" />,
+  docker: (
+    <>
+      <path d="M12 3 20 7.5v9L12 21 4 16.5v-9z" />
+      <path d="M12 12 20 7.5M12 12v9M12 12 4 7.5" />
+    </>
+  ),
+  refresh: <path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" />,
 };
 
 export type IconName = keyof typeof PATHS;

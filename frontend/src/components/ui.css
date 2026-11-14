@@ -321,3 +321,12 @@ a.chip:hover {
   margin: 0;
   accent-color: var(--accent);
 }
+.section-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+.section-row .btn {
+  margin-bottom: 4px;
+}

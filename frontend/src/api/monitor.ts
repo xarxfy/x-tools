@@ -1,0 +1,197 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "./client";
+import type { Snapshot, SystemInfo } from "./docker";
+
+export interface Issue {
+  key: string;
+  kind: string;
+  level: "down" | "warn";
+  text: string;
+  link: string;
+  manual?: boolean;
+}
+
+export interface Overview {
+  issues: Issue[];
+  counts: {
+    services: number;
+    customers: number;
+    servers: number;
+    containers: number;
+    containers_running: number;
+    sites: number;
+    sites_up: number;
+  };
+  system: SystemInfo | null;
+  notifications: boolean;
+}
+
+export interface SiteCheck {
+  checked_at: number;
+  level?: "up" | "warn" | "down";
+  label?: string;
+  status?: number;
+  ms?: number;
+  ips: string[];
+  cloudflare: boolean;
+  cert_expires?: number;
+}
+
+export interface Channel {
+  enabled: boolean;
+  has_token: boolean;
+  chat_id?: string;
+  server?: string;
+  topic?: string;
+}
+
+export interface NotificationSettings {
+  enabled: boolean;
+  delay: number;
+  recovery: boolean;
+  events: Record<string, boolean>;
+  telegram: Channel;
+  ntfy: Channel;
+  base_url?: string;
+  last?: { time: number; title: string; results: Record<string, string | null> } | null;
+}
+
+export interface AgentSummary {
+  id: string;
+  name: string;
+  disabled: boolean;
+  created_at: string;
+  last_report_at: string | null;
+  hostname: string;
+  version: string;
+}
+
+export interface ProxmoxGuest {
+  vmid: number;
+  name: string;
+  type: "lxc" | "qemu";
+  status: string;
+  node: string;
+  cpu: number;
+  maxcpu: number;
+  mem: number;
+  maxmem: number;
+  uptime: number;
+}
+
+export interface Proxmox {
+  error?: string;
+  nodes?: { name: string; status: string; cpu: number; maxcpu: number; mem: number; maxmem: number; uptime: number }[];
+  guests?: ProxmoxGuest[];
+  storage?: { storage: string; node: string; disk: number; maxdisk: number }[];
+}
+
+export interface AgentReport {
+  hostname?: string;
+  system?: SystemInfo;
+  docker?: Snapshot | null;
+  proxmox?: Proxmox | null;
+}
+
+export interface AgentDetail extends AgentSummary {
+  report: AgentReport | null;
+}
+
+export const AGENT_STALE = 300;
+
+export function agentAge(a: AgentSummary): number | null {
+  return a.last_report_at ? Date.now() / 1000 - Date.parse(a.last_report_at) / 1000 : null;
+}
+
+export const useOverview = () =>
+  useQuery({ queryKey: ["overview"], queryFn: () => api<Overview>("/overview"), refetchInterval: 30_000 });
+
+export const useSiteChecks = () =>
+  useQuery({ queryKey: ["sitechecks"], queryFn: () => api<Record<string, SiteCheck>>("/sitechecks") });
+
+export function useRunSiteChecks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (customer_id?: string) =>
+      api<Record<string, SiteCheck>>("/sitechecks", { method: "POST", body: { customer_id: customer_id ?? null } }),
+    onSuccess: (data) => {
+      qc.setQueryData(["sitechecks"], data);
+      qc.invalidateQueries({ queryKey: ["overview"] });
+    },
+  });
+}
+
+export const useNotificationSettings = () =>
+  useQuery({ queryKey: ["notifications"], queryFn: () => api<NotificationSettings>("/settings/notifications") });
+
+export function useSaveNotifications() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: unknown) => api<NotificationSettings>("/settings/notifications", { method: "PUT", body }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}
+
+export const useTestNotification = () =>
+  useMutation({
+    mutationFn: (channel: "telegram" | "ntfy") =>
+      api<{ ok: boolean }>("/settings/notifications/test", { method: "POST", body: { channel } }),
+  });
+
+export const useAgents = () =>
+  useQuery({ queryKey: ["agents"], queryFn: () => api<AgentSummary[]>("/agents"), refetchInterval: 30_000 });
+
+export const useAgent = (id: string, enabled = true) =>
+  useQuery({
+    queryKey: ["agents", id],
+    enabled,
+    retry: false,
+    queryFn: () => api<AgentDetail>(`/agents/${id}`),
+    refetchInterval: 30_000,
+  });
+
+function useAgentsInvalidate() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["agents"] });
+    qc.invalidateQueries({ queryKey: ["overview"] });
+  };
+}
+
+export function useCreateAgent() {
+  const invalidate = useAgentsInvalidate();
+  return useMutation({
+    mutationFn: (name: string) => api<AgentSummary & { key: string }>("/agents", { method: "POST", body: { name } }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateAgent() {
+  const invalidate = useAgentsInvalidate();
+  return useMutation({
+    mutationFn: ({ id, disabled }: { id: string; disabled: boolean }) =>
+      api<AgentSummary>(`/agents/${id}`, { method: "PUT", body: { disabled } }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteAgent() {
+  const invalidate = useAgentsInvalidate();
+  return useMutation({
+    mutationFn: (id: string) => api<void>(`/agents/${id}`, { method: "DELETE" }),
+    onSuccess: invalidate,
+  });
+}
+
+export interface About {
+  version: string;
+  base_url: string;
+  timezone: string;
+  data_dir: string;
+  secret_key_from_env: boolean;
+  compose_roots: string[];
+  protected: string[];
+  collector_seen: number | null;
+}
+
+export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: () => api<About>("/about") });

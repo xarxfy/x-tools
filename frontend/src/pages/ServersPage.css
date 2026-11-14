@@ -202,6 +202,7 @@
   line-height: 1.5;
   white-space: pre;
   max-height: 60vh;
+  font-weight: 400;
 }
 .logs {
   white-space: pre-wrap;
@@ -234,4 +235,37 @@
     flex: 1;
     justify-content: center;
   }
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 12px;
+}
+.chip-on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.chip-on:hover {
+  background: var(--accent);
+}
+.guest-bar {
+  width: 120px;
+  flex: none;
+}
+@media (max-width: 640px) {
+  .guest-bar {
+    display: none;
+  }
+}
+.meters-compact .meter-top {
+  font-size: 12px;
+  white-space: nowrap;
+  gap: 4px;
+}
+.meters-compact .meter-top span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

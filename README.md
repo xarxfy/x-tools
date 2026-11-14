@@ -3,10 +3,10 @@
 Self-hosted overview of your servers, services, Docker containers and the websites you host for others – with
 alerts when something breaks.
 
-> **Status: early development (0.1).** X-TOOLS is the successor of a private tool and is being rebuilt step by step.
-> Not ready for production use yet.
+> **Status: early development (0.1).** X-TOOLS is the successor of a private tool. All areas are in place; expect
+> rough edges until 1.0.
 
-## What it will do
+## What it does
 
 - **Overview** – everything that needs attention on one page: ports not answering, stopped containers, unreachable
   websites, silent servers, full disks.
@@ -36,6 +36,27 @@ volume – the collector never sees the database or the secret key.
 Open the UI (port 8080 on localhost; put a reverse proxy or tunnel in front for HTTPS) and create the administrator
 account. X-TOOLS generates a secret key in its data volume on first start – **back up the data volume**, stored
 credentials can only be decrypted with that key.
+
+## More servers (agents)
+
+Create an agent under *Settings → Agents*, then on the other server:
+
+```sh
+git clone <repository> x-tools
+cd x-tools/deploy/agent
+cp .env.example .env      # XT_AGENT_URL, XT_AGENT_KEY, optional Proxmox token
+docker compose up -d --build
+```
+
+The agent reports every minute over HTTPS (outbound only). Behind Cloudflare Access, add a service token and a
+"Service Auth" rule for `/api/agent/report`. Agents of Server-Info keep working after the import.
+
+## Importing from Server-Info
+
+```sh
+sudo docker run --rm -v deploy_x-tools-data:/data -v /path/to/server-info:/si:ro x-tools:local \
+  python /app/migrate/import_server_info.py --source /si/data --old-env /si/.env
+```
 
 ## Configuration
 

@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   allContainers, containerState, fetchLogs, useContainerAction, useDocker,
-  type Container, type Project, type ProjectFile, type Snapshot, type SystemInfo,
+  type Container, type DockerState, type Project, type ProjectFile, type Snapshot, type SystemInfo,
 } from "../api/docker";
+import {
+  AGENT_STALE, agentAge, useAgent as useAgentQueryBase, useAgents,
+  type AgentReport, type AgentSummary, type Proxmox,
+} from "../api/monitor";
 import { Icon } from "../components/Icon";
-import { Dialog, Dot, Empty, Loading, PageHead } from "../components/ui";
+import { Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { ago, fmtBytes, fmtDuration, level, pct } from "../components/format";
 import { ServiceDialog } from "./ServicesPage";
 import "./ServersPage.css";
+
+const useAgentQuery = (id: string, enabled: boolean) => useAgentQueryBase(id, enabled);
 
 function Meter({ label, value, detail }: { label: string; value: number; detail?: string }) {
   return (
@@ -54,51 +61,115 @@ function counts(snap: Snapshot | null | undefined) {
   return { running: all.filter((c) => containerState(c)[0] === "up").length, total: all.length };
 }
 
+/** One server as the pages need it – the machine X-TOOLS runs on, or an agent. */
+interface ServerView {
+  id: string;
+  name: string;
+  host: string;
+  state: "up" | "warn" | "down";
+  stateText: string;
+  sys?: SystemInfo;
+  snap: Snapshot | null;
+  stale: boolean;
+  proxmox: Proxmox | null;
+  readonly: boolean;
+  reported: boolean;
+}
+
+function localServer(t: TFunction, data: DockerState): ServerView {
+  const snap = data.snapshot;
+  return {
+    id: "local", name: t("servers.local"), host: snap?.system?.hostname ?? "", snap, stale: data.stale,
+    state: !snap ? "warn" : snap.error || data.stale ? "down" : "up",
+    stateText: !snap ? t("servers.noSnapshot") : snap.error ?? t("servers.updated", { when: ago(snap.collected_at) }),
+    sys: snap?.system, proxmox: null, readonly: false, reported: true,
+  };
+}
+
+function agentServer(t: TFunction, a: AgentSummary, report?: AgentReport | null): ServerView {
+  const age = agentAge(a);
+  const fresh = age !== null && age < AGENT_STALE;
+  return {
+    id: a.id, name: a.name, host: a.hostname, snap: report?.docker ?? null, stale: false,
+    state: age === null ? "warn" : fresh ? "up" : "down",
+    stateText: age === null ? t("servers.neverReported")
+      : fresh ? t("servers.reported", { when: ago(Date.now() / 1000 - age) })
+        : t("servers.silent", { when: ago(Date.now() / 1000 - age) }),
+    sys: report?.system, proxmox: report?.proxmox ?? null, readonly: true, reported: age !== null,
+  };
+}
+
 export function ServersPage() {
   const { t } = useTranslation();
   const docker = useDocker();
+  const agents = useAgents();
   if (!docker.data) return <Loading error={docker.error} retry={() => docker.refetch()} />;
-  const snap = docker.data.snapshot;
-  const c = counts(snap);
-  const state = !snap ? "warn" : snap.error || docker.data.stale ? "down" : "up";
+  const servers = [localServer(t, docker.data), ...(agents.data ?? []).filter((a) => !a.disabled).map((a) => agentServer(t, a))];
   return (
     <>
-      <PageHead title={t("nav.servers")} sub={t("servers.sub")} />
+      <PageHead title={t("nav.servers")} sub={t("servers.count", { count: servers.length })} />
       <div className="server-grid">
-        <Link to="/servers/local" className="card server-card">
-          <span className="list-title">
-            <Dot state={state} />
-            {t("servers.local")}
-            {snap?.system?.hostname && <span className="muted server-host">{snap.system.hostname}</span>}
-          </span>
-          <span className="list-sub">
-            {!snap ? t("servers.noSnapshot") : snap.error ? snap.error
-              : t("servers.updated", { when: ago(snap.collected_at) })}
-          </span>
-          <SystemMeters sys={snap?.system} compact />
-          {snap && !snap.error && (
-            <span className="chips">
-              <span className="chip">{t("servers.containersRunning", { running: c.running, total: c.total })}</span>
-            </span>
-          )}
-        </Link>
+        {servers.map((srv) => <ServerCard key={srv.id} srv={srv} />)}
       </div>
-      <div className="card card-pad soft-note">
-        <strong>{t("servers.moreTitle")}</strong>
-        <p className="muted">{t("servers.moreText")}</p>
-      </div>
+      {servers.length === 1 && (
+        <div className="card card-pad soft-note">
+          <strong>{t("servers.moreTitle")}</strong>
+          <p className="muted">
+            {t("servers.moreText")} <Link to="/settings?tab=agents">{t("servers.setupAgent")}</Link>
+          </p>
+        </div>
+      )}
     </>
   );
 }
 
+function ServerCard({ srv }: { srv: ServerView }) {
+  const { t } = useTranslation();
+  const agent = useAgentReport(srv.id);
+  const full = srv.readonly && agent ? { ...srv, sys: agent.system, snap: agent.docker ?? null, proxmox: agent.proxmox ?? null } : srv;
+  const c = counts(full.snap);
+  const guests = full.proxmox?.guests;
+  return (
+    <Link to={`/servers/${srv.id}`} className="card server-card">
+      <span className="list-title">
+        <Dot state={srv.state} />
+        {srv.name}
+        {srv.host && <span className="muted server-host">{srv.host}</span>}
+      </span>
+      <span className="list-sub">{srv.stateText}</span>
+      <SystemMeters sys={full.sys} compact />
+      <span className="chips">
+        {guests && (
+          <span className="chip">
+            {t("servers.guestsRunning", { running: guests.filter((g) => g.status === "running").length, total: guests.length })}
+          </span>
+        )}
+        {full.snap && !full.snap.error && (
+          <span className="chip">{t("servers.containersRunning", { running: c.running, total: c.total })}</span>
+        )}
+      </span>
+    </Link>
+  );
+}
+
+/** Report of an agent for the cards (null for the local server). */
+function useAgentReport(id: string): AgentReport | null {
+  const enabled = id !== "local";
+  const q = useAgentQuery(id, enabled);
+  return enabled ? q.data?.report ?? null : null;
+}
+
 export function ServerPage() {
-  const { id } = useParams();
+  const { id = "" } = useParams();
   const { t } = useTranslation();
   const docker = useDocker();
+  const agent = useAgentQuery(id, id !== "local");
   const [params, setParams] = useSearchParams();
-  const tab = params.get("tab") === "docker" ? "docker" : "overview";
 
-  if (id !== "local") {
+  if (!docker.data || (id !== "local" && !agent.data && !agent.error)) {
+    return <Loading error={docker.error} retry={() => docker.refetch()} />;
+  }
+  if (id !== "local" && !agent.data) {
     return (
       <div className="center-state">
         <div>
@@ -108,85 +179,217 @@ export function ServerPage() {
       </div>
     );
   }
-  if (!docker.data) return <Loading error={docker.error} retry={() => docker.refetch()} />;
-  const { snapshot: snap, stale } = docker.data;
+  const srv = id === "local" ? localServer(t, docker.data) : agentServer(t, agent.data!, agent.data!.report);
+  const snap = srv.snap;
   const c = counts(snap);
+  const tabs = [
+    "overview",
+    ...(srv.proxmox ? ["proxmox"] : []),
+    ...(snap || !srv.readonly ? ["docker"] : []),
+  ];
+  const tab = tabs.includes(params.get("tab") ?? "") ? params.get("tab")! : "overview";
 
   return (
     <>
       <p style={{ margin: "0 0 6px" }}>
         <Link to="/servers">‹ {t("nav.servers")}</Link>
       </p>
-      <PageHead
-        title={t("servers.local")}
-        sub={[snap?.system?.hostname, snap && t("servers.updated", { when: ago(snap.collected_at) })]
-          .filter(Boolean).join(" · ")}
-      />
-      <div className="tabs" role="tablist">
-        {(["overview", "docker"] as const).map((k) => (
-          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "active" : ""}
-                  onClick={() => setParams(k === "overview" ? {} : { tab: k })}>
-            {t(`servers.tab.${k}`)}
-            {k === "docker" && snap && <span className="tab-count">{c.total}</span>}
-          </button>
-        ))}
-      </div>
+      <PageHead title={srv.name} sub={[srv.host, srv.stateText].filter(Boolean).join(" · ")} />
+      {tabs.length > 1 && (
+        <div className="tabs" role="tablist">
+          {tabs.map((k) => (
+            <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "active" : ""}
+                    onClick={() => setParams(k === "overview" ? {} : { tab: k })}>
+              {t(`servers.tab.${k}`)}
+              {k === "docker" && snap && <span className="tab-count">{c.total}</span>}
+              {k === "proxmox" && srv.proxmox?.guests && <span className="tab-count">{srv.proxmox.guests.length}</span>}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {!snap ? (
+      {!srv.reported ? (
+        <Empty>
+          {t("servers.agentPending")} <Link to="/settings?tab=agents">{t("servers.setupAgent")}</Link>
+        </Empty>
+      ) : tab === "proxmox" && srv.proxmox ? (
+        <ProxmoxTab px={srv.proxmox} />
+      ) : !snap && tab === "docker" ? (
         <Empty>{t("servers.noSnapshotLong")}</Empty>
       ) : (
         <>
-          {snap.error && <p className="notice">{snap.error}</p>}
-          {stale && !snap.error && <p className="notice">{t("servers.stale", { when: ago(snap.collected_at) })}</p>}
-          {tab === "overview" ? <Overview snap={snap} onDocker={() => setParams({ tab: "docker" })} />
-            : <DockerTab snap={snap} protectedNames={docker.data.protected} />}
+          {snap?.error && <p className="notice">{snap.error}</p>}
+          {srv.stale && snap && !snap.error && <p className="notice">{t("servers.stale", { when: ago(snap.collected_at) })}</p>}
+          {tab === "overview" ? (
+            <Overview srv={srv} onTab={(k) => setParams({ tab: k })} />
+          ) : (
+            snap && <DockerTab snap={snap} protectedNames={docker.data.protected} readonly={srv.readonly} />
+          )}
         </>
       )}
     </>
   );
 }
 
-function Overview({ snap, onDocker }: { snap: Snapshot; onDocker: () => void }) {
+function Overview({ srv, onTab }: { srv: ServerView; onTab: (tab: string) => void }) {
   const { t } = useTranslation();
+  const snap = srv.snap;
   const c = counts(snap);
   const problems = allContainers(snap).filter((x) => containerState(x)[0] !== "up");
+  const px = srv.proxmox;
   return (
     <>
       <h2 className="section-title">{t("servers.system")}</h2>
       <div className="card card-pad">
-        <SystemMeters sys={snap.system} />
-        {snap.system?.uptime && (
+        <SystemMeters sys={srv.sys} />
+        {srv.sys?.uptime && (
           <p className="muted" style={{ margin: "14px 0 0" }}>
-            {t("servers.uptime", { duration: fmtDuration(snap.system.uptime) })}
-            {snap.docker && ` · Docker ${snap.docker}`}
+            {t("servers.uptime", { duration: fmtDuration(srv.sys.uptime) })}
+            {snap?.docker && ` · Docker ${snap.docker}`}
           </p>
         )}
       </div>
-      <h2 className="section-title">Docker</h2>
-      <div className="card card-pad">
-        <div className="stat-row">
-          <div><b>{c.running}/{c.total}</b><span className="muted">{t("servers.containersUp")}</span></div>
-          <div><b>{snap.projects.length}</b><span className="muted">{t("servers.projects")}</span></div>
-        </div>
-        {problems.length > 0 && (
-          <ul className="plain-list">
-            {problems.slice(0, 8).map((x) => (
-              <li key={x.name}>
-                <Dot state={containerState(x)[0]} /> {x.name} – {t(`docker.state.${containerState(x)[1]}`)}
-              </li>
-            ))}
-          </ul>
-        )}
-        <button type="button" className="btn" style={{ marginTop: 14 }} onClick={onDocker}>
-          {t("servers.allContainers")}
-          <Icon name="chevron" size={14} />
-        </button>
-      </div>
+      {px && (
+        <>
+          <h2 className="section-title">Proxmox</h2>
+          {px.error ? (
+            <p className="notice">{px.error}</p>
+          ) : (
+            <div className="card card-pad">
+              <div className="stat-row">
+                <div>
+                  <b>{px.guests?.filter((g) => g.status === "running").length ?? 0}/{px.guests?.length ?? 0}</b>
+                  <span className="muted">{t("servers.guestsUp")}</span>
+                </div>
+                <div><b>{px.nodes?.length ?? 0}</b><span className="muted">{t("servers.nodes")}</span></div>
+              </div>
+              {px.storage && px.storage.length > 0 && (
+                <div className="meters" style={{ marginTop: 18 }}>
+                  {px.storage.map((st) => (
+                    <Meter key={`${st.node}/${st.storage}`} label={st.storage} value={pct(st.disk, st.maxdisk)}
+                           detail={`${fmtBytes(st.disk)} / ${fmtBytes(st.maxdisk)}`} />
+                  ))}
+                </div>
+              )}
+              <button type="button" className="btn" style={{ marginTop: 14 }} onClick={() => onTab("proxmox")}>
+                {t("servers.allGuests")}
+                <Icon name="chevron" size={14} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+      {snap && !snap.error && (
+        <>
+          <h2 className="section-title">Docker</h2>
+          <div className="card card-pad">
+            <div className="stat-row">
+              <div><b>{c.running}/{c.total}</b><span className="muted">{t("servers.containersUp")}</span></div>
+              <div><b>{snap.projects.length}</b><span className="muted">{t("servers.projects")}</span></div>
+            </div>
+            {problems.length > 0 && (
+              <ul className="plain-list">
+                {problems.slice(0, 8).map((x) => (
+                  <li key={x.name}>
+                    <Dot state={containerState(x)[0]} /> {x.name} – {t(`docker.state.${containerState(x)[1]}`)}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button type="button" className="btn" style={{ marginTop: 14 }} onClick={() => onTab("docker")}>
+              {t("servers.allContainers")}
+              <Icon name="chevron" size={14} />
+            </button>
+          </div>
+        </>
+      )}
     </>
   );
 }
 
-function DockerTab({ snap, protectedNames }: { snap: Snapshot; protectedNames: string[] }) {
+function ProxmoxTab({ px }: { px: Proxmox }) {
+  const { t } = useTranslation();
+  const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
+  if (px.error) return <p className="notice">{px.error}</p>;
+  const guests = px.guests ?? [];
+  const running = guests.filter((g) => g.status === "running").length;
+  const lxc = guests.filter((g) => g.type === "lxc").length;
+  const filters: [string, string][] = [
+    ["all", t("proxmox.all", { count: guests.length })],
+    ["running", t("proxmox.running", { count: running })],
+    ["stopped", t("proxmox.stopped", { count: guests.length - running })],
+    ["lxc", `LXC ${lxc}`],
+    ["qemu", `VM ${guests.length - lxc}`],
+  ];
+  const list = guests.filter((g) =>
+    (filter === "all" || (filter === "running" ? g.status === "running" : filter === "stopped" ? g.status !== "running" : g.type === filter))
+    && matches(query, g.name, String(g.vmid)));
+  return (
+    <>
+      {px.nodes && px.nodes.length > 0 && (
+        <div className="server-grid" style={{ marginTop: 16 }}>
+          {px.nodes.map((n) => (
+            <div key={n.name} className="card card-pad">
+              <div className="list-title" style={{ marginBottom: 12 }}>
+                <Dot state={n.status === "online" ? "up" : "down"} /> {t("proxmox.node", { name: n.name })}
+              </div>
+              <div className="meters" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                <Meter label="CPU" value={n.cpu * 100} detail={t("proxmox.cores", { count: n.maxcpu })} />
+                <Meter label={t("servers.memory")} value={pct(n.mem, n.maxmem)} detail={`${fmtBytes(n.mem)} / ${fmtBytes(n.maxmem)}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="toolbar">
+        <div className="chips">
+          {filters.map(([k, label]) => (
+            <button key={k} type="button" className={`chip chip-btn${filter === k ? " chip-on" : ""}`} onClick={() => setFilter(k)}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <SearchField value={query} onChange={setQuery} />
+      </div>
+      {list.length === 0 ? (
+        <Empty>{t("common.noMatch")}</Empty>
+      ) : (
+        <div className="card list">
+          {list.map((g) => {
+            const on = g.status === "running";
+            return (
+              <div key={g.vmid} className="list-row container-row">
+                <Dot state={on ? "up" : "off"} />
+                <div className="list-main">
+                  <div className="list-title">
+                    <span className="muted mono">{g.vmid}</span> {g.name}
+                    <span className="badge">{g.type === "lxc" ? "LXC" : "VM"}</span>
+                  </div>
+                  <div className="list-sub">
+                    {on
+                      ? [`CPU ${(g.cpu * 100).toFixed(0)} % / ${g.maxcpu}`, `RAM ${fmtBytes(g.mem)} / ${fmtBytes(g.maxmem)}`,
+                        t("proxmox.upFor", { duration: fmtDuration(g.uptime) })].join(" · ")
+                      : `${t(`proxmox.status.${g.status}`, { defaultValue: g.status })} · RAM ${fmtBytes(g.maxmem)}`}
+                  </div>
+                </div>
+                {on && g.maxmem > 0 && (
+                  <div className="guest-bar">
+                    <div className="bar">
+                      <span className={`bar-${level(pct(g.mem, g.maxmem))}`} style={{ width: `${Math.min(100, pct(g.mem, g.maxmem))}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function DockerTab({ snap, protectedNames, readonly }: { snap: Snapshot; protectedNames: string[]; readonly: boolean }) {
   const { t } = useTranslation();
   const [file, setFile] = useState<ProjectFile | null>(null);
   const [logs, setLogs] = useState<string | null>(null);
@@ -194,7 +397,8 @@ function DockerTab({ snap, protectedNames }: { snap: Snapshot; protectedNames: s
 
   if (!snap.projects.length && !snap.containers.length) return <Empty>{t("docker.none")}</Empty>;
   const row = (c: Container) => (
-    <ContainerRow key={c.name} c={c} isProtected={protectedNames.includes(c.name)} onLogs={() => setLogs(c.name)} />
+    <ContainerRow key={c.name} c={c} readonly={readonly} isProtected={protectedNames.includes(c.name)}
+                  onLogs={() => setLogs(c.name)} />
   );
 
   return (
@@ -206,7 +410,7 @@ function DockerTab({ snap, protectedNames }: { snap: Snapshot; protectedNames: s
               <div className="list-title">{p.name}</div>
               <div className="list-sub">{p.folder}</div>
             </div>
-            {p.service ? (
+            {readonly ? null : p.service ? (
               <span className="badge" title={t("docker.listedHint")}>{t("docker.service", { name: p.service.name })}</span>
             ) : (
               <button type="button" className="btn btn-ghost" onClick={() => setAdopt(p)}>
@@ -247,7 +451,10 @@ function DockerTab({ snap, protectedNames }: { snap: Snapshot; protectedNames: s
           <div className="list">{snap.containers.map(row)}</div>
         </section>
       )}
-      <p className="muted small-note">{t("docker.maskedNote")}</p>
+      <p className="muted small-note">
+        {readonly && `${t("docker.readonlyNote")} `}
+        {t("docker.maskedNote")}
+      </p>
 
       {file && (
         <Dialog wide title={file.path.split("/").pop() ?? ""} onClose={() => setFile(null)}>
@@ -273,7 +480,12 @@ function DockerTab({ snap, protectedNames }: { snap: Snapshot; protectedNames: s
   );
 }
 
-function ContainerRow({ c, isProtected, onLogs }: { c: Container; isProtected: boolean; onLogs: () => void }) {
+function ContainerRow({ c, isProtected, readonly, onLogs }: {
+  c: Container;
+  isProtected: boolean;
+  readonly: boolean;
+  onLogs: () => void;
+}) {
   const { t } = useTranslation();
   const action = useContainerAction();
   const [state, label] = containerState(c);
@@ -299,7 +511,7 @@ function ContainerRow({ c, isProtected, onLogs }: { c: Container; isProtected: b
         )}
         {action.error && <p className="error-text">{action.error.message}</p>}
       </div>
-      <div className="list-side">
+      {!readonly && <div className="list-side">
         <button type="button" className="btn btn-small" onClick={onLogs}>{t("docker.logs")}</button>
         {isProtected ? (
           <span className="muted small-note" title={t("docker.protectedHint")}>{t("docker.protected")}</span>
@@ -313,7 +525,7 @@ function ContainerRow({ c, isProtected, onLogs }: { c: Container; isProtected: b
         ) : (
           <button type="button" className="btn btn-small btn-start" onClick={() => run("start")}>{t("docker.start")}</button>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

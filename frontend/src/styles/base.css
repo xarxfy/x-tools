@@ -166,3 +166,6 @@ pre {
     font-size: 26px;
   }
 }
+.card p {
+  overflow-wrap: anywhere;
+}
