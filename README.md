@@ -26,7 +26,7 @@ alerts when something breaks.
 git clone <repository> x-tools
 cd x-tools/deploy
 cp .env.example .env      # adjust XT_BASE_URL, XT_TIMEZONE …
-docker compose up -d --build
+sudo sh setup.sh          # builds the image, starts the container, waits until it answers
 ```
 
 Open the UI (port 8080 on localhost; put a reverse proxy or tunnel in front for HTTPS) and create the administrator
