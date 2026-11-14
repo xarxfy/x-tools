@@ -29,7 +29,9 @@ class AgentIn(InstallOptions):
 
 
 class AgentUpdate(BaseModel):
-    disabled: bool
+    disabled: bool | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    kind: str | None = Field(default=None, pattern="^(proxmox|docker)$")
 
 
 def as_utc(value: datetime | None) -> datetime | None:
@@ -38,7 +40,7 @@ def as_utc(value: datetime | None) -> datetime | None:
 
 def summary(a: Agent) -> dict:
     report = a.last_report or {}
-    return {"id": a.id, "name": a.name, "disabled": a.disabled, "created_at": as_utc(a.created_at),
+    return {"id": a.id, "name": a.name, "kind": a.kind, "disabled": a.disabled, "created_at": as_utc(a.created_at),
             "last_report_at": as_utc(a.last_report_at), "hostname": report.get("hostname", ""),
             "version": report.get("version", "")}
 
@@ -69,7 +71,7 @@ def create_agent(body: AgentIn, request: Request, db: Session = Depends(get_db))
     if any(a.name.lower() == name.lower() for a in db.scalars(select(Agent))):
         raise HTTPException(409, "An agent with this name already exists")
     key = secrets.token_urlsafe(32)
-    agent = Agent(name=name, key_hash=token_hash(key))
+    agent = Agent(name=name, kind=body.kind, key_hash=token_hash(key))
     db.add(agent)
     db.commit()
     # The key is shown exactly once; only its hash is stored.
@@ -83,6 +85,7 @@ def new_install(aid: str, body: InstallOptions, request: Request, db: Session = 
     agent = get_agent(db, aid)
     key = secrets.token_urlsafe(32)
     agent.key_hash = token_hash(key)
+    agent.kind = body.kind
     db.commit()
     return {"key": key, "install": create_install(request, agent.id, key, body)}
 
@@ -90,7 +93,17 @@ def new_install(aid: str, body: InstallOptions, request: Request, db: Session = 
 @router.put("/{aid}")
 def update_agent(aid: str, body: AgentUpdate, db: Session = Depends(get_db)):
     agent = get_agent(db, aid)
-    agent.disabled = body.disabled
+    if body.name is not None:
+        name = body.name.strip()
+        if not name:
+            raise HTTPException(422, "Name is missing")
+        if any(a.id != aid and a.name.lower() == name.lower() for a in db.scalars(select(Agent))):
+            raise HTTPException(409, "An agent with this name already exists")
+        agent.name = name
+    if body.kind is not None:
+        agent.kind = body.kind
+    if body.disabled is not None:
+        agent.disabled = body.disabled
     db.commit()
     return summary(agent)
 

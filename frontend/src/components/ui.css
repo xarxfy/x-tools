@@ -364,3 +364,13 @@ a.list-title svg,
 .chip svg {
   color: var(--muted);
 }
+.section-row {
+  flex-wrap: wrap;
+}
+.section-row > .btn {
+  white-space: nowrap;
+}
+.tabs {
+  max-width: 100%;
+  overflow-x: auto;
+}

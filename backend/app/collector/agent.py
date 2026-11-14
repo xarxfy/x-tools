@@ -70,7 +70,7 @@ def hostname() -> str:
 
 
 def build_report() -> dict:
-    has_docker = os.path.exists(get_settings().docker_socket)
+    has_docker = os.environ.get("XT_AGENT_DOCKER", "1") != "0" and os.path.exists(get_settings().docker_socket)
     docker = collect_snapshot() if has_docker else None
     return {"version": AGENT_VERSION, "hostname": hostname(), "sent_at": time.time(),
             "system": (docker or {}).get("system") or system_info(), "docker": docker, "proxmox": proxmox_info()}

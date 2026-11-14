@@ -175,7 +175,14 @@ sudo docker run --rm -v deploy_x-tools-data:/data -v "$PWD":/backup busybox tar 
 
 ## More servers (agents)
 
-*Settings → Agents → Add server* – optionally with the Proxmox API token – creates a one-line install command:
+There are two kinds of agents – install one on the Proxmox host and one on every LXC/VM that runs Docker:
+
+- **Proxmox host** – host metrics plus nodes, storage and all LXCs/VMs through the Proxmox API (read-only token).
+- **Docker host** – a server, LXC or VM with Docker: containers, compose files, git status.
+
+(Docker containers can only be seen from the machine they run on; the Proxmox API can be read from anywhere.)
+
+*Settings → Agents → Add server* creates a one-line install command:
 
 ```sh
 curl -fsSL 'https://tools.example.com/api/agent/install/<one-time token>' | sh     # as root

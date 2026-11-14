@@ -113,6 +113,8 @@ class Agent(Base):
 
     id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(60), unique=True)
+    # "proxmox": Proxmox host (API: nodes, storage, guests) · "docker": machine with Docker containers
+    kind: Mapped[str] = mapped_column(String(20), default="docker", server_default="docker")
     key_hash: Mapped[str] = mapped_column(String(64))  # SHA-256 of the agent key
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

@@ -175,7 +175,12 @@
     "guestsUp": "LXCs/VMs running",
     "nodes": "nodes",
     "allGuests": "All LXCs and VMs",
-    "agentPending": "The agent is created but has not sent any data yet."
+    "agentPending": "The agent is created but has not sent any data yet.",
+    "groups": {
+      "local": "This server",
+      "proxmox": "Proxmox hosts",
+      "docker": "Docker hosts"
+    }
   },
   "docker": {
     "none": "No containers found.",
@@ -294,7 +299,7 @@
     "noBaseUrl": "Tip: set XT_BASE_URL so notifications contain a link to X-TOOLS."
   },
   "agents": {
-    "intro": "Agents report other servers (e.g. at home) to X-TOOLS – outbound only, they never receive commands.",
+    "intro": "Agents report other servers to X-TOOLS – outbound only, they never receive commands. Install one on the Proxmox host and one on every LXC/VM that runs Docker.",
     "name": "Name",
     "namePlaceholder": "e.g. Proxmox at home",
     "create": "Add server",
@@ -316,7 +321,7 @@
     "proxmox": "This is a Proxmox host",
     "proxmoxHint": "Also report nodes, storage, LXCs and VMs through the Proxmox API (read-only).",
     "proxmoxUrl": "Proxmox URL",
-    "proxmoxUrlHint": "Seen from that server – usually https://127.0.0.1:8006",
+    "proxmoxUrlHint": "Seen from the Proxmox host – usually https://127.0.0.1:8006",
     "tokenId": "API token ID",
     "tokenIdHint": "user@realm!token",
     "tokenSecret": "API token secret",
@@ -340,7 +345,20 @@
     "fact2": "Installs the systemd service x-tools-agent (Python 3.10+, nothing else) – read-only, no open ports.",
     "fact3": "The server shows up under Servers within a minute.",
     "dockerAlt": "Prefer Docker?",
-    "dockerAltHint": "Use deploy/agent from the repository with this .env (the key is shown only now):"
+    "dockerAltHint": "Use deploy/agent from the repository with this .env (the key is shown only now):",
+    "kind": "Kind of server",
+    "createTitle": "Add server",
+    "rename": "Rename",
+    "kinds": {
+      "proxmox": "Proxmox host",
+      "proxmoxHint": "Host metrics, nodes, storage and all LXCs/VMs via the Proxmox API (read-only token).",
+      "docker": "Docker host",
+      "dockerHint": "A server, LXC or VM with Docker: containers, compose files, git status."
+    },
+    "groups": {
+      "proxmox": "Proxmox hosts",
+      "docker": "Docker hosts"
+    }
   },
   "about": {
     "version": "Version",

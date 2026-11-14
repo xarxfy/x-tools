@@ -104,14 +104,25 @@ export function ServersPage() {
   const docker = useDocker();
   const agents = useAgents();
   if (!docker.data) return <Loading error={docker.error} retry={() => docker.refetch()} />;
-  const servers = [localServer(t, docker.data), ...(agents.data ?? []).filter((a) => !a.disabled).map((a) => agentServer(t, a))];
+  const active = (agents.data ?? []).filter((a) => !a.disabled);
+  const groups: [string, ServerView[]][] = [
+    ["local", [localServer(t, docker.data)]],
+    ["proxmox", active.filter((a) => a.kind === "proxmox").map((a) => agentServer(t, a))],
+    ["docker", active.filter((a) => a.kind !== "proxmox").map((a) => agentServer(t, a))],
+  ];
+  const total = 1 + active.length;
   return (
     <>
-      <PageHead title={t("nav.servers")} sub={t("servers.count", { count: servers.length })} />
-      <div className="server-grid">
-        {servers.map((srv) => <ServerCard key={srv.id} srv={srv} />)}
-      </div>
-      {servers.length === 1 && (
+      <PageHead title={t("nav.servers")} sub={t("servers.count", { count: total })} />
+      {groups.filter(([, list]) => list.length).map(([key, list]) => (
+        <section key={key}>
+          {total > 1 && <h2 className="section-title">{t(`servers.groups.${key}`)}</h2>}
+          <div className="server-grid">
+            {list.map((srv) => <ServerCard key={srv.id} srv={srv} />)}
+          </div>
+        </section>
+      ))}
+      {total === 1 && (
         <div className="card card-pad soft-note">
           <strong>{t("servers.moreTitle")}</strong>
           <p className="muted">

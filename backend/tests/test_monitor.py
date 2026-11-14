@@ -132,12 +132,13 @@ def test_site_check_dns_failure():
 def test_agent_install(admin, tmp_path):
     import subprocess
     h = csrf_headers(admin)
-    bad = admin.post("/api/agents", json={"name": "PVE", "proxmox_url": "https://10.0.0.2:8006"}, headers=h)
+    bad = admin.post("/api/agents", json={"name": "PVE", "kind": "proxmox", "proxmox_url": "https://10.0.0.2:8006"},
+                     headers=h)
     assert bad.status_code == 422  # proxmox needs all three values
-    bad = admin.post("/api/agents", json={"name": "PVE", "proxmox_url": "https://x';rm -rf /;'",
+    bad = admin.post("/api/agents", json={"name": "PVE", "kind": "proxmox", "proxmox_url": "https://x';rm -rf /;'",
                                           "proxmox_token_id": "a", "proxmox_token_secret": "b"}, headers=h)
     assert bad.status_code == 422
-    r = admin.post("/api/agents", json={"name": "PVE", "proxmox_url": "https://10.0.0.2:8006",
+    r = admin.post("/api/agents", json={"name": "PVE", "kind": "proxmox", "proxmox_url": "https://10.0.0.2:8006",
                                         "proxmox_token_id": "xtools@pve!agent",
                                         "proxmox_token_secret": "1111-2222-3333"}, headers=h)
     assert r.status_code == 201, r.text
@@ -151,6 +152,7 @@ def test_agent_install(admin, tmp_path):
     assert script.status_code == 200
     text = script.text
     assert r.json()["key"] in text and "PROXMOX_TOKEN_SECRET=1111-2222-3333" in text and "__" not in text
+    assert "XT_AGENT_DOCKER=0" in text and r.json()["kind"] == "proxmox"
     (tmp_path / "install.sh").write_text(text)
     assert subprocess.run(["sh", "-n", str(tmp_path / "install.sh")]).returncode == 0
     assert admin.get(url).status_code == 404  # one-time
@@ -161,8 +163,16 @@ def test_agent_install(admin, tmp_path):
 
     # a new install command replaces the key
     admin.post("/api/auth/login", json={"username": "admin", "password": "correct horse battery"})
-    r2 = admin.post(f"/api/agents/{r.json()['id']}/install", json={}, headers=csrf_headers(admin))
+    h = csrf_headers(admin)
+    assert admin.post(f"/api/agents/{r.json()['id']}/install", json={"kind": "proxmox"}, headers=h).status_code == 422
+    # switch to a Docker host: Proxmox values are dropped
+    r2 = admin.post(f"/api/agents/{r.json()['id']}/install",
+                    json={"kind": "docker", "proxmox_url": "https://10.0.0.2:8006"}, headers=h)
     assert r2.status_code == 200 and r2.json()["key"] != r.json()["key"]
+    detail = admin.get(f"/api/agents/{r.json()['id']}").json()
+    assert detail["kind"] == "docker"
+    r3 = admin.put(f"/api/agents/{r.json()['id']}", json={"name": "docker-server"}, headers=h)
+    assert r3.json()["name"] == "docker-server" and r3.json()["disabled"] is False
     admin.cookies.clear()
     assert admin.get("/api/agent/bundle", headers={"X-Agent-Key": r.json()["key"]}).status_code == 401
 

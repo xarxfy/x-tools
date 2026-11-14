@@ -95,8 +95,10 @@ const DOCS: Doc[] = [
   </>, "agents servers home outbound", [
     doc("agents-setup", "Set up an agent", <>
       <ol>
-        <li><Link to="/settings?tab=agents">Settings → Agents</Link> → <em>Create agent</em>. For a Proxmox host,
-          switch on Proxmox and enter the API token.</li>
+        <li><Link to="/settings?tab=agents">Settings → Agents</Link> → <em>Add server</em>. Choose
+          <em>Proxmox host</em> (enter the API token) or <em>Docker host</em> (a server, LXC or VM with Docker).
+          Docker containers are only visible to an agent on the same machine, so install one on the Proxmox host and
+          one on every LXC/VM with Docker.</li>
         <li>Copy the install command and run it as root on the other server. It installs a small service
           (<code>x-tools-agent</code>, Python standard library only, no Docker needed).</li>
         <li>The server shows up within a minute.</li>

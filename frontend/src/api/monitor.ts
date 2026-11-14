@@ -56,9 +56,12 @@ export interface NotificationSettings {
   last?: { time: number; title: string; results: Record<string, string | null> } | null;
 }
 
+export type AgentKind = "proxmox" | "docker";
+
 export interface AgentSummary {
   id: string;
   name: string;
+  kind: AgentKind;
   disabled: boolean;
   created_at: string;
   last_report_at: string | null;
@@ -159,6 +162,7 @@ function useAgentsInvalidate() {
 }
 
 export interface InstallOptions {
+  kind: AgentKind;
   proxmox_url: string;
   proxmox_token_id: string;
   proxmox_token_secret: string;
@@ -184,9 +188,11 @@ export function useCreateAgent() {
 }
 
 export function useNewInstall() {
+  const invalidate = useAgentsInvalidate();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: InstallOptions }) =>
       api<{ key: string; install: InstallInfo }>(`/agents/${id}/install`, { method: "POST", body }),
+    onSuccess: invalidate,
   });
 }
 
@@ -211,8 +217,8 @@ export function useSaveFeatures() {
 export function useUpdateAgent() {
   const invalidate = useAgentsInvalidate();
   return useMutation({
-    mutationFn: ({ id, disabled }: { id: string; disabled: boolean }) =>
-      api<AgentSummary>(`/agents/${id}`, { method: "PUT", body: { disabled } }),
+    mutationFn: ({ id, ...body }: { id: string; disabled?: boolean; name?: string }) =>
+      api<AgentSummary>(`/agents/${id}`, { method: "PUT", body }),
     onSuccess: invalidate,
   });
 }
