@@ -21,8 +21,9 @@ async def lifespan(_app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="X-TOOLS", version=VERSION, lifespan=lifespan,
-                  docs_url="/api/docs", redoc_url=None, openapi_url="/api/openapi.json")
+    docs = get_settings().api_docs
+    app = FastAPI(title="X-TOOLS", version=VERSION, lifespan=lifespan, redoc_url=None,
+                  docs_url="/api/docs" if docs else None, openapi_url="/api/openapi.json" if docs else None)
     app.include_router(auth.router)
 
     @app.middleware("http")
@@ -43,7 +44,12 @@ def create_app() -> FastAPI:
         # Unknown API paths stay 404; everything else is a route of the React app.
         if request.url.path.startswith("/api/"):
             return JSONResponse({"detail": "Not found"}, status_code=404)
-        index = get_settings().frontend_dir / "index.html"
+        root = get_settings().frontend_dir.resolve()
+        # Top-level files of the build (favicon.svg, robots.txt …) – never outside the build folder.
+        candidate = (root / request.url.path.lstrip("/")).resolve()
+        if candidate.is_file() and candidate.parent == root:
+            return FileResponse(candidate)
+        index = root / "index.html"
         if index.exists():
             return FileResponse(index, headers={"Cache-Control": "no-cache"})
         return JSONResponse({"detail": "Frontend not built"}, status_code=404)

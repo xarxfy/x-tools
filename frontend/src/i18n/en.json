@@ -1,0 +1,50 @@
+{
+  "app": {
+    "name": "X-TOOLS",
+    "loading": "Loading …",
+    "error": "Something went wrong",
+    "retry": "Try again"
+  },
+  "nav": {
+    "overview": "Overview",
+    "customers": "Customers",
+    "services": "Services",
+    "servers": "Servers",
+    "domains": "Domains",
+    "credentials": "Credentials",
+    "settings": "Settings",
+    "help": "Help",
+    "menu": "Menu",
+    "logout": "Log out",
+    "signedInAs": "Signed in as {{name}}"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Log in",
+    "loggingIn": "Logging in …",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Log in to X-TOOLS",
+    "setupTitle": "Set up X-TOOLS",
+    "setupSubtitle": "Create the administrator account. You will use it to log in from now on.",
+    "confirmPassword": "Repeat password",
+    "passwordHint": "At least 10 characters.",
+    "usernameHint": "3–64 characters: letters, digits, dot, dash, underscore.",
+    "createAccount": "Create account",
+    "creating": "Creating …",
+    "passwordsDiffer": "The passwords do not match.",
+    "keyHintTitle": "Back up your data directory",
+    "keyHint": "X-TOOLS generated a secret key in its data directory (secret.key). Stored credentials can only be decrypted with it – include it in your backups."
+  },
+  "pages": {
+    "overview": {
+      "title": "Overview",
+      "welcome": "X-TOOLS is set up.",
+      "next": "The individual areas are being moved over from the previous version step by step."
+    },
+    "comingSoon": "Coming soon",
+    "comingSoonText": "This area is not available in this version yet.",
+    "notFound": "Page not found",
+    "backHome": "Back to the overview"
+  }
+}

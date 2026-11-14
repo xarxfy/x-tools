@@ -1,0 +1,168 @@
+/* Base elements and shared building blocks. Page-specific styles live next to their components. */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--font);
+  letter-spacing: -0.003em;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+code,
+pre {
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+::selection {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+/* Buttons: pills */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 980px;
+  padding: 8px 18px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--fill);
+  color: var(--text);
+  transition: filter 0.15s, transform 0.1s;
+}
+.btn:hover {
+  filter: brightness(0.97);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+.btn-ghost {
+  background: transparent;
+}
+.btn-ghost:hover {
+  background: var(--hover);
+  filter: none;
+}
+.btn-block {
+  width: 100%;
+}
+
+/* Form fields */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.field .hint {
+  font-weight: 400;
+  color: var(--muted);
+}
+.input {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-control);
+  padding: 10px 12px;
+  width: 100%;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Surfaces */
+.card {
+  background: var(--card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+}
+.card-pad {
+  padding: 20px 22px;
+}
+.muted {
+  color: var(--muted);
+}
+.error-text {
+  color: var(--down-text);
+  font-size: 14px;
+  margin: 0;
+}
+.notice {
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+/* Page header */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.page-head h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.page-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+/* Centered loading/error state */
+.center-state {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .page-head h1 {
+    font-size: 26px;
+  }
+}

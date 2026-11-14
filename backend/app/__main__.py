@@ -5,6 +5,8 @@ import os
 
 
 def main() -> None:
+    # Database, secret key and everything else X-TOOLS writes is readable by its own user only.
+    os.umask(0o077)
     parser = argparse.ArgumentParser(prog="x-tools", description="X-TOOLS server")
     sub = parser.add_subparsers(dest="command")
     serve = sub.add_parser("serve", help="run the web UI and API (default)")

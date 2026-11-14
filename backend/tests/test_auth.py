@@ -94,3 +94,26 @@ def test_security_headers(client):
 def test_unknown_api_path_is_json_404(client):
     r = client.get("/api/does-not-exist")
     assert r.status_code == 404 and r.json()["detail"] == "Not found"
+
+
+def test_api_docs_disabled_by_default(client):
+    assert client.get("/api/docs").status_code == 404
+    assert client.get("/api/openapi.json").status_code == 404
+
+
+def test_spa_fallback_never_serves_files_outside_build(client, tmp_path, monkeypatch):
+    from app.core import config
+    build = tmp_path / "dist"
+    build.mkdir()
+    (build / "index.html").write_text("<!doctype html><div id=root></div>")
+    (build / "favicon.svg").write_text("<svg/>")
+    (tmp_path / "secret.txt").write_text("top secret")
+    monkeypatch.setenv("XT_FRONTEND_DIR", str(build))
+    config.get_settings.cache_clear()
+    from app.main import create_app
+    from fastapi.testclient import TestClient
+    with TestClient(create_app()) as c:
+        assert c.get("/favicon.svg").text == "<svg/>"
+        assert "id=root" in c.get("/customers/abc").text
+        for path in ("/../secret.txt", "/%2e%2e/secret.txt", "/..%2fsecret.txt"):
+            assert "top secret" not in c.get(path).text

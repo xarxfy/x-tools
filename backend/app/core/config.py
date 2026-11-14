@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Trust X-Forwarded-For / X-Forwarded-Proto from a reverse proxy in front of X-TOOLS.
     trust_proxy: bool = True
 
+    # Interactive API documentation at /api/docs (for development; off by default).
+    api_docs: bool = False
+
     # Directory with the built frontend (index.html + assets).
     frontend_dir: Path = Path(__file__).resolve().parents[3] / "frontend" / "dist"
 
