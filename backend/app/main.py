@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth
+from app.api import auth, customers, services
 from app.core.config import VERSION, get_settings
 from app.core.db import run_migrations
 from app.core.security import secret_key
@@ -25,6 +25,8 @@ def create_app() -> FastAPI:
     app = FastAPI(title="X-TOOLS", version=VERSION, lifespan=lifespan, redoc_url=None,
                   docs_url="/api/docs" if docs else None, openapi_url="/api/openapi.json" if docs else None)
     app.include_router(auth.router)
+    app.include_router(services.router)
+    app.include_router(customers.router)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):

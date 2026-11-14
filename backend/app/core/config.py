@@ -37,6 +37,10 @@ class Settings(BaseSettings):
 
     docker_socket: str = "/var/run/docker.sock"
 
+    # Host on which the ports of services are checked (in a container usually
+    # host.docker.internal, mapped to the Docker host via extra_hosts).
+    check_host: str = "127.0.0.1"
+
     # Containers that cannot be stopped from the UI (so you cannot lock yourself out).
     # Comma-separated.
     protected_containers: str = "x-tools,x-tools-collector"
