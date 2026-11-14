@@ -359,7 +359,7 @@ function ProxmoxTab({ px }: { px: Proxmox }) {
           {list.map((g) => {
             const on = g.status === "running";
             return (
-              <div key={g.vmid} className="list-row container-row">
+              <div key={g.vmid} className="list-row static-row">
                 <Dot state={on ? "up" : "off"} />
                 <div className="list-main">
                   <div className="list-title">
@@ -492,7 +492,7 @@ function ContainerRow({ c, isProtected, readonly, onLogs }: {
   const running = ["running", "restarting", "paused"].includes(c.state);
   const run = (a: "start" | "stop" | "restart") => action.mutate({ action: a, container: c.name });
   return (
-    <div className="list-row container-row">
+    <div className="list-row static-row">
       <Dot state={state} />
       <div className="list-main">
         <div className="list-title">

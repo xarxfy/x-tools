@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import agents, auth, customers, docker, monitor, services
 from app.core.config import VERSION, get_settings
-from app.core.db import run_migrations
+from app.core.db import run_migrations, session_scope
 from app.core.security import secret_key
 from app.monitor.alerts import start_background
 
@@ -18,6 +18,8 @@ from app.monitor.alerts import start_background
 async def lifespan(_app: FastAPI):
     run_migrations()
     secret_key()  # make sure the key exists (and is generated on first start)
+    with session_scope() as db:
+        auth.announce_setup_code(db)
     start_background()
     yield
 

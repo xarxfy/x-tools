@@ -189,7 +189,7 @@ export function CustomerPage() {
             {[...new Set(own.flatMap((s) => s.domains))].map((d) => {
               const ch = checks.data?.[d];
               return (
-                <div key={d} className="list-row container-row">
+                <div key={d} className="list-row static-row">
                   <Dot state={ch?.level ?? "off"} />
                   <div className="list-main">
                     <div className="list-title">

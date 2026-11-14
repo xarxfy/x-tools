@@ -14,6 +14,7 @@
 }
 .server-card:hover {
   text-decoration: none;
+  background: var(--card-hover);
   box-shadow: var(--shadow-hover);
 }
 .server-host {
@@ -27,9 +28,6 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
-}
-.meters-compact {
-  gap: 12px;
 }
 .meter-top {
   display: flex;
@@ -132,25 +130,18 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 20px 10px;
-  border-bottom: 1px solid var(--separator);
+  padding: 16px 20px 8px;
 }
 .project .list {
-  padding: 0;
+  padding: 4px 6px;
 }
-.container-row {
-  cursor: default;
-}
-.container-row:hover {
-  background: none;
-}
+
 .project-foot {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 20px 14px;
   border-top: 1px solid var(--separator);
-  background: color-mix(in srgb, var(--inset) 50%, transparent);
 }
 .chip-btn {
   border: 0;
@@ -260,12 +251,31 @@
     display: none;
   }
 }
+.meters-compact {
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+.meters-compact .meter {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 10px;
+}
 .meters-compact .meter-top {
-  font-size: 12px;
-  white-space: nowrap;
-  gap: 4px;
+  display: contents;
+  font-size: 13px;
 }
 .meters-compact .meter-top span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  order: 1;
+  color: var(--muted);
+  font-size: 13px;
+}
+.meters-compact .bar {
+  order: 2;
+}
+.meters-compact .meter-top b {
+  order: 3;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
 }

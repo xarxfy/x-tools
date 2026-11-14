@@ -1,3 +1,4 @@
+from app.api.auth import setup_code
 from conftest import csrf_headers
 
 PASSWORD = "correct horse battery"
@@ -5,25 +6,25 @@ PASSWORD = "correct horse battery"
 
 def test_status_before_and_after_setup(client):
     assert client.get("/api/status").json()["needs_setup"] is True
-    client.post("/api/setup", json={"username": "admin", "password": PASSWORD})
+    client.post("/api/setup", json={"username": "admin", "password": PASSWORD, "code": setup_code()})
     assert client.get("/api/status").json()["needs_setup"] is False
 
 
 def test_setup_creates_admin_and_logs_in(client):
-    r = client.post("/api/setup", json={"username": "admin", "password": PASSWORD})
+    r = client.post("/api/setup", json={"username": "admin", "password": PASSWORD, "code": setup_code()})
     assert r.status_code == 200
     assert r.json() == {"id": 1, "username": "admin", "role": "admin"}
     assert client.get("/api/auth/me").json()["username"] == "admin"
 
 
 def test_setup_only_once(admin):
-    r = admin.post("/api/setup", json={"username": "second", "password": PASSWORD})
+    r = admin.post("/api/setup", json={"username": "second", "password": PASSWORD, "code": setup_code()})
     assert r.status_code == 409
 
 
 def test_setup_rejects_short_password_and_bad_username(client):
-    assert client.post("/api/setup", json={"username": "admin", "password": "short"}).status_code == 422
-    assert client.post("/api/setup", json={"username": "a b", "password": PASSWORD}).status_code == 422
+    assert client.post("/api/setup", json={"username": "admin", "password": "short", "code": setup_code()}).status_code == 422
+    assert client.post("/api/setup", json={"username": "a b", "password": PASSWORD, "code": setup_code()}).status_code == 422
     assert client.get("/api/status").json()["needs_setup"] is True
 
 
@@ -42,7 +43,7 @@ def test_login_logout(admin):
 
 
 def test_session_cookie_flags(client):
-    r = client.post("/api/setup", json={"username": "admin", "password": PASSWORD})
+    r = client.post("/api/setup", json={"username": "admin", "password": PASSWORD, "code": setup_code()})
     cookies = r.headers.get_list("set-cookie")
     session = next(c for c in cookies if c.startswith("xt_session="))
     csrf = next(c for c in cookies if c.startswith("xt_csrf="))
@@ -117,3 +118,12 @@ def test_spa_fallback_never_serves_files_outside_build(client, tmp_path, monkeyp
         assert "id=root" in c.get("/customers/abc").text
         for path in ("/../secret.txt", "/%2e%2e/secret.txt", "/..%2fsecret.txt"):
             assert "top secret" not in c.get(path).text
+
+
+def test_setup_needs_code(client):
+    r = client.post("/api/setup", json={"username": "admin", "password": PASSWORD, "code": "WRNG-CODE"})
+    assert r.status_code == 403
+    r = client.post("/api/setup", json={"username": "admin", "password": PASSWORD})
+    assert r.status_code == 403
+    code = setup_code().lower().replace("-", " ")  # case and separators do not matter
+    assert client.post("/api/setup", json={"username": "admin", "password": PASSWORD, "code": code}).status_code == 200

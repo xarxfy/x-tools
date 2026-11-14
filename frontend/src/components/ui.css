@@ -111,15 +111,17 @@ select.input {
   font-size: 14px;
 }
 
-/* Lists */
+/* Lists – inset grouped, rows highlight inside the card's rounded corners */
 .list {
-  padding: 4px 0;
+  padding: 6px;
 }
 .list-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 20px;
+  padding: 11px 14px;
+  border-radius: 10px;
   color: var(--text);
   width: 100%;
   text-align: left;
@@ -127,13 +129,28 @@ select.input {
   border: 0;
   font: inherit;
   cursor: pointer;
+  transition: background 0.12s;
 }
-.list-row + .list-row {
+.list-row + .list-row::before {
+  /* inset separator */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
   border-top: 1px solid var(--separator);
+  transition: opacity 0.12s;
 }
-.list-row:hover {
+.list-row:not(.static-row):hover {
   background: var(--hover);
   text-decoration: none;
+}
+.list-row:not(.static-row):hover::before,
+.list-row:not(.static-row):hover + .list-row::before {
+  opacity: 0;
+}
+.static-row {
+  cursor: default;
 }
 .list-main {
   flex: 1;
@@ -146,6 +163,10 @@ select.input {
   gap: 8px;
   flex-wrap: wrap;
 }
+a.list-title:hover {
+  text-decoration: none;
+  opacity: 0.8;
+}
 .list-sub {
   color: var(--muted);
   font-size: 13px;
@@ -157,6 +178,7 @@ select.input {
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  color: var(--muted);
 }
 .chips {
   display: flex;
@@ -181,11 +203,12 @@ a.chip:hover {
 }
 .badge {
   font-size: 12px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 6px;
+  font-weight: 500;
+  padding: 1px 8px;
+  border-radius: 980px;
   background: var(--fill);
   color: var(--muted);
+  white-space: nowrap;
 }
 .dot {
   width: 8px;
@@ -208,12 +231,10 @@ a.chip:hover {
   opacity: 0.5;
 }
 .section-title {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 26px 4px 8px;
+  letter-spacing: -0.01em;
+  margin: 32px 2px 10px;
 }
 .empty {
   color: var(--muted);
@@ -233,9 +254,15 @@ a.chip:hover {
   color: var(--muted);
 }
 .search .input {
-  padding: 8px 12px 8px 34px;
-  border-radius: 980px;
+  padding: 7px 12px 7px 32px;
+  border-radius: 10px;
   width: 220px;
+  font-size: 14px;
+  background: var(--fill);
+  border-color: transparent;
+}
+.search .input:focus {
+  background: var(--input-bg);
 }
 
 /* Key/value details */
@@ -299,7 +326,7 @@ a.chip:hover {
   }
   .list-row {
     flex-wrap: wrap;
-    padding: 12px 16px;
+    padding: 11px 12px;
   }
   .list-row > .list-main {
     flex-basis: calc(100% - 40px);
@@ -329,4 +356,11 @@ a.chip:hover {
 }
 .section-row .btn {
   margin-bottom: 4px;
+}
+a.list-title {
+  color: var(--text);
+}
+a.list-title svg,
+.chip svg {
+  color: var(--muted);
 }

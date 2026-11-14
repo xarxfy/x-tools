@@ -1,3 +1,4 @@
+from app.api.auth import setup_code
 import pytest
 from fastapi.testclient import TestClient
 
@@ -30,6 +31,6 @@ def csrf_headers(client) -> dict:
 @pytest.fixture()
 def admin(client):
     """Client that has completed setup and is logged in."""
-    r = client.post("/api/setup", json={"username": "admin", "password": "correct horse battery"})
+    r = client.post("/api/setup", json={"username": "admin", "password": "correct horse battery", "code": setup_code()})
     assert r.status_code == 200, r.text
     return client

@@ -78,6 +78,10 @@
 }
 .nav-main svg,
 .nav-foot svg {
+  color: var(--muted);
+}
+.nav-main a.active svg,
+.nav-foot a.active svg {
   color: var(--accent);
 }
 .nav-main a:hover,
@@ -89,7 +93,6 @@
 .nav-main a.active,
 .nav-foot a.active {
   background: var(--fill);
-  font-weight: 600;
 }
 .side-foot {
   margin-top: auto;
@@ -106,8 +109,8 @@
 }
 main {
   min-width: 0;
-  padding: 36px 44px 64px;
-  max-width: 1240px;
+  padding: 40px 48px 72px;
+  max-width: 1180px;
 }
 
 @media (max-width: 860px) {

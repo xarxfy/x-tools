@@ -34,7 +34,9 @@
     "creating": "Creating …",
     "passwordsDiffer": "The passwords do not match.",
     "keyHintTitle": "Back up your data directory",
-    "keyHint": "X-TOOLS generated a secret key in its data directory (secret.key). Stored credentials can only be decrypted with it – include it in your backups."
+    "keyHint": "X-TOOLS generated a secret key in its data directory (secret.key). Stored credentials can only be decrypted with it – include it in your backups.",
+    "setupCode": "Setup code",
+    "setupCodeHint": "Printed in the server log: docker logs x-tools"
   },
   "pages": {
     "overview": {

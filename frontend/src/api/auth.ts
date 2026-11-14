@@ -50,7 +50,7 @@ export function useLogin() {
 export function useSetup() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: Credentials) => api<User>("/setup", { method: "POST", body }),
+    mutationFn: (body: Credentials & { code: string }) => api<User>("/setup", { method: "POST", body }),
     onSuccess: (user) => {
       qc.setQueryData(["me"], user);
       qc.invalidateQueries({ queryKey: ["status"] });

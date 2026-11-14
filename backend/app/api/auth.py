@@ -1,5 +1,7 @@
 """First-run setup, login, logout and the current user."""
 
+import hmac
+import secrets
 import threading
 from datetime import datetime, timezone
 
@@ -31,6 +33,33 @@ class Credentials(BaseModel):
 class SetupRequest(BaseModel):
     username: str = Field(pattern=USERNAME_PATTERN)
     password: str = Field(max_length=256)
+    code: str = Field(default="", max_length=32)
+
+
+# One-time setup code: whoever reaches a fresh installation first must not be
+# able to claim it. The code is only printed to the server log.
+_SETUP_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+_setup_code: str | None = None
+
+
+def setup_code() -> str:
+    global _setup_code
+    if _setup_code is None:
+        raw = "".join(secrets.choice(_SETUP_ALPHABET) for _ in range(8))
+        _setup_code = f"{raw[:4]}-{raw[4:]}"
+    return _setup_code
+
+
+def announce_setup_code(db: Session) -> None:
+    """Called on startup: print the setup code while no account exists."""
+    if _user_count(db) == 0:
+        line = "=" * 60
+        print(f"\n{line}\n  X-TOOLS is not set up yet.\n  Setup code: {setup_code()}\n"
+              f"  Enter it on the setup page to create the admin account.\n{line}\n", flush=True)
+
+
+def _normalize_code(code: str) -> str:
+    return code.strip().upper().replace(" ", "").replace("-", "")
 
 
 class UserOut(BaseModel):
@@ -78,9 +107,18 @@ def setup(body: SetupRequest, request: Request, response: Response, db: Session 
         validate_new_password(body.password)
     except ValueError as error:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(error)) from None
+    ip = client_ip(request)
+    wait = login_throttle.retry_after("\0setup", ip)
+    if wait:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, f"Too many attempts. Try again in {wait} s.",
+                            headers={"Retry-After": str(wait)})
     with _setup_lock:
         if _user_count(db) > 0:
             raise HTTPException(status.HTTP_409_CONFLICT, "Setup has already been completed")
+        if not hmac.compare_digest(_normalize_code(body.code), _normalize_code(setup_code())):
+            login_throttle.failed("\0setup", ip)
+            raise HTTPException(status.HTTP_403_FORBIDDEN,
+                                "Wrong setup code – it is printed in the server log (docker logs x-tools)")
         user = User(username=body.username, password_hash=hash_password(body.password), role="admin")
         db.add(user)
         db.flush()

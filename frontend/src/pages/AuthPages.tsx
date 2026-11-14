@@ -71,6 +71,7 @@ export function SetupPage() {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [code, setCode] = useState("");
   const [localError, setLocalError] = useState("");
   const [done, setDone] = useState(false);
 
@@ -83,7 +84,7 @@ export function SetupPage() {
       setLocalError(t("auth.passwordsDiffer"));
       return;
     }
-    setup.mutate({ username, password }, { onSuccess: () => setDone(true) });
+    setup.mutate({ username, password, code }, { onSuccess: () => setDone(true) });
   };
 
   if (done) {
@@ -104,13 +105,18 @@ export function SetupPage() {
     <AuthCard title={t("auth.setupTitle")} subtitle={t("auth.setupSubtitle")}>
       <form className="auth-form" onSubmit={submit}>
         <label className="field">
+          {t("auth.setupCode")} <span className="hint">{t("auth.setupCodeHint")}</span>
+          <input className="input setup-code" required autoFocus autoComplete="off" spellCheck={false}
+                 placeholder="ABCD-EFGH" maxLength={32} value={code} onChange={(e) => setCode(e.target.value)} />
+        </label>
+        <label className="field">
           {t("auth.username")} <span className="hint">{t("auth.usernameHint")}</span>
           <input className="input" autoComplete="username" required minLength={3} maxLength={64}
                  pattern="[A-Za-z0-9._\-]{3,64}" value={username} onChange={(e) => setUsername(e.target.value)} />
         </label>
         <label className="field">
           {t("auth.password")} <span className="hint">{t("auth.passwordHint")}</span>
-          <input className="input" type="password" autoComplete="new-password" required minLength={10} autoFocus
+          <input className="input" type="password" autoComplete="new-password" required minLength={10}
                  value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         <label className="field">

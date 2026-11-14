@@ -36,7 +36,7 @@ export function DomainsPage() {
             <h2 className="section-title">{root}</h2>
             <div className="card list">
               {list.map(({ domain, service }) => (
-                <div key={`${domain}-${service.id}`} className="list-row" style={{ cursor: "default" }}>
+                <div key={`${domain}-${service.id}`} className="list-row static-row">
                   <span className="list-main">
                     <a className="list-title" href={`https://${domain}`} target="_blank" rel="noreferrer">
                       {domain}

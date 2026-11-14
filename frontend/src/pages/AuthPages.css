@@ -41,3 +41,8 @@
 .auth-notice p {
   margin: 4px 0 0;
 }
+.setup-code {
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

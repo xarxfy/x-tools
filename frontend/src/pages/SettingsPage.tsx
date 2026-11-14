@@ -234,7 +234,7 @@ function Agents() {
             const age = agentAge(a);
             const st = a.disabled ? "off" : age === null ? "warn" : age < AGENT_STALE ? "up" : "down";
             return (
-              <div key={a.id} className="list-row container-row">
+              <div key={a.id} className="list-row static-row">
                 <Dot state={st} />
                 <div className="list-main">
                   <div className="list-title">
