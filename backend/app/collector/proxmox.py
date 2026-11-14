@@ -187,11 +187,51 @@ def guest_ips(node: str, kind: str, vmid: int) -> list[dict]:
     return out
 
 
+MASKED_CONF_KEYS = ("cipassword", "sshkeys")
+MAX_CONF = 64 * 1024
+
+
+def mask_conf(text: str) -> str:
+    lines = []
+    for line in text.splitlines():
+        key = line.split(":", 1)[0].strip()
+        lines.append(f"{key}: ••••••" if key in MASKED_CONF_KEYS and ":" in line else line)
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+
+def conf_path(node: str, kind: str, vmid: int) -> str:
+    return f"/etc/pve/nodes/{node}/{'lxc' if kind == 'lxc' else 'qemu-server'}/{vmid}.conf"
+
+
+def conf_from_api(config: dict) -> str:
+    """The file as Proxmox writes it: description as comment lines, then key: value."""
+    lines = [f"#{line}" for line in str(config.get("description", "")).rstrip("\n").split("\n")
+             if config.get("description")]
+    for key in sorted(k for k in config if k not in ("description", "digest")):
+        lines.append(f"{key}: {config[key]}")
+    return mask_conf("\n".join(lines) + "\n")
+
+
+def read_conf(node: str, kind: str, vmid: int, config: dict) -> dict:
+    """The real .conf file when the agent runs on the Proxmox host, otherwise rebuilt from the API."""
+    path = conf_path(node, kind, vmid)
+    local = os.environ.get("XT_HOST_ROOT", "").rstrip("/") + path
+    try:
+        if os.path.getsize(local) <= MAX_CONF:
+            with open(local, encoding="utf-8", errors="replace") as f:
+                return {"path": path, "source": "file", "content": mask_conf(f.read())}
+    except OSError:
+        pass
+    return {"path": path, "source": "api", "content": conf_from_api(config)}
+
+
 def guest_details(g: dict) -> dict:
     node, kind, vmid = g["node"], g["type"], g["vmid"]
     out: dict = {"fetched_at": time.time()}
     try:
-        out["config"] = parse_config(request(f"/nodes/{node}/{kind}/{vmid}/config") or {}, kind)
+        raw = request(f"/nodes/{node}/{kind}/{vmid}/config") or {}
+        out["config"] = parse_config(raw, kind)
+        out["conf"] = read_conf(node, kind, vmid, raw)
     except ProxmoxError as error:
         out["error"] = str(error)
         return out

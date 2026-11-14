@@ -78,3 +78,9 @@
     grid-template-columns: 1fr;
   }
 }
+.guest-conf {
+  grid-column: 1 / -1;
+}
+.guest-conf .file-block {
+  background: var(--card);
+}

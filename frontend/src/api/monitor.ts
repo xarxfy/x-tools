@@ -141,6 +141,7 @@ export interface PveGuestDetails {
   config?: PveConfig;
   ips?: { interface: string; address: string }[];
   snapshots?: { name: string; time: number | null; description: string; parent: string }[] | null;
+  conf?: { path: string; source: "file" | "api"; content: string };
 }
 
 export interface PveBackup {

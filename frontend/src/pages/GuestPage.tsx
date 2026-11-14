@@ -9,6 +9,7 @@ import { Icon } from "../components/Icon";
 import { Dialog, Empty, Loading, PageHead } from "../components/ui";
 import { ago, fmtBytes, fmtDuration, level, pct } from "../components/format";
 import { GuestActions } from "./ServersPage";
+import { FileBlock } from "./AssistantPage";
 import "./GuestPage.css";
 
 const OS: Record<string, string> = { l26: "Linux", win11: "Windows 11", win10: "Windows 10", other: "Other" };
@@ -93,6 +94,14 @@ export function GuestPage() {
               )}
             </section>
             <Other guest={guest} cfg={cfg} />
+            {details?.conf && (
+              <section className="guest-conf">
+                <FileBlock file={{
+                  name: details.conf.path, lang: "ini", content: details.conf.content,
+                  note: details.conf.source === "file" ? t("guest.confFile") : t("guest.confApi"),
+                }} />
+              </section>
+            )}
           </div>
         </>
       )}
@@ -196,7 +205,6 @@ function Other({ guest, cfg }: { guest: ProxmoxGuest; cfg: PveConfig }) {
         <dt>{t("guest.tags")}</dt>
         <dd>{cfg.tags.length ? <span className="chips">{cfg.tags.map((tag) => <span key={tag} className="chip">{tag}</span>)}</span> : "–"}</dd>
       </dl>
-      {cfg.description && (<><h4>{t("guest.notes")}</h4><p className="guest-notes">{cfg.description}</p></>)}
     </section>
   );
 }
@@ -218,7 +226,6 @@ function EditDialog({ agentId, guest, cfg, onClose }: { agentId: string; guest: 
   const [swap, setSwap] = useState(cfg.swap ?? 0);
   const [onboot, setOnboot] = useState(cfg.onboot);
   const [tags, setTags] = useState(cfg.tags.join(", "));
-  const [description, setDescription] = useState(cfg.description);
 
   const submit = () => {
     const changes: Record<string, unknown> = {};
@@ -228,7 +235,6 @@ function EditDialog({ agentId, guest, cfg, onClose }: { agentId: string; guest: 
     if (onboot !== cfg.onboot) changes.onboot = onboot;
     const tagList = tags.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
     if (tagList.join(";") !== cfg.tags.join(";")) changes.tags = tagList;
-    if (description !== cfg.description) changes.description = description;
     if (!Object.keys(changes).length) return onClose();
     save.mutate({ action: "proxmox.config", changes }, { onSuccess: onClose });
   };
@@ -263,10 +269,6 @@ function EditDialog({ agentId, guest, cfg, onClose }: { agentId: string; guest: 
       <label className="inline-check">
         <input type="checkbox" checked={onboot} onChange={(e) => setOnboot(e.target.checked)} />
         {t("guest.onbootLabel")}
-      </label>
-      <label className="field">
-        {t("guest.notes")}
-        <textarea className="input" rows={4} maxLength={8000} value={description} onChange={(e) => setDescription(e.target.value)} />
       </label>
       {guest.type === "qemu" && guest.status === "running" && <p className="muted small-note" style={{ margin: 0 }}>{t("guest.vmPending")}</p>}
       {save.error && <p className="error-text">{save.error.message}</p>}

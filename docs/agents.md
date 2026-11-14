@@ -35,7 +35,7 @@ role **operator** or **admin** can:
 
 | Docker host | Proxmox host |
 |---|---|
-| start, stop, restart containers, read their logs | start, shut down, stop, reboot LXCs and VMs; change CPU cores, memory, swap, start at boot, tags and notes; grow disks |
+| start, stop, restart containers, read their logs | start, shut down, stop, reboot LXCs and VMs; change CPU cores, memory, swap, start at boot and tags; grow disks |
 
 How it stays safe:
 
@@ -54,7 +54,7 @@ To switch control off again: *Install command* without the switch, or set `XT_AG
 
 Every 10 minutes (and right after a change) a Proxmox agent also reads, per LXC/VM: resources and disks, network
 cards (bridge, VLAN, MAC, configured and **current** IP addresses – for VMs via the QEMU guest agent), snapshots,
-backups on backup storages, OS, start at boot, features, tags and notes. Per node: Proxmox version, kernel, available
+backups on backup storages, OS, start at boot, features, tags and the guest's `.conf` file (read from `/etc/pve` when the agent runs on the host, otherwise rebuilt from the API; password and SSH key lines masked). Per node: Proxmox version, kernel, available
 updates and the host network (bridges, bonds, VLANs). Click a guest on the *Proxmox* page to see its detail page.
 
 Interval: `XT_PROXMOX_DETAILS_INTERVAL` (seconds, default 600, minimum 120) in `/etc/x-tools-agent/agent.env`.
@@ -74,7 +74,7 @@ Interval: `XT_PROXMOX_DETAILS_INTERVAL` (seconds, default 600, minimum 120) in `
    |---|---|
    | `VM.Audit`, `Datastore.Audit`, `Sys.Audit` | reading guests, snapshots, backups, node status and network |
    | `VM.PowerMgmt` | start, shut down, stop, reboot |
-   | `VM.Config.CPU`, `VM.Config.Memory`, `VM.Config.Options` | cores, memory/swap, start at boot, tags, notes |
+   | `VM.Config.CPU`, `VM.Config.Memory`, `VM.Config.Options` | cores, memory/swap, start at boot, tags |
    | `VM.Config.Disk`, `Datastore.AllocateSpace` | growing disks |
 
    Available updates are read through the API if the token may (`Sys.Modify`), otherwise – when the agent runs on

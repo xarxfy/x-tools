@@ -121,3 +121,19 @@ def test_details_against_fake_proxmox(monkeypatch):
     # apt/update is forbidden for the token; the agent runs on the host (localhost) and reads apt locally
     assert node["updates"] == ["pve-manager", "proxmox-kernel-6.8"]
     assert node["network"][0]["iface"] == "vmbr0" and node["network"][0]["vlan_aware"]
+    conf = g101["conf"]
+    assert conf["path"] == "/etc/pve/nodes/pve/lxc/101.conf" and conf["source"] == "api"
+    assert conf["content"].startswith("#Docker host for the web apps\narch") or "cores: 2" in conf["content"]
+    assert "digest" not in conf["content"] and "rootfs: local-lvm:vm-101-disk-0,size=16G" in conf["content"]
+
+
+def test_conf_file_is_read_and_masked(tmp_path, monkeypatch):
+    from app.collector.proxmox import read_conf
+    conf = tmp_path / "etc/pve/nodes/pve/qemu-server/102.conf"
+    conf.parent.mkdir(parents=True)
+    conf.write_text("#notes\ncores: 2\ncipassword: $5$hash\nsshkeys: ssh-rsa%20AAA\n\n[snap1]\ncores: 1\n")
+    monkeypatch.setenv("XT_HOST_ROOT", str(tmp_path))
+    r = read_conf("pve", "qemu", 102, {})
+    assert r["source"] == "file" and r["path"] == "/etc/pve/nodes/pve/qemu-server/102.conf"
+    assert "cipassword: ••••••" in r["content"] and "$5$hash" not in r["content"] and "AAA" not in r["content"]
+    assert "[snap1]" in r["content"]

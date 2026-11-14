@@ -413,7 +413,7 @@
     "updateHint": "A newer agent is available: create a new install command and run it on the server.",
     "control": "Allow control from X-TOOLS",
     "controlHintDocker": "Operators can start, stop and restart containers on this server and read their logs. Off: the agent only reports.",
-    "controlHintProxmox": "Operators can start, shut down, stop and reboot LXCs/VMs, change CPU, memory, tags and notes and grow disks. The API token needs the matching privileges (see the hint above).",
+    "controlHintProxmox": "Operators can start, shut down, stop and reboot LXCs/VMs, change CPU, memory, swap, start at boot and tags, and grow disks. The API token needs the matching privileges (see the hint above).",
     "controlBadge": "control on",
     "secretStored": "Stored – leave empty to keep it",
     "prefilled": "Filled in from the last install command. Stored secrets are kept unless you enter new ones."
@@ -748,7 +748,7 @@
   "guest": {
     "notFound": "This LXC/VM is not in the last report.",
     "node": "node",
-    "needsAgent": "Configuration details need agent version 4 – create a new install command for this agent.",
+    "needsAgent": "Configuration details need a newer agent – create a new install command for this agent.",
     "noDetails": "No details yet – they are fetched every 10 minutes.",
     "updated": "Configuration fetched {{when}}",
     "resources": "Resources",
@@ -791,6 +791,8 @@
     "growText": "{{disk}} is {{size}} on {{storage}}.",
     "growBy": "Grow by (GB)",
     "newSize": "new size about {{size}}",
-    "growNote": "Disks can only grow, never shrink. Inside VMs you may still have to extend the partition/file system."
+    "growNote": "Disks can only grow, never shrink. Inside VMs you may still have to extend the partition/file system.",
+    "confFile": "Read from the file on the Proxmox host. Password and SSH key lines are masked.",
+    "confApi": "Rebuilt from the Proxmox API (the agent cannot read the file – it does not run on the host). Snapshot sections are missing."
   }
 }
