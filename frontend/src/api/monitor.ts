@@ -71,6 +71,7 @@ export interface AgentSummary {
   has_proxmox: boolean;
   outdated: boolean;
   latest_version: string;
+  control: boolean;
 }
 
 export interface ProxmoxGuest {
@@ -167,6 +168,7 @@ function useAgentsInvalidate() {
 
 export interface InstallOptions {
   kind: AgentKind;
+  control: boolean;
   proxmox_url: string;
   proxmox_token_id: string;
   proxmox_token_secret: string;

@@ -76,6 +76,10 @@ Tick a box when it works; for anything else, write a short report (template at t
 - [ ] Disable an agent → no more data; enable again
 - [ ] Delete an agent → the uninstall command is shown and removes the agent on the server
 - [ ] Optional: behind Cloudflare Access with a service token ([agents.md](agents.md#behind-cloudflare-access))
+- [ ] With **Allow control**: as operator restart a test container on a Docker host and read its logs
+- [ ] With **Allow control** on a Proxmox host (token with PVEVMUser): start/shut down a **test** LXC; without the
+      privilege a clear error is shown
+- [ ] As viewer: no control buttons; an agent without control shows no buttons for anyone
 
 ## 9. Cloudflare (if you use it)
 
@@ -83,6 +87,10 @@ Tick a box when it works; for anything else, write a short report (template at t
 - [ ] *Cloudflare* appears in the sidebar; zones, DNS records, tunnels and Access apps are correct
 - [ ] Hostnames show the right chain (DNS → tunnel → route → Access) and the matching service
 - [ ] Deliberately set a service port different from the tunnel route → a problem is shown (and on the overview)
+- [ ] *Allow changes* (token with DNS Edit + Tunnel Edit): add a tunnel route for a test hostname – route and DNS
+      record appear in Cloudflare; delete it again
+- [ ] *Create route* on a hostname with a problem fixes it
+- [ ] Add, edit, delete a test DNS record; all changes are in the audit log
 - [ ] Removing the token hides the sidebar entry
 
 ## 10. Customers (optional area)

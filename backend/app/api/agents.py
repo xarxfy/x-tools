@@ -47,6 +47,7 @@ def summary(a: Agent) -> dict:
             "version": report.get("version", ""),
             "has_docker": bool(report.get("docker")), "has_proxmox": bool(report.get("proxmox")),
             "outdated": bool(report) and str(report.get("version", "")) != AGENT_VERSION,
+            "control": bool(report.get("control")),
             "latest_version": AGENT_VERSION}
 
 

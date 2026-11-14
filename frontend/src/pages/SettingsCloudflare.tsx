@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useCloudflareSettings, useRemoveCloudflare, useSaveCloudflareToken } from "../api/cloudflare";
+import { useAllowWrite, useCloudflareSettings, useRemoveCloudflare, useSaveCloudflareToken } from "../api/cloudflare";
+import { Toggle } from "./SettingsPage";
 import { ConfirmDelete, Loading } from "../components/ui";
 import { ago } from "../components/format";
 
@@ -13,6 +14,7 @@ export function CloudflareSettings() {
   const settings = useCloudflareSettings();
   const save = useSaveCloudflareToken();
   const remove = useRemoveCloudflare();
+  const allow = useAllowWrite();
   const [token, setToken] = useState("");
   if (!settings.data) return <Loading error={settings.error} />;
   const s = settings.data;
@@ -33,6 +35,9 @@ export function CloudflareSettings() {
               {errors.map(([k, v]) => <li key={k}><code>{k}</code>: {v}</li>)}
             </ul>
           )}
+          <Toggle checked={s.allow_write} label={t("cloudflare.allowWrite")} hint={t("cloudflare.allowWriteHint")}
+                  onChange={(v) => allow.mutate(v, { onSuccess: () => settings.refetch() })} />
+          {allow.error && <span className="error-text">{allow.error.message}</span>}
           <div className="channel-actions">
             <Link className="btn" to="/cloudflare">{t("cloudflare.open")}</Link>
             <ConfirmDelete onConfirm={() => remove.mutate()} busy={remove.isPending} />

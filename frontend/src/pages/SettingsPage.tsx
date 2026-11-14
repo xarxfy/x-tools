@@ -215,7 +215,7 @@ const UNINSTALL =
   "systemctl daemon-reload 2>/dev/null; docker rm -f x-tools-agent 2>/dev/null; echo 'X-TOOLS agent removed'";
 
 const NO_INSTALL: InstallOptions = {
-  kind: "docker", proxmox_url: "https://127.0.0.1:8006", proxmox_token_id: "", proxmox_token_secret: "",
+  kind: "docker", control: false, proxmox_url: "https://127.0.0.1:8006", proxmox_token_id: "", proxmox_token_secret: "",
   proxmox_verify_tls: false, cf_client_id: "", cf_client_secret: "", compose_roots: "/opt,/srv,/home,/root",
 };
 
@@ -272,6 +272,9 @@ function InstallFields({ value, onChange }: { value: InstallOptions; onChange: (
           <p className="muted small-note" style={{ margin: 0 }}>{t("agents.proxmoxHowto")}</p>
         </div>
       )}
+      <Toggle checked={value.control} label={t("agents.control")}
+              hint={value.kind === "proxmox" ? t("agents.controlHintProxmox") : t("agents.controlHintDocker")}
+              onChange={(control) => set({ control })} />
       <Toggle checked={cf} label={t("agents.cf")} hint={t("agents.cfHint")}
               onChange={(v) => { setCf(v); if (!v) set({ cf_client_id: "", cf_client_secret: "" }); }} />
       {cf && (
@@ -327,6 +330,7 @@ function Agents() {
           <div className="list-title">
             <Link to={`/servers/${a.id}`}>{a.name}</Link>
             {a.disabled && <span className="badge">{t("agents.disabled")}</span>}
+            {a.control && <span className="badge">{t("agents.controlBadge")}</span>}
             {a.outdated && (
               <span className="badge badge-warn" title={t("agents.updateHint")}>{t("agents.update", { version: a.latest_version })}</span>
             )}

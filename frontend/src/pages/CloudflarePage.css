@@ -52,3 +52,9 @@ a.badge:hover {
     color: #ff9f4a;
   }
 }
+.cf-add-route {
+  margin-left: auto;
+}
+.cf-host .btn-small {
+  align-self: center;
+}

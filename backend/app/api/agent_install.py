@@ -44,6 +44,7 @@ class InstallOptions(BaseModel):
     proxmox_token_id: str = ""
     proxmox_token_secret: str = ""
     proxmox_verify_tls: bool = False
+    control: bool = False  # agent accepts commands from X-TOOLS (operators)
     cf_client_id: str = ""
     cf_client_secret: str = ""
     compose_roots: str = Field(default="/opt,/srv,/home,/root")
@@ -202,7 +203,8 @@ echo "Remove: systemctl disable --now x-tools-agent; rm -rf /opt/x-tools-agent /
 def render_script(base: str, data: dict) -> str:
     env = [f"XT_AGENT_URL={base}", f"XT_AGENT_KEY={data['key']}", f"XT_TIMEZONE={get_settings().timezone}",
            f"XT_COMPOSE_ROOTS={data.get('compose_roots') or '/opt,/srv,/home,/root'}",
-           f"XT_AGENT_DOCKER={'0' if data.get('kind') == 'proxmox' else '1'}"]
+           f"XT_AGENT_DOCKER={'0' if data.get('kind') == 'proxmox' else '1'}",
+           f"XT_AGENT_CONTROL={'1' if data.get('control') else '0'}"]
     curl_headers = ""
     if data.get("cf_client_id"):
         env += [f"CF_ACCESS_CLIENT_ID={data['cf_client_id']}", f"CF_ACCESS_CLIENT_SECRET={data['cf_client_secret']}"]

@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import (
-    account, agents, auth, backup, cloudflare, customers, docker, features, history, monitor, services, users,
+    account, agent_control, agents, auth, backup, cloudflare, customers, docker, features, history, monitor, services, users,
 )
 from app.core.audit import current_request as audit_request
 from app.core.config import VERSION, get_settings
@@ -44,6 +44,8 @@ def create_app() -> FastAPI:
     app.include_router(history.router)
     app.include_router(users.router)
     app.include_router(cloudflare.router)
+    app.include_router(agent_control.router)
+    app.include_router(agent_control.agent_router)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):

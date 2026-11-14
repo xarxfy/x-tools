@@ -88,6 +88,35 @@ export function useContainerAction() {
 export const fetchLogs = (container: string, lines: number) =>
   api<{ logs: string }>("/docker/logs", { method: "POST", body: { container, lines } });
 
+/** Container actions – on this server (collector) or through an agent with control switched on. */
+export interface DockerControl {
+  action: (action: "start" | "stop" | "restart", container: string) => Promise<unknown>;
+  logs: (container: string, lines: number) => Promise<{ logs: string }>;
+}
+
+export const localControl: DockerControl = {
+  action: (action, container) => api("/docker/action", { method: "POST", body: { action, container } }),
+  logs: fetchLogs,
+};
+
+export interface AgentActionBody {
+  action: string;
+  target: string;
+  node?: string;
+  type?: string;
+  lines?: number;
+}
+
+export const agentAction = (agentId: string, body: AgentActionBody) =>
+  api<{ ok: boolean; logs?: string }>(`/agents/${agentId}/action`, { method: "POST", body });
+
+export const agentControl = (agentId: string): DockerControl => ({
+  action: (action, container) => agentAction(agentId, { action: `docker.${action}`, target: container }),
+  logs: async (container, lines) => ({
+    logs: (await agentAction(agentId, { action: "docker.logs", target: container, lines })).logs ?? "",
+  }),
+});
+
 export type State = "up" | "warn" | "down";
 
 export function containerState(c: Container): [State, string] {

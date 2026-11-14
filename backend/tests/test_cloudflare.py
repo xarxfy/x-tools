@@ -31,8 +31,31 @@ ROUTES = {
 
 
 class FakeCF(BaseHTTPRequestHandler):
+    writes: list = []
+
     def log_message(self, *args):
         pass
+
+    def _write(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        body = json.loads(self.rfile.read(length)) if length else None
+        path = urlparse(self.path).path
+        FakeCF.writes.append((self.command, path, body))
+        if self.command == "PUT" and path.endswith("/configurations"):
+            ROUTES[path] = body
+        elif path.startswith("/zones/z1/dns_records"):
+            records = ROUTES["/zones/z1/dns_records"]
+            if self.command == "POST":
+                records.append({**body, "id": f"r{len(records) + 1}"})
+            elif self.command == "DELETE":
+                ROUTES["/zones/z1/dns_records"] = [r for r in records if r.get("id") != path.rsplit("/", 1)[1]]
+        data = json.dumps({"success": True, "result": {}}).encode()
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    do_POST = do_PUT = do_DELETE = _write
 
     def do_GET(self):
         if self.headers.get("Authorization") != f"Bearer {TOKEN}":
@@ -88,7 +111,8 @@ def test_cloudflare(cf, tmp_path):
 
     assert cf.delete("/api/cloudflare/settings", headers=h).status_code == 204
     assert cf.get("/api/features").json()["cloudflare"] is False
-    assert cf.get("/api/cloudflare").json() == {"configured": False, "snapshot": None, "hosts": []}
+    assert cf.get("/api/cloudflare").json() == {"configured": False, "allow_write": False, "snapshot": None,
+                                                "hosts": []}
 
 
 def test_foreign_domains_ignored(cf):
@@ -97,3 +121,43 @@ def test_foreign_domains_ignored(cf):
     cf.post("/api/services", json={"name": "Elsewhere", "domains": ["shop.other-registrar.net"]}, headers=h)
     hosts = [r["hostname"] for r in cf.get("/api/cloudflare").json()["hosts"]]
     assert "shop.other-registrar.net" not in hosts and "app.example.com" in hosts
+
+
+def test_cloudflare_changes(cf):
+    import copy
+    saved = copy.deepcopy(ROUTES)
+    FakeCF.writes = []
+    try:
+        h = csrf_headers(cf)
+        cf.put("/api/cloudflare/settings", json={"token": TOKEN}, headers=h)
+        route = {"tunnel_id": TUNNEL, "hostname": "new.example.com", "service": "http://localhost:8200"}
+        assert cf.post("/api/cloudflare/routes", json=route, headers=h).status_code == 409  # read-only by default
+        assert cf.put("/api/cloudflare/settings/write", json={"allow_write": True}, headers=h).json()["allow_write"]
+
+        assert cf.post("/api/cloudflare/routes", json={**route, "service": "rm -rf /"}, headers=h).status_code == 422
+        assert cf.post("/api/cloudflare/routes", json=route, headers=h).status_code == 200
+        config_put = next(w for w in FakeCF.writes if w[0] == "PUT")
+        ingress = config_put[2]["config"]["ingress"]
+        assert ingress[-1] == {"service": "http_status:404"}  # catch-all stays last
+        assert {"hostname": "new.example.com", "service": "http://localhost:8200"} in ingress
+        dns = next(w for w in FakeCF.writes if w[0] == "POST")
+        assert dns[2] == {"type": "CNAME", "name": "new.example.com", "content": f"{TUNNEL}.cfargotunnel.com",
+                          "ttl": 1, "proxied": True}
+        hosts = {r["hostname"]: r for r in cf.get("/api/cloudflare").json()["hosts"]}
+        assert hosts["new.example.com"]["problems"] == []
+
+        # DNS record outside the zone is refused, inside works; delete
+        rec = {"zone_id": "z1", "type": "TXT", "name": "x.other.org", "content": "hello"}
+        assert cf.post("/api/cloudflare/dns", json=rec, headers=h).status_code == 502
+        assert cf.post("/api/cloudflare/dns", json={**rec, "name": "x.example.com"}, headers=h).status_code == 200
+        rid = next(r["id"] for r in ROUTES["/zones/z1/dns_records"] if r.get("name") == "x.example.com")
+        assert cf.delete(f"/api/cloudflare/dns/z1/{rid}", headers=h).status_code == 204
+
+        assert cf.post("/api/cloudflare/routes/delete", json={**route, "dns": True}, headers=h).status_code == 200
+        assert not any(r.get("name") == "new.example.com" for r in ROUTES["/zones/z1/dns_records"])
+        actions = [a["action"] for a in cf.get("/api/audit").json()]
+        assert {"cloudflare.route_saved", "cloudflare.dns_created", "cloudflare.dns_deleted",
+                "cloudflare.route_deleted"} <= set(actions)
+    finally:
+        ROUTES.clear()
+        ROUTES.update(saved)

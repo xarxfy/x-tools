@@ -131,14 +131,15 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
 }
 
 /** Delete button that asks once more before doing anything. */
-export function ConfirmDelete({ onConfirm, busy }: { onConfirm: () => void; busy?: boolean }) {
+export function ConfirmDelete({ onConfirm, busy, compact }: { onConfirm: () => void; busy?: boolean; compact?: boolean }) {
   const { t } = useTranslation();
   const [ask, setAsk] = useState(false);
   if (!ask) {
     return (
-      <button type="button" className="btn btn-danger-ghost" onClick={() => setAsk(true)}>
+      <button type="button" className={`btn btn-danger-ghost${compact ? " btn-icon" : ""}`} onClick={() => setAsk(true)}
+              title={t("common.delete")} aria-label={t("common.delete")}>
         <Icon name="trash" size={16} />
-        {t("common.delete")}
+        {!compact && t("common.delete")}
       </button>
     );
   }

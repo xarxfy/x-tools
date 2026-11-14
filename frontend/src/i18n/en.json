@@ -223,7 +223,7 @@
       "created": "created",
       "stopped": "stopped"
     },
-    "readonlyNote": "Agents only report – containers on this server cannot be controlled from here."
+    "readonlyNote": "This agent only reports – switch on “Allow control” with a new install command to control containers here."
   },
   "proxmox": {
     "all": "All {{count}}",
@@ -237,6 +237,17 @@
       "stopped": "stopped",
       "paused": "paused",
       "running": "running"
+    },
+    "reboot": "Reboot",
+    "shutdown": "Shut down",
+    "stop": "Stop",
+    "yes": "Yes",
+    "failed": "failed",
+    "sent": "done",
+    "confirm": {
+      "stop": "Hard stop {{name}}?",
+      "reboot": "Reboot {{name}}?",
+      "shutdown": "Shut down {{name}}?"
     }
   },
   "overview": {
@@ -343,7 +354,7 @@
     "tokenIdHint": "user@realm!token",
     "tokenSecret": "API token secret",
     "verifyTls": "Verify the TLS certificate (off for the default self-signed certificate)",
-    "proxmoxHowto": "Proxmox: Datacenter → Permissions → API Tokens → Add; then Permissions → Add → API Token Permission, path /, role PVEAuditor. The secret only goes into the install command.",
+    "proxmoxHowto": "Proxmox: Datacenter → Permissions → API Tokens → Add; then Permissions → Add → API Token Permission, path /, role PVEAuditor (read-only) – for control a role with VM.PowerMgmt too, e.g. PVEVMUser. The secret only goes into the install command.",
     "cf": "X-TOOLS is behind Cloudflare Access",
     "cfHint": "Service token so the agent gets through (rule: Service Auth for /api/agent/).",
     "cfId": "Client ID",
@@ -382,7 +393,11 @@
     "uninstallHint": "Removes the systemd service and its files, or the Docker container – whichever is installed.",
     "uninstallNote": "Without it the agent keeps trying to report and is rejected. Later you can also find the command under Help → Agents.",
     "update": "Update to v{{version}}",
-    "updateHint": "A newer agent is available: create a new install command and run it on the server."
+    "updateHint": "A newer agent is available: create a new install command and run it on the server.",
+    "control": "Allow control from X-TOOLS",
+    "controlHintDocker": "Operators can start, stop and restart containers on this server and read their logs. Off: the agent only reports.",
+    "controlHintProxmox": "Operators can start, shut down, stop and reboot LXCs/VMs. The API token then needs VM.PowerMgmt (see the hint above).",
+    "controlBadge": "control on"
   },
   "about": {
     "version": "Version",
@@ -536,7 +551,20 @@
       "settings.features": "Features changed",
       "backup.downloaded": "Backup downloaded",
       "backup.restored": "Backup restored",
-      "settings.cloudflare": "Cloudflare settings changed"
+      "settings.cloudflare": "Cloudflare settings changed",
+      "docker.start": "Container started",
+      "docker.stop": "Container stopped",
+      "docker.restart": "Container restarted",
+      "docker.logs": "Container logs viewed",
+      "proxmox.start": "Proxmox guest started",
+      "proxmox.shutdown": "Proxmox guest shut down",
+      "proxmox.stop": "Proxmox guest stopped",
+      "proxmox.reboot": "Proxmox guest rebooted",
+      "cloudflare.dns_created": "DNS record created",
+      "cloudflare.dns_updated": "DNS record changed",
+      "cloudflare.dns_deleted": "DNS record deleted",
+      "cloudflare.route_saved": "Tunnel route saved",
+      "cloudflare.route_deleted": "Tunnel route deleted"
     },
     "areas": {
       "login": "Logins",
@@ -550,7 +578,10 @@
       "container": "Containers",
       "agent": "Agents",
       "settings": "Settings",
-      "backup": "Backups"
+      "backup": "Backups",
+      "docker": "Containers (agents)",
+      "proxmox": "Proxmox",
+      "cloudflare": "Cloudflare"
     }
   },
   "assistant": {
@@ -668,6 +699,29 @@
     "tokenReplace": "A token is stored – enter a new one to replace it.",
     "saveToken": "Check and save",
     "checking": "Checking …",
-    "saved": "Saved – data is being fetched."
+    "saved": "Saved – data is being fetched.",
+    "addRecord": "Add record",
+    "editRecord": "Edit DNS record",
+    "addRoute": "Add route",
+    "editRoute": "Edit route",
+    "fixRoute": "Create route",
+    "zone": "Zone {{name}}",
+    "type": "Type",
+    "name": "Name",
+    "content": "Content",
+    "contentHint": {
+      "A": "IPv4 address",
+      "AAAA": "IPv6 address",
+      "CNAME": "Target host name",
+      "TXT": "Text"
+    },
+    "proxiedHint": "Proxied through Cloudflare (orange cloud)",
+    "tunnel": "Tunnel",
+    "hostname": "Hostname",
+    "service": "Service",
+    "serviceHint": "Seen from the server the tunnel runs on, e.g. http://localhost:8080",
+    "routeDns": "Point the DNS record to this tunnel (create or update the CNAME)",
+    "allowWrite": "Allow changes",
+    "allowWriteHint": "Operators can add, edit and delete DNS records and tunnel routes. The token then needs DNS → Edit and Cloudflare Tunnel → Edit. Every change lands in the audit log."
   }
 }

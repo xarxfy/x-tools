@@ -311,3 +311,6 @@
 .host-section .center-state {
   min-height: 120px;
 }
+.guest-actions {
+  flex-wrap: wrap;
+}

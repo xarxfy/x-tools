@@ -124,6 +124,13 @@ const DOCS: Doc[] = [
         "/etc/x-tools-agent /etc/systemd/system/x-tools-agent.service; systemctl daemon-reload 2>/dev/null; " +
         "docker rm -f x-tools-agent 2>/dev/null; echo 'X-TOOLS agent removed'"}</pre>
     </>, "remove uninstall delete agent"),
+    doc("agents-control", "Control (start/stop)", <>
+      <p>With <em>Allow control from X-TOOLS</em> (when adding the server or with a new install command), operators and
+        admins can start, stop and restart containers and read logs on Docker hosts, and start, shut down, stop and
+        reboot LXCs/VMs on Proxmox hosts. The agent still opens no port – it asks X-TOOLS for commands and only runs
+        this fixed list. Control must be switched on on the agent itself (<code>XT_AGENT_CONTROL=1</code>). Proxmox needs
+        a token with <code>VM.PowerMgmt</code> (e.g. role PVEVMUser). Every action is in the audit log.</p>
+    </>, "control start stop restart reboot shutdown operator agent proxmox docker"),
     doc("agents-access", "Behind Cloudflare Access", <>
       <p>If X-TOOLS is protected by Cloudflare Access, the agent cannot log in interactively. Create a service token
         (Zero Trust → Access → Service Auth), add a policy with action “Service Auth” for the path
@@ -144,8 +151,10 @@ const DOCS: Doc[] = [
       permissions (Zone, DNS, Cloudflare Tunnel, Access: Apps and Policies). The <em>Cloudflare</em> page then shows
       per hostname the chain DNS record → tunnel → route → Access app and the service using it, and marks problems:
       no DNS record, a tunnel without route for the hostname, a route to a different port than the service uses,
-      DNS not pointing to the tunnel. Unhealthy tunnels appear on the overview. X-TOOLS never changes anything at
-      Cloudflare; data is refreshed every 10 minutes.</p>
+      DNS not pointing to the tunnel. Unhealthy tunnels appear on the overview. Data is refreshed every 10 minutes.</p>
+    <p>Read-only by default. With <em>Allow changes</em> (admins, token with DNS Edit and Cloudflare Tunnel Edit)
+      operators can add, edit and delete DNS records and tunnel routes – or fix a hostname with <em>Create route</em>.
+      Every change is in the audit log.</p>
   </>, "cloudflare dns tunnel route access token"),
   doc("notifications", "Notifications", <>
     <p>Every minute X-TOOLS compares the list of issues with the previous run. New problems are sent once they

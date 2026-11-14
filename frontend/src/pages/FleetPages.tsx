@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useDocker } from "../api/docker";
+import { agentControl, localControl, useDocker } from "../api/docker";
 import { AGENT_STALE, agentAge, useAgent, useAgents, type AgentSummary } from "../api/monitor";
 import { Icon } from "../components/Icon";
 import { Dot, Empty, Loading, PageHead } from "../components/ui";
@@ -68,7 +68,7 @@ function ProxmoxHost({ agent }: { agent: AgentSummary }) {
     <section className="host-section">
       <HostHead to={`/servers/${agent.id}`} name={agent.name} state={agentState(agent)}
                 sub={[agent.hostname, age !== null && t("servers.reported", { when: ago(Date.now() / 1000 - age) })].filter(Boolean).join(" · ")} />
-      {!detail.data ? <Loading error={detail.error} /> : px ? <ProxmoxTab px={px} /> : <Empty>{t("fleet.noData")}</Empty>}
+      {!detail.data ? <Loading error={detail.error} /> : px ? <ProxmoxTab px={px} agentId={agent.control ? agent.id : undefined} /> : <Empty>{t("fleet.noData")}</Empty>}
     </section>
   );
 }
@@ -89,7 +89,7 @@ export function DockerPage() {
                     state={docker.data.stale ? "down" : "up"}
                     sub={[snap.system?.hostname, t("servers.containersRunning", counts(snap)),
                       t("servers.updated", { when: ago(snap.collected_at) })].filter(Boolean).join(" · ")} />
-          <DockerTab snap={snap} protectedNames={docker.data.protected} readonly={false} />
+          <DockerTab snap={snap} protectedNames={docker.data.protected} readonly={false} control={localControl} />
         </section>
       )}
       {hosts.map((a) => <DockerHost key={a.id} agent={a} />)}
@@ -106,7 +106,8 @@ function DockerHost({ agent }: { agent: AgentSummary }) {
       <HostHead to={`/servers/${agent.id}?tab=docker`} name={agent.name} state={agentState(agent)}
                 sub={[agent.hostname, snap && t("servers.containersRunning", counts(snap))].filter(Boolean).join(" · ")} />
       {!detail.data ? <Loading error={detail.error} /> : snap ? (
-        <DockerTab snap={snap} protectedNames={[]} readonly />
+        <DockerTab snap={snap} protectedNames={[]} readonly={!agent.control} agent
+                   control={agent.control ? agentControl(agent.id) : undefined} />
       ) : <Empty>{t("fleet.noData")}</Empty>}
     </section>
   );

@@ -51,7 +51,15 @@ def configured() -> bool:
 
 
 def save_token(value: str) -> None:
-    state.save(SETTINGS_KEY, {"token": encrypt_json(value), "saved_at": time.time()})
+    state.save(SETTINGS_KEY, {**load_settings(), "token": encrypt_json(value), "saved_at": time.time()})
+
+
+def allow_write() -> bool:
+    return configured() and bool(load_settings().get("allow_write"))
+
+
+def set_allow_write(value: bool) -> None:
+    state.save(SETTINGS_KEY, {**load_settings(), "allow_write": bool(value)})
 
 
 def remove() -> None:
@@ -62,11 +70,12 @@ def remove() -> None:
 # --- API ----------------------------------------------------------------------------
 
 
-def api(path: str, tok: str, params: dict | None = None):
+def api(path: str, tok: str, params: dict | None = None, method: str = "GET", body: dict | None = None):
     base = get_settings().cloudflare_api.rstrip("/")
     url = base + path + ("?" + urllib.parse.urlencode(params) if params else "")
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json",
-                                               "User-Agent": "x-tools"})
+    req = urllib.request.Request(url, method=method, data=json.dumps(body).encode() if body is not None else None,
+                                 headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json",
+                                          "User-Agent": "x-tools"})
     try:
         with urllib.request.urlopen(req, timeout=20) as res:
             data = json.loads(res.read())
@@ -117,7 +126,8 @@ def fetch(tok: str) -> dict:
         zone = {"id": z["id"], "name": z["name"], "status": z.get("status", ""), "records": []}
         try:
             records = api_all(f"/zones/{z['id']}/dns_records", tok, per_page=500)
-            zone["records"] = [{"type": r.get("type"), "name": r.get("name"), "content": r.get("content", ""),
+            zone["records"] = [{"id": r.get("id", ""), "type": r.get("type"), "name": r.get("name"),
+                                "content": r.get("content", ""),
                                 "proxied": bool(r.get("proxied")), "ttl": r.get("ttl")} for r in records
                                if r.get("type") in ("A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV", "CAA")]
         except CloudflareError as error:
@@ -132,7 +142,7 @@ def fetch(tok: str) -> dict:
             snap["errors"]["tunnels"] = str(error)
             tunnels = []
         for tn in tunnels:
-            tunnel = {"id": tn["id"], "name": tn.get("name", ""), "status": tn.get("status", ""),
+            tunnel = {"id": tn["id"], "account_id": account_id, "name": tn.get("name", ""), "status": tn.get("status", ""),
                       "connections": len(tn.get("connections") or []), "remote_config": bool(tn.get("remote_config")),
                       "ingress": None}
             if tunnel["remote_config"]:
@@ -271,3 +281,107 @@ def issues(services: list[dict]) -> list[dict]:
             out.append({"key": f"cloudflare:host:{rw['hostname']}", "kind": "cloudflare", "level": "warn",
                         "text": f"{rw['hostname']}: {rw['problems'][0]}", "link": "/cloudflare"})
     return out
+
+
+# --- Changes (only when an admin allowed them; the token needs edit permissions) ---------
+
+EDITABLE_TYPES = ("A", "AAAA", "CNAME", "TXT")
+
+
+def _zone(snap: dict, zone_id: str) -> dict:
+    zone = next((z for z in snap.get("zones", []) if z["id"] == zone_id), None)
+    if zone is None:
+        raise CloudflareError("Unknown zone")
+    return zone
+
+
+def _tunnel(snap: dict, tunnel_id: str) -> dict:
+    tunnel = next((t for t in snap.get("tunnels", []) if t["id"] == tunnel_id), None)
+    if tunnel is None:
+        raise CloudflareError("Unknown tunnel")
+    if not tunnel.get("remote_config"):
+        raise CloudflareError("This tunnel is configured locally (config.yml) – change its routes there")
+    return tunnel
+
+
+def zone_for(snap: dict, hostname: str) -> dict:
+    zones = sorted(snap.get("zones", []), key=lambda z: len(z["name"]), reverse=True)
+    zone = next((z for z in zones if hostname == z["name"] or hostname.endswith("." + z["name"])), None)
+    if zone is None:
+        raise CloudflareError(f"{hostname} is not in a zone of this Cloudflare account")
+    return zone
+
+
+def current() -> dict:
+    """Fresh data before every change, so changes are based on what is really at Cloudflare."""
+    return refresh() or {}
+
+
+def save_record(zone_id: str, record: dict, record_id: str = "", snap: dict | None = None) -> None:
+    snap = snap or current()
+    zone = _zone(snap, zone_id)
+    name = record["name"]
+    if not (name == zone["name"] or name.endswith("." + zone["name"])):
+        raise CloudflareError(f"The name must end with {zone['name']}")
+    body = {"type": record["type"], "name": name, "content": record["content"], "ttl": record.get("ttl") or 1}
+    if record["type"] in ("A", "AAAA", "CNAME"):
+        body["proxied"] = bool(record.get("proxied"))
+    if record_id:
+        api(f"/zones/{zone_id}/dns_records/{record_id}", token(), method="PUT", body=body)
+    else:
+        api(f"/zones/{zone_id}/dns_records", token(), method="POST", body=body)
+
+
+def delete_record(zone_id: str, record_id: str, snap: dict | None = None) -> None:
+    snap = snap or current()
+    _zone(snap, zone_id)
+    api(f"/zones/{zone_id}/dns_records/{record_id}", token(), method="DELETE")
+
+
+def _tunnel_config(tunnel: dict) -> dict:
+    path = f"/accounts/{tunnel['account_id']}/cfd_tunnel/{tunnel['id']}/configurations"
+    return ((api(path, token()).get("result") or {}).get("config")) or {}
+
+
+def _put_tunnel_config(tunnel: dict, config: dict) -> None:
+    path = f"/accounts/{tunnel['account_id']}/cfd_tunnel/{tunnel['id']}/configurations"
+    api(path, token(), method="PUT", body={"config": config})
+
+
+def save_route(tunnel_id: str, hostname: str, service: str, create_dns: bool = True) -> None:
+    """Add or change the route of a hostname (above the catch-all rule) and point DNS to the tunnel."""
+    snap = current()
+    tunnel = _tunnel(snap, tunnel_id)
+    config = _tunnel_config(tunnel)
+    ingress = [i for i in config.get("ingress") or [] if i.get("hostname") != hostname]
+    rules = [i for i in ingress if i.get("hostname")]
+    catch_all = [i for i in ingress if not i.get("hostname")] or [{"service": "http_status:404"}]
+    config["ingress"] = rules + [{"hostname": hostname, "service": service}] + catch_all[-1:]
+    _put_tunnel_config(tunnel, config)
+    if create_dns:
+        zone = zone_for(snap, hostname)
+        target = f"{tunnel_id}{TUNNEL_SUFFIX}"
+        existing = next((r for r in zone["records"] if r["name"] == hostname and r["type"] in ("A", "AAAA", "CNAME")),
+                        None)
+        if existing is None:
+            save_record(zone["id"], {"type": "CNAME", "name": hostname, "content": target, "proxied": True}, "", snap)
+        elif existing["type"] == "CNAME" and existing["content"] != target:
+            save_record(zone["id"], {"type": "CNAME", "name": hostname, "content": target, "proxied": True},
+                        existing["id"], snap)
+        elif existing["type"] != "CNAME":
+            raise CloudflareError(f"Route saved, but {hostname} has an {existing['type']} record – replace it with a "
+                                  "CNAME to the tunnel yourself")
+
+
+def delete_route(tunnel_id: str, hostname: str, delete_dns: bool = False) -> None:
+    snap = current()
+    tunnel = _tunnel(snap, tunnel_id)
+    config = _tunnel_config(tunnel)
+    config["ingress"] = [i for i in config.get("ingress") or [] if i.get("hostname") != hostname]
+    _put_tunnel_config(tunnel, config)
+    if delete_dns:
+        zone = zone_for(snap, hostname)
+        target = f"{tunnel_id}{TUNNEL_SUFFIX}"
+        for r in zone["records"]:
+            if r["name"] == hostname and r["type"] == "CNAME" and r["content"] == target:
+                delete_record(zone["id"], r["id"], snap)

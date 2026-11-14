@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useCloudflare, useRefreshCloudflare, type CfHost } from "../api/cloudflare";
+import {
+  useCloudflare, useDeleteRecord, useDeleteRoute, useRefreshCloudflare, useSaveRecord, useSaveRoute,
+  type CfHost, type CfRecord, type CfSnapshot, type RecordBody, type RouteBody,
+} from "../api/cloudflare";
+import { ConfirmDelete, Dialog } from "../components/ui";
 import { useCan } from "../api/users";
 import { Icon } from "../components/Icon";
 import { Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
@@ -21,6 +25,8 @@ export function CloudflarePage() {
   const can = useCan();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
+  const [record, setRecord] = useState<(RecordBody & { id?: string }) | null>(null);
+  const [route, setRoute] = useState<(RouteBody & { edit?: boolean }) | null>(null);
   const tab = TABS.find((k) => k === params.get("tab")) ?? "hosts";
 
   if (!cf.data) return <Loading error={cf.error} retry={() => cf.refetch()} />;
@@ -33,6 +39,8 @@ export function CloudflarePage() {
     );
   }
   const snap = cf.data.snapshot;
+  const edit = can("operator") && cf.data.allow_write;
+  const remoteTunnels = snap.tunnels.filter((tn) => tn.remote_config);
   const problems = cf.data.hosts.filter((h) => h.problems.length);
   const errors = Object.entries(snap.errors ?? {});
 
@@ -64,13 +72,27 @@ export function CloudflarePage() {
         ))}
       </div>
 
-      {tab === "hosts" && <Hosts hosts={cf.data.hosts.filter((h) => matches(query, h.hostname, h.service?.name, h.route?.service))} />}
+      {tab === "hosts" && (
+        <Hosts hosts={cf.data.hosts.filter((h) => matches(query, h.hostname, h.service?.name, h.route?.service))}
+               onFix={edit && remoteTunnels.length ? (h) => setRoute({
+                 tunnel_id: h.tunnel?.id && remoteTunnels.some((tn) => tn.id === h.tunnel!.id) ? h.tunnel.id : remoteTunnels[0].id,
+                 hostname: h.hostname, service: `http://localhost:${h.service?.ports[0] ?? 8080}`, dns: true,
+               }) : undefined} />
+      )}
 
       {tab === "dns" && snap.zones.map((z) => {
         const records = z.records.filter((r) => matches(query, r.name, r.content, r.type));
         return (
           <section key={z.id}>
-            <h2 className="section-title">{z.name} <span className="badge">{z.status}</span></h2>
+            <div className="section-row">
+              <h2 className="section-title">{z.name} <span className="badge">{z.status}</span></h2>
+              {edit && (
+                <button type="button" className="btn btn-ghost btn-small"
+                        onClick={() => setRecord({ zone_id: z.id, type: "CNAME", name: `.${z.name}`, content: "", proxied: true })}>
+                  <Icon name="plus" size={14} />{t("cloudflare.addRecord")}
+                </button>
+              )}
+            </div>
             {records.length === 0 ? <Empty>{t("common.noMatch")}</Empty> : (
               <div className="card list">
                 {records.map((r, i) => (
@@ -82,6 +104,10 @@ export function CloudflarePage() {
                     </div>
                     {["A", "AAAA", "CNAME"].includes(r.type) && (
                       <span className={`badge ${r.proxied ? "badge-proxied" : ""}`}>{r.proxied ? t("cloudflare.proxied") : t("cloudflare.dnsOnly")}</span>
+                    )}
+                    {edit && ["A", "AAAA", "CNAME", "TXT"].includes(r.type) && (
+                      <RecordActions zoneId={z.id} record={r}
+                                     onEdit={() => setRecord({ id: r.id, zone_id: z.id, type: r.type, name: r.name, content: r.content, proxied: r.proxied })} />
                     )}
                   </div>
                 ))}
@@ -97,6 +123,12 @@ export function CloudflarePage() {
             <Dot state={tunnelState(tn.status)} /> {tn.name}
             <span className="badge">{t(`cloudflare.status.${tn.status}`, { defaultValue: tn.status })}</span>
             <span className="muted cf-small">{t("cloudflare.connections", { count: tn.connections })}</span>
+            {edit && tn.remote_config && (
+              <button type="button" className="btn btn-ghost btn-small cf-add-route"
+                      onClick={() => setRoute({ tunnel_id: tn.id, hostname: "", service: "http://localhost:", dns: true })}>
+                <Icon name="plus" size={14} />{t("cloudflare.addRoute")}
+              </button>
+            )}
           </h2>
           {tn.ingress === null ? (
             <Empty>{t("cloudflare.localConfig")}</Empty>
@@ -108,6 +140,15 @@ export function CloudflarePage() {
                     <div className="list-title">{i.hostname}{i.path && <span className="muted">{i.path}</span>}</div>
                     <div className="list-sub mono">→ {i.service}</div>
                   </div>
+                  {edit && (
+                    <div className="list-side">
+                      <button type="button" className="btn btn-ghost btn-icon" aria-label={t("common.edit")}
+                              onClick={() => setRoute({ tunnel_id: tn.id, hostname: i.hostname, service: i.service, dns: false, edit: true })}>
+                        <Icon name="edit" size={15} />
+                      </button>
+                      <RouteDelete tunnelId={tn.id} hostname={i.hostname} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -128,11 +169,121 @@ export function CloudflarePage() {
           ))}
         </div>
       ))}
+      {record && <RecordDialog value={record} snap={snap} onClose={() => setRecord(null)} />}
+      {route && <RouteDialog value={route} snap={snap} onClose={() => setRoute(null)} />}
     </>
   );
 }
 
-function Hosts({ hosts }: { hosts: CfHost[] }) {
+function RecordActions({ zoneId, record, onEdit }: { zoneId: string; record: CfRecord; onEdit: () => void }) {
+  const { t } = useTranslation();
+  const remove = useDeleteRecord();
+  return (
+    <div className="list-side">
+      <button type="button" className="btn btn-ghost btn-icon" aria-label={t("common.edit")} onClick={onEdit}>
+        <Icon name="edit" size={15} />
+      </button>
+      <ConfirmDelete compact onConfirm={() => remove.mutate({ zone_id: zoneId, id: record.id })} busy={remove.isPending} />
+      {remove.error && <span className="error-text small-note">{remove.error.message}</span>}
+    </div>
+  );
+}
+
+function RouteDelete({ tunnelId, hostname }: { tunnelId: string; hostname: string }) {
+  const remove = useDeleteRoute();
+  return (
+    <>
+      <ConfirmDelete compact onConfirm={() => remove.mutate({ tunnel_id: tunnelId, hostname, service: "", dns: true })}
+                     busy={remove.isPending} />
+      {remove.error && <span className="error-text small-note">{remove.error.message}</span>}
+    </>
+  );
+}
+
+function RecordDialog({ value, snap, onClose }: { value: RecordBody & { id?: string }; snap: CfSnapshot; onClose: () => void }) {
+  const { t } = useTranslation();
+  const save = useSaveRecord();
+  const [form, setForm] = useState(value);
+  const zone = snap.zones.find((z) => z.id === form.zone_id);
+  return (
+    <Dialog title={value.id ? t("cloudflare.editRecord") : t("cloudflare.addRecord")} onClose={onClose}
+            onSubmit={() => save.mutate(form, { onSuccess: onClose })}
+            footer={<>
+              <span className="spacer" />
+              <button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
+              <button type="submit" className="btn btn-primary" disabled={save.isPending}>{t("common.save")}</button>
+            </>}>
+      <p className="muted" style={{ margin: 0 }}>{t("cloudflare.zone", { name: zone?.name })}</p>
+      <div className="grid-2">
+        <label className="field">
+          {t("cloudflare.type")}
+          <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+            {["A", "AAAA", "CNAME", "TXT"].map((x) => <option key={x}>{x}</option>)}
+          </select>
+        </label>
+        <label className="field">
+          {t("cloudflare.name")}
+          <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.trim().toLowerCase() })} />
+        </label>
+      </div>
+      <label className="field">
+        {t("cloudflare.content")}
+        <span className="hint">{t(`cloudflare.contentHint.${form.type}`)}</span>
+        <input className="input mono" required value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
+      </label>
+      {["A", "AAAA", "CNAME"].includes(form.type) && (
+        <label className="inline-check">
+          <input type="checkbox" checked={form.proxied} onChange={(e) => setForm({ ...form, proxied: e.target.checked })} />
+          {t("cloudflare.proxiedHint")}
+        </label>
+      )}
+      {save.error && <p className="error-text">{save.error.message}</p>}
+    </Dialog>
+  );
+}
+
+function RouteDialog({ value, snap, onClose }: { value: RouteBody & { edit?: boolean }; snap: CfSnapshot; onClose: () => void }) {
+  const { t } = useTranslation();
+  const save = useSaveRoute();
+  const [form, setForm] = useState(value);
+  const tunnels = snap.tunnels.filter((tn) => tn.remote_config);
+  return (
+    <Dialog title={value.edit ? t("cloudflare.editRoute") : t("cloudflare.addRoute")} onClose={onClose}
+            onSubmit={() => save.mutate(form, { onSuccess: onClose })}
+            footer={<>
+              <span className="spacer" />
+              <button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
+              <button type="submit" className="btn btn-primary" disabled={save.isPending}>{t("common.save")}</button>
+            </>}>
+      <div className="grid-2">
+        <label className="field">
+          {t("cloudflare.tunnel")}
+          <select className="input" value={form.tunnel_id} disabled={value.edit}
+                  onChange={(e) => setForm({ ...form, tunnel_id: e.target.value })}>
+            {tunnels.map((tn) => <option key={tn.id} value={tn.id}>{tn.name}</option>)}
+          </select>
+        </label>
+        <label className="field">
+          {t("cloudflare.hostname")}
+          <input className="input" required readOnly={value.edit} placeholder="app.example.com" value={form.hostname}
+                 onChange={(e) => setForm({ ...form, hostname: e.target.value.trim().toLowerCase() })} />
+        </label>
+      </div>
+      <label className="field">
+        {t("cloudflare.service")}
+        <span className="hint">{t("cloudflare.serviceHint")}</span>
+        <input className="input mono" required value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value.trim() })} />
+      </label>
+      <label className="inline-check">
+        <input type="checkbox" checked={form.dns} onChange={(e) => setForm({ ...form, dns: e.target.checked })} />
+        {t("cloudflare.routeDns")}
+      </label>
+      {save.error && <p className="error-text">{save.error.message}</p>}
+    </Dialog>
+  );
+}
+
+function Hosts({ hosts, onFix }: { hosts: CfHost[]; onFix?: (h: CfHost) => void }) {
   const { t } = useTranslation();
   if (!hosts.length) return <Empty>{t("common.noMatch")}</Empty>;
   const zones = [...new Set(hosts.map((h) => h.zone ?? t("cloudflare.otherZone")))];
@@ -164,6 +315,9 @@ function Hosts({ hosts }: { hosts: CfHost[] }) {
                   </div>
                   {h.problems.map((p) => <p key={p} className="cf-problem">{p}</p>)}
                 </div>
+                {onFix && h.service && h.problems.length > 0 && (
+                  <button type="button" className="btn btn-small" onClick={() => onFix(h)}>{t("cloudflare.fixRoute")}</button>
+                )}
               </div>
             ))}
           </div>

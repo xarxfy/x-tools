@@ -12,7 +12,7 @@
                                                               x-tools-collector  ── Docker socket,
                                                               no network            compose folders (read-only)
 
-  Other servers:  x-tools-agent  ── HTTPS POST /api/agent/report ──▶  x-tools
+  Other servers:  x-tools-agent  ── HTTPS: report every minute, poll for commands (if control is on) ──▶  x-tools
 ```
 
 - **One image, three roles:** `x-tools serve` (web UI + API), `x-tools collect` (Docker collector) and
@@ -32,7 +32,9 @@
 - Credentials, notification tokens and the Cloudflare token are encrypted with the instance's secret key. Backups
   from the UI are encrypted with a passphrase (scrypt + Fernet).
 - Compose files, Dockerfiles and logs are shown with passwords, tokens and keys masked; `.env` files are never read.
-- Agents only send; they authenticate with their own key (only a hash is stored). Agent install commands work once
-  and for one hour.
+- Agents authenticate with their own key (only a hash is stored) and open no ports. Control (start/stop) is opt-in on
+  the agent itself; the agent fetches commands by long polling and only runs a fixed list of actions. Agent install
+  commands work once and for one hour.
+- Cloudflare is read-only unless an admin allows changes; changes are limited to DNS records and tunnel routes.
 - Run X-TOOLS behind HTTPS or on a private connection. An additional login in front (Cloudflare Access, VPN) is
   recommended for anything with credentials in it.

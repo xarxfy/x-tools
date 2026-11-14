@@ -14,8 +14,8 @@ something breaks.
 | **Services** | What runs where: host, ports (checked every minute), domains, folder, uptime; credentials encrypted |
 | **Assistant** | New services from templates – compose file, `.env`, proxy/tunnel config and a setup checklist |
 | **Servers & Docker** | Containers per compose project, start/stop/restart, logs, compose files (secrets masked), charts |
-| **Agents** | More servers: Proxmox hosts (nodes, LXCs, VMs) and Docker hosts – one install command, outbound only |
-| **Cloudflare** | Read-only: DNS, tunnels, routes and Access apps, checked against your services |
+| **Agents** | More servers: Proxmox hosts (nodes, LXCs, VMs) and Docker hosts – one install command, outbound only, optional control (start/stop) |
+| **Cloudflare** | DNS, tunnels, routes and Access apps, checked against your services; optionally edit DNS records and tunnel routes |
 | **Customers** | Optional: contacts, agreements and external website checks for sites you host for others |
 | **Notifications** | Telegram and ntfy, with delay and "back to normal" |
 | **Users** | Roles (viewer, operator, admin), two-factor login, audit log, encrypted backups |
@@ -60,7 +60,7 @@ The *Help* page inside X-TOOLS explains every area as well.
 - The web UI never accesses Docker; a separate collector without network does, and only start/stop/restart/logs.
 - Credentials and tokens are encrypted; passwords in compose files and logs are masked; `.env` files are never read.
 - Setup code for the first account, two-factor login, roles enforced by the API, audit log.
-- Agents only send data and cannot be controlled from X-TOOLS.
+- Agents open no ports; controlling them is opt-in on the agent and limited to start/stop/restart/logs.
 
 Details: [architecture.md](docs/architecture.md#security)
 

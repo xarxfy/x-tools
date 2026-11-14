@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import {
-  allContainers, containerState, fetchLogs, useContainerAction, useDocker,
-  type Container, type DockerState, type Project, type ProjectFile, type Snapshot, type SystemInfo,
+  agentAction, agentControl, allContainers, containerState, localControl, useDocker,
+  type Container, type DockerControl, type DockerState, type Project, type ProjectFile, type Snapshot, type SystemInfo,
 } from "../api/docker";
 import {
   AGENT_STALE, agentAge, useAgent as useAgentQueryBase, useAgents,
-  type AgentReport, type AgentSummary, type Proxmox,
+  type AgentReport, type AgentSummary, type Proxmox, type ProxmoxGuest,
 } from "../api/monitor";
 import { Icon } from "../components/Icon";
 import { Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
@@ -76,6 +77,7 @@ interface ServerView {
   proxmox: Proxmox | null;
   readonly: boolean;
   reported: boolean;
+  control: boolean;
 }
 
 function localServer(t: TFunction, data: DockerState): ServerView {
@@ -84,7 +86,7 @@ function localServer(t: TFunction, data: DockerState): ServerView {
     id: "local", name: t("servers.local"), host: snap?.system?.hostname ?? "", snap, stale: data.stale,
     state: !snap ? "warn" : snap.error || data.stale ? "down" : "up",
     stateText: !snap ? t("servers.noSnapshot") : snap.error ?? t("servers.updated", { when: ago(snap.collected_at) }),
-    sys: snap?.system, proxmox: null, readonly: false, reported: true,
+    sys: snap?.system, proxmox: null, readonly: false, reported: true, control: true,
   };
 }
 
@@ -97,7 +99,8 @@ function agentServer(t: TFunction, a: AgentSummary, report?: AgentReport | null)
     stateText: age === null ? t("servers.neverReported")
       : fresh ? t("servers.reported", { when: ago(Date.now() / 1000 - age) })
         : t("servers.silent", { when: ago(Date.now() / 1000 - age) }),
-    sys: report?.system, proxmox: report?.proxmox ?? null, readonly: true, reported: age !== null,
+    sys: report?.system, proxmox: report?.proxmox ?? null, readonly: !a.control, reported: age !== null,
+    control: a.control,
   };
 }
 
@@ -226,7 +229,7 @@ export function ServerPage() {
           {t("servers.agentPending")} <Link to="/settings?tab=agents">{t("servers.setupAgent")}</Link>
         </Empty>
       ) : tab === "proxmox" && srv.proxmox ? (
-        <ProxmoxTab px={srv.proxmox} />
+        <ProxmoxTab px={srv.proxmox} agentId={srv.control ? srv.id : undefined} />
       ) : !snap && tab === "docker" ? (
         <Empty>{t("servers.noSnapshotLong")}</Empty>
       ) : (
@@ -236,7 +239,11 @@ export function ServerPage() {
           {tab === "overview" ? (
             <Overview srv={srv} onTab={(k) => setParams({ tab: k })} />
           ) : (
-            snap && <DockerTab snap={snap} protectedNames={docker.data.protected} readonly={srv.readonly} />
+            snap && (
+              <DockerTab snap={snap} protectedNames={id === "local" ? docker.data.protected : []}
+                         readonly={srv.readonly} agent={id !== "local"}
+                         control={id === "local" ? localControl : srv.control ? agentControl(srv.id) : undefined} />
+            )
           )}
         </>
       )}
@@ -323,8 +330,9 @@ function Overview({ srv, onTab }: { srv: ServerView; onTab: (tab: string) => voi
   );
 }
 
-export function ProxmoxTab({ px }: { px: Proxmox }) {
+export function ProxmoxTab({ px, agentId }: { px: Proxmox; agentId?: string }) {
   const { t } = useTranslation();
+  const canControl = useCan()("operator") && !!agentId;
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   if (px.error) return <p className="notice">{px.error}</p>;
@@ -389,6 +397,7 @@ export function ProxmoxTab({ px }: { px: Proxmox }) {
                       : `${t(`proxmox.status.${g.status}`, { defaultValue: g.status })} · RAM ${fmtBytes(g.maxmem)}`}
                   </div>
                 </div>
+                {canControl && <GuestActions agentId={agentId!} guest={g} />}
                 {on && g.maxmem > 0 && (
                   <div className="guest-bar">
                     <div className="bar">
@@ -405,21 +414,23 @@ export function ProxmoxTab({ px }: { px: Proxmox }) {
   );
 }
 
-export function DockerTab({ snap, protectedNames, readonly: agentReadonly }: {
+export function DockerTab({ snap, protectedNames, readonly: agentReadonly, agent = false, control }: {
   snap: Snapshot;
   protectedNames: string[];
   readonly: boolean;
+  agent?: boolean;
+  control?: DockerControl;
 }) {
   const { t } = useTranslation();
   const canOperate = useCan()("operator");
-  const readonly = agentReadonly || !canOperate;
+  const readonly = agentReadonly || !canOperate || !control;
   const [file, setFile] = useState<ProjectFile | null>(null);
   const [logs, setLogs] = useState<string | null>(null);
   const [adopt, setAdopt] = useState<Project | null>(null);
 
   if (!snap.projects.length && !snap.containers.length) return <Empty>{t("docker.none")}</Empty>;
   const row = (c: Container) => (
-    <ContainerRow key={c.name} c={c} readonly={readonly} isProtected={protectedNames.includes(c.name)}
+    <ContainerRow key={c.name} c={c} readonly={readonly} control={control} isProtected={protectedNames.includes(c.name)}
                   onLogs={() => setLogs(c.name)} />
   );
 
@@ -432,7 +443,7 @@ export function DockerTab({ snap, protectedNames, readonly: agentReadonly }: {
               <div className="list-title">{p.name}</div>
               <div className="list-sub">{p.folder}</div>
             </div>
-            {readonly ? null : p.service ? (
+            {readonly || agent ? null : p.service ? (
               <span className="badge" title={t("docker.listedHint")}>{t("docker.service", { name: p.service.name })}</span>
             ) : (
               <button type="button" className="btn btn-ghost" onClick={() => setAdopt(p)}>
@@ -474,7 +485,7 @@ export function DockerTab({ snap, protectedNames, readonly: agentReadonly }: {
         </section>
       )}
       <p className="muted small-note">
-        {agentReadonly && `${t("docker.readonlyNote")} `}
+        {agent && agentReadonly && `${t("docker.readonlyNote")} `}
         {t("docker.maskedNote")}
       </p>
 
@@ -484,7 +495,7 @@ export function DockerTab({ snap, protectedNames, readonly: agentReadonly }: {
           {file.error ? <p className="error-text">{file.error}</p> : <pre className="code">{file.content}</pre>}
         </Dialog>
       )}
-      {logs && <LogsDialog container={logs} onClose={() => setLogs(null)} />}
+      {logs && control && <LogsDialog container={logs} control={control} onClose={() => setLogs(null)} />}
       {adopt && (
         <ServiceDialog
           service={null}
@@ -502,14 +513,23 @@ export function DockerTab({ snap, protectedNames, readonly: agentReadonly }: {
   );
 }
 
-function ContainerRow({ c, isProtected, readonly, onLogs }: {
+function ContainerRow({ c, isProtected, readonly, control, onLogs }: {
   c: Container;
   isProtected: boolean;
   readonly: boolean;
+  control?: DockerControl;
   onLogs: () => void;
 }) {
   const { t } = useTranslation();
-  const action = useContainerAction();
+  const qc = useQueryClient();
+  const action = useMutation({
+    mutationFn: ({ action: a, container }: { action: "start" | "stop" | "restart"; container: string }) =>
+      control!.action(a, container),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["docker"] });
+      qc.invalidateQueries({ queryKey: ["agents"] });
+    },
+  });
   const [state, label] = containerState(c);
   const running = ["running", "restarting", "paused"].includes(c.state);
   const run = (a: "start" | "stop" | "restart") => action.mutate({ action: a, container: c.name });
@@ -552,14 +572,14 @@ function ContainerRow({ c, isProtected, readonly, onLogs }: {
   );
 }
 
-function LogsDialog({ container, onClose }: { container: string; onClose: () => void }) {
+function LogsDialog({ container, control, onClose }: { container: string; control: DockerControl; onClose: () => void }) {
   const { t } = useTranslation();
   const [lines, setLines] = useState(300);
   const [state, setState] = useState<{ text?: string; error?: string; loading: boolean }>({ loading: false });
   const load = async (n = lines) => {
     setState((s) => ({ ...s, loading: true }));
     try {
-      const r = await fetchLogs(container, n);
+      const r = await control.logs(container, n);
       setState({ text: r.logs, loading: false });
       requestAnimationFrame(() => {
         const el = document.getElementById("log-view");
@@ -595,5 +615,42 @@ function LogsDialog({ container, onClose }: { container: string; onClose: () => 
         : state.text === undefined ? <Loading />
           : <pre id="log-view" className="code logs">{state.text || t("docker.noLogs")}</pre>}
     </Dialog>
+  );
+}
+
+function GuestActions({ agentId, guest }: { agentId: string; guest: ProxmoxGuest }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [confirm, setConfirm] = useState<"" | "stop" | "reboot" | "shutdown">("");
+  const run = useMutation({
+    mutationFn: (action: string) =>
+      agentAction(agentId, { action: `proxmox.${action}`, target: String(guest.vmid), node: guest.node, type: guest.type }),
+    onSettled: () => {
+      setConfirm("");
+      setTimeout(() => qc.invalidateQueries({ queryKey: ["agents"] }), 4000);
+    },
+  });
+  const on = guest.status === "running";
+  if (run.isPending) return <span className="muted small-note">{t("docker.working")}</span>;
+  return (
+    <div className="list-side guest-actions">
+      {run.error && <span className="error-text small-note" title={run.error.message}>{t("proxmox.failed")}</span>}
+      {run.isSuccess && <span className="state-up small-note">{t("proxmox.sent")}</span>}
+      {confirm ? (
+        <>
+          <span className="muted small-note">{t(`proxmox.confirm.${confirm}`, { name: guest.name })}</span>
+          <button type="button" className="btn btn-small btn-danger" onClick={() => run.mutate(confirm)}>{t("proxmox.yes")}</button>
+          <button type="button" className="btn btn-small btn-ghost" onClick={() => setConfirm("")}>{t("common.cancel")}</button>
+        </>
+      ) : on ? (
+        <>
+          <button type="button" className="btn btn-small" onClick={() => setConfirm("reboot")}>{t("proxmox.reboot")}</button>
+          <button type="button" className="btn btn-small" onClick={() => setConfirm("shutdown")}>{t("proxmox.shutdown")}</button>
+          <button type="button" className="btn btn-small btn-stop" onClick={() => setConfirm("stop")}>{t("proxmox.stop")}</button>
+        </>
+      ) : (
+        <button type="button" className="btn btn-small btn-start" onClick={() => run.mutate("start")}>{t("docker.start")}</button>
+      )}
+    </div>
   );
 }

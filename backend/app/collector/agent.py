@@ -8,6 +8,8 @@ anything leaves the machine.
 Environment:
   XT_AGENT_URL, XT_AGENT_KEY            where to report, key from Settings → Agents
   XT_AGENT_INTERVAL                     seconds (default 60, min 30)
+  XT_AGENT_CONTROL                      1 = accept commands from X-TOOLS (start/stop containers and
+                                        Proxmox guests, read logs). Off by default.
   CF_ACCESS_CLIENT_ID/_SECRET           optional Cloudflare Access service token
   PROXMOX_URL, PROXMOX_TOKEN_ID, PROXMOX_TOKEN_SECRET, PROXMOX_VERIFY_TLS (0/1)
 """
@@ -17,6 +19,7 @@ import os
 import socket
 import ssl
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -25,7 +28,7 @@ from app.collector.collector import collect_snapshot, host_path, system_info
 from app.core.config import get_settings
 from app.collector.httpjson import post_json
 
-AGENT_VERSION = "2"
+AGENT_VERSION = "3"
 
 
 def proxmox_info() -> dict | None:
@@ -62,6 +65,89 @@ def proxmox_info() -> dict | None:
             "storage": sorted(storage, key=lambda s: (s["node"], s["storage"]))}
 
 
+def _proxmox_ctx():
+    ctx = ssl.create_default_context()
+    if os.environ.get("PROXMOX_VERIFY_TLS", "0") == "0":
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
+PROXMOX_ACTIONS = ("start", "shutdown", "stop", "reboot")
+DOCKER_ACTIONS = ("start", "stop", "restart", "logs")
+
+
+def proxmox_action(action: str, params: dict) -> None:
+    """Power action for one guest. The API token needs VM.PowerMgmt for this."""
+    url = os.environ.get("PROXMOX_URL", "").rstrip("/")
+    if not url:
+        raise ValueError("Proxmox is not configured on this agent")
+    node, kind, vmid = str(params.get("node", "")), params.get("type"), params.get("vmid")
+    if action not in PROXMOX_ACTIONS or kind not in ("lxc", "qemu") or not str(vmid).isdigit() \
+            or not node.replace("-", "").replace(".", "").isalnum():
+        raise ValueError("Invalid Proxmox command")
+    token = f"PVEAPIToken={os.environ.get('PROXMOX_TOKEN_ID', '')}={os.environ.get('PROXMOX_TOKEN_SECRET', '')}"
+    req = urllib.request.Request(f"{url}/api2/json/nodes/{node}/{kind}/{int(vmid)}/status/{action}", data=b"",
+                                 method="POST", headers={"Authorization": token})
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=_proxmox_ctx()):
+            pass
+    except urllib.error.HTTPError as error:
+        hint = " – the API token needs the privilege VM.PowerMgmt" if error.code in (401, 403) else ""
+        raise OSError(f"Proxmox API: HTTP {error.code}{hint}") from None
+    except (urllib.error.URLError, OSError) as error:
+        raise OSError(f"Proxmox API not reachable: {getattr(error, 'reason', error)}") from None
+
+
+def execute(command: dict) -> dict:
+    """Run one command from X-TOOLS – only the fixed set of actions is possible."""
+    from app.collector.collector import docker_action, docker_logs
+    action, target, params = command.get("action", ""), str(command.get("target", "")), command.get("params") or {}
+    try:
+        area, _, verb = action.partition(".")
+        if area == "docker" and verb in DOCKER_ACTIONS:
+            if os.environ.get("XT_AGENT_DOCKER", "1") == "0":
+                raise ValueError("Docker is not enabled on this agent")
+            if verb == "logs":
+                return {"ok": True, "logs": docker_logs(target, params.get("lines"))}
+            docker_action(verb, target)
+        elif area == "proxmox" and verb in PROXMOX_ACTIONS:
+            proxmox_action(verb, {**params, "vmid": target})
+        else:
+            raise ValueError("Unknown command")
+        return {"ok": True}
+    except (ValueError, OSError) as error:
+        return {"ok": False, "error": str(error)[:300]}
+
+
+def get_json(url: str, headers: dict, timeout: float) -> object:
+    req = urllib.request.Request(url, headers={"User-Agent": "x-tools", **headers})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as res:
+            return json.loads(res.read() or b"null")
+    except urllib.error.HTTPError as error:
+        raise OSError(f"HTTP {error.code}") from None
+    except urllib.error.URLError as error:
+        raise OSError(f"not reachable ({error.reason})") from None
+
+
+def command_loop(url: str, headers: dict, report_now) -> None:
+    """Long-poll X-TOOLS for commands (outbound only) and send the results back."""
+    while True:
+        try:
+            commands = get_json(url + "/api/agent/commands?wait=25", headers, timeout=40) or []
+            for command in commands:
+                result = execute(command)
+                print(f"Command {command.get('action')} {command.get('target')}: "
+                      f"{'ok' if result['ok'] else result.get('error')}", flush=True)
+                post_json(f"{url}/api/agent/commands/{command['id']}", result, headers, timeout=60)
+                if result["ok"] and not command.get("action", "").endswith(".logs"):
+                    report_now.set()  # show the new state soon
+        except (OSError, ValueError) as error:
+            print(f"Command polling failed: {error}", flush=True)
+            time.sleep(15)
+
+
 def hostname() -> str:
     try:
         return host_path("/etc/hostname").read_text().strip() or socket.gethostname()
@@ -73,6 +159,7 @@ def build_report() -> dict:
     has_docker = os.environ.get("XT_AGENT_DOCKER", "1") != "0" and os.path.exists(get_settings().docker_socket)
     docker = collect_snapshot() if has_docker else None
     return {"version": AGENT_VERSION, "hostname": hostname(), "sent_at": time.time(),
+            "control": os.environ.get("XT_AGENT_CONTROL", "0") == "1",
             "system": (docker or {}).get("system") or system_info(), "docker": docker, "proxmox": proxmox_info()}
 
 
@@ -86,9 +173,14 @@ def run() -> None:
     if os.environ.get("CF_ACCESS_CLIENT_ID"):
         headers["CF-Access-Client-Id"] = os.environ["CF_ACCESS_CLIENT_ID"]
         headers["CF-Access-Client-Secret"] = os.environ.get("CF_ACCESS_CLIENT_SECRET", "")
+    control = os.environ.get("XT_AGENT_CONTROL", "0") == "1"
     print(f"X-TOOLS agent: reporting every {interval}s to {url} "
           f"(Docker: {'yes' if os.path.exists(get_settings().docker_socket) else 'no'}, "
-          f"Proxmox: {'yes' if os.environ.get('PROXMOX_URL') else 'no'})", flush=True)
+          f"Proxmox: {'yes' if os.environ.get('PROXMOX_URL') else 'no'}, "
+          f"control: {'on' if control else 'off'})", flush=True)
+    report_now = threading.Event()
+    if control:
+        threading.Thread(target=command_loop, args=(url, headers, report_now), daemon=True).start()
     failures = 0
     while True:
         try:
@@ -106,4 +198,7 @@ def run() -> None:
                 if isinstance(error, ValueError):
                     error = "answer was not JSON (login page?)"
                 print(f"Report failed ({failures}×): {error}{hint}", flush=True)
-        time.sleep(interval)
+        report_now.wait(interval)
+        if report_now.is_set():
+            report_now.clear()
+            time.sleep(3)  # give Docker/Proxmox a moment to change state
