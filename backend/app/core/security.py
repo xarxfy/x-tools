@@ -148,3 +148,51 @@ class LoginThrottle:
 
 
 login_throttle = LoginThrottle()
+
+
+# --- Two-factor login (TOTP, RFC 6238) -----------------------------------------------
+
+import base64  # noqa: E402
+import struct  # noqa: E402
+
+TOTP_PERIOD = 30
+TOTP_DIGITS = 6
+
+
+def new_totp_secret() -> str:
+    return base64.b32encode(secrets.token_bytes(20)).decode().rstrip("=")
+
+
+def totp_code(secret: str, step: int) -> str:
+    key = base64.b32decode(secret + "=" * (-len(secret) % 8), casefold=True)
+    digest = hmac.new(key, struct.pack(">Q", step), hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    value = struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF
+    return str(value % 10 ** TOTP_DIGITS).zfill(TOTP_DIGITS)
+
+
+def totp_verify(secret: str, code: str, last_step: int = 0, now: float | None = None) -> int | None:
+    """Returns the matching time step (±1 step for clock drift), or None. A step may only be used once."""
+    code = "".join(ch for ch in str(code) if ch.isdigit())
+    if len(code) != TOTP_DIGITS:
+        return None
+    current = int((now if now is not None else time.time()) // TOTP_PERIOD)
+    for step in (current - 1, current, current + 1):
+        if step > last_step and hmac.compare_digest(totp_code(secret, step), code):
+            return step
+    return None
+
+
+def totp_uri(secret: str, username: str, issuer: str = "X-TOOLS") -> str:
+    from urllib.parse import quote
+    return (f"otpauth://totp/{quote(issuer)}:{quote(username)}?secret={secret}&issuer={quote(issuer)}"
+            f"&algorithm=SHA1&digits={TOTP_DIGITS}&period={TOTP_PERIOD}")
+
+
+def new_recovery_codes(count: int = 10) -> list[str]:
+    alphabet = "abcdefghjkmnpqrstuvwxyz23456789"
+    return ["-".join("".join(secrets.choice(alphabet) for _ in range(5)) for _ in range(2)) for _ in range(count)]
+
+
+def recovery_hash(code: str) -> str:
+    return token_hash(code.strip().lower().replace(" ", ""))

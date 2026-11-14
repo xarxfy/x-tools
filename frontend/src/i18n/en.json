@@ -38,7 +38,12 @@
     "keyHintTitle": "Back up your data directory",
     "keyHint": "X-TOOLS generated a secret key in its data directory (secret.key). Stored credentials can only be decrypted with it – include it in your backups.",
     "setupCode": "Setup code",
-    "setupCodeHint": "Printed in the server log: docker logs x-tools"
+    "setupCodeHint": "Printed in the server log: docker logs x-tools",
+    "codeTitle": "Two-factor login",
+    "codeSubtitle": "Enter the code from your authenticator app.",
+    "code": "Code",
+    "codeHint": "6 digits – or one of your recovery codes",
+    "verify": "Verify"
   },
   "pages": {
     "overview": {
@@ -263,7 +268,9 @@
       "notifications": "Notifications",
       "agents": "Agents",
       "about": "About",
-      "general": "General"
+      "general": "General",
+      "account": "Account",
+      "backup": "Backup"
     }
   },
   "notify": {
@@ -365,7 +372,9 @@
     "removedText": "X-TOOLS no longer accepts reports from this agent. To remove it from {{host}} as well, run this there:",
     "uninstallRun": "Uninstall command (as root)",
     "uninstallHint": "Removes the systemd service and its files, or the Docker container – whichever is installed.",
-    "uninstallNote": "Without it the agent keeps trying to report and is rejected. Later you can also find the command under Help → Agents."
+    "uninstallNote": "Without it the agent keeps trying to report and is rejected. Later you can also find the command under Help → Agents.",
+    "update": "Update to v{{version}}",
+    "updateHint": "A newer agent is available: create a new install command and run it on the server."
   },
   "about": {
     "version": "Version",
@@ -395,5 +404,60 @@
     "noProxmox": "No Proxmox host reports yet.",
     "noDocker": "No Docker host reports yet.",
     "noData": "No data in the last report."
+  },
+  "history": {
+    "load": "Load",
+    "mem": "Memory",
+    "disk": "Disk",
+    "range": {
+      "24": "Last 24 h",
+      "168": "Last 7 days",
+      "720": "Last 30 days"
+    },
+    "now": "now",
+    "noMetrics": "Not enough data yet – a sample is taken every 5 minutes.",
+    "chartLabel": "Load, memory and disk over time",
+    "noEvents": "No problems in the last {{days}} days.",
+    "solved": "{{when}} · solved after {{duration}}",
+    "ongoing": "since {{when}} · ongoing ({{duration}})",
+    "title": "Recent events",
+    "uptime": "{{pct}} % up (7 days)"
+  },
+  "account": {
+    "password": "Password",
+    "current": "Current password",
+    "new": "New password",
+    "change": "Change password",
+    "changed": "Password changed – other sessions were logged out.",
+    "twoFactor": "Two-factor login",
+    "twoFactorText": "Besides your password, log in with a code from an authenticator app (e.g. Apple Passwords, 1Password, Google Authenticator, Aegis).",
+    "turnOn": "Set up two-factor login",
+    "turnOff": "Turn off",
+    "step1": "Scan the QR code with your authenticator app (or enter the key manually).",
+    "step2": "Enter the 6-digit code it shows to confirm.",
+    "manualKey": "Key for manual entry",
+    "confirm": "Confirm and turn on",
+    "qrAlt": "QR code for the authenticator app",
+    "on_one": "On – {{count}} recovery code left.",
+    "on_other": "On – {{count}} recovery codes left.",
+    "newCodes": "New recovery codes",
+    "recoveryTitle": "Recovery codes",
+    "recoveryText": "Store these codes somewhere safe (e.g. your password manager). Each one logs you in once if you lose your phone. They are shown only now.",
+    "saved": "I have saved them"
+  },
+  "backup": {
+    "create": "Create a backup",
+    "createText": "Database and secret key in one file, encrypted with a passphrase you choose. Anyone with file and passphrase can read everything in it, including credentials.",
+    "passphrase": "Passphrase",
+    "passphraseHint": "At least 10 characters – without it the backup cannot be restored.",
+    "download": "Download backup",
+    "created": "Backup downloaded.",
+    "restore": "Restore",
+    "restoreText": "Replaces everything in this installation with the backup. Everyone is logged out afterwards.",
+    "file": "Backup file (.xtb)",
+    "restoreButton": "Restore backup",
+    "confirmTitle": "Restore backup?",
+    "confirmText": "All current data is replaced by {{name}}. This cannot be undone.",
+    "restoring": "Restoring …"
   }
 }

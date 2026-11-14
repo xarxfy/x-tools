@@ -7,7 +7,7 @@ the predecessor project (Server-Info) can be imported with its IDs intact.
 import secrets
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -31,6 +31,11 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), default="admin")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Two-factor login (TOTP). The secret is encrypted with the instance key; recovery codes are hashed.
+    totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    totp_last_step: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    recovery_codes: Mapped[list] = mapped_column(JSON, default=list)
 
 
 class UserSession(Base):
@@ -120,3 +125,31 @@ class Agent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_report_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_report: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class Event(Base):
+    """History: one row per problem, from when it appeared until it was solved."""
+
+    __tablename__ = "events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    key: Mapped[str] = mapped_column(String(300), index=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    level: Mapped[str] = mapped_column(String(10))
+    text: Mapped[str] = mapped_column(String(500))
+    link: Mapped[str] = mapped_column(String(200), default="")
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Metric(Base):
+    """History: host metrics every few minutes (percentages)."""
+
+    __tablename__ = "metrics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source: Mapped[str] = mapped_column(String(20), index=True)  # "local" or an agent id
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    load: Mapped[float | None] = mapped_column(Float, nullable=True)
+    mem: Mapped[float | None] = mapped_column(Float, nullable=True)
+    disk: Mapped[float | None] = mapped_column(Float, nullable=True)

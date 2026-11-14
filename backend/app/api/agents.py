@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.api.agent_install import InstallOptions, bundle_response, create_install, install_script
 from app.api.deps import current_user
+from app.collector.agent import AGENT_VERSION
 from app.core.db import get_db
 from app.core.security import token_hash
 from app.models import Agent
@@ -43,7 +44,9 @@ def summary(a: Agent) -> dict:
     return {"id": a.id, "name": a.name, "kind": a.kind, "disabled": a.disabled, "created_at": as_utc(a.created_at),
             "last_report_at": as_utc(a.last_report_at), "hostname": report.get("hostname", ""),
             "version": report.get("version", ""),
-            "has_docker": bool(report.get("docker")), "has_proxmox": bool(report.get("proxmox"))}
+            "has_docker": bool(report.get("docker")), "has_proxmox": bool(report.get("proxmox")),
+            "outdated": bool(report) and str(report.get("version", "")) != AGENT_VERSION,
+            "latest_version": AGENT_VERSION}
 
 
 def get_agent(db: Session, aid: str) -> Agent:

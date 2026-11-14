@@ -9,6 +9,7 @@ import { Icon } from "../components/Icon";
 import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { CredentialsDialog } from "./CredentialsPage";
 import { useFeatures } from "../api/monitor";
+import { useUptime } from "../api/account";
 
 const EMPTY: ServiceInput = { name: "", host: "", domains: [], ports: [], folder: "", type: "", notes: "", customer_id: null };
 
@@ -23,6 +24,7 @@ export function ServicesPage() {
   const { t } = useTranslation();
   const services = useServices();
   const ports = usePortStatus();
+  const uptime = useUptime();
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Service | "new" | null>(null);
   const [keys, setKeys] = useState<Service | null>(null);
@@ -81,6 +83,12 @@ export function ServicesPage() {
                 )}
               </div>
               <div className="list-side">
+                {uptime.data?.[s.id] !== undefined && (
+                  <span className={`badge uptime ${uptime.data[s.id] < 99 ? "uptime-low" : ""}`}
+                        title={t("history.uptime", { pct: uptime.data[s.id] })}>
+                    {uptime.data[s.id] >= 99.995 ? "100" : uptime.data[s.id].toFixed(2)} %
+                  </span>
+                )}
                 <button type="button" className="btn btn-ghost" title={t("credentials.show")}
                         onClick={(e) => { e.stopPropagation(); setKeys(s); }}>
                   <Icon name="credentials" size={16} />

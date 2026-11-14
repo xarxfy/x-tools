@@ -1,0 +1,60 @@
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.chart-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart-legend i {
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.tabs-small {
+  margin: 0;
+}
+.tabs-small button {
+  padding: 3px 10px;
+  font-size: 13px;
+}
+.chart {
+  width: 100%;
+  height: 150px;
+  display: block;
+}
+.chart-grid {
+  stroke: var(--separator);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.chart-empty {
+  margin: 30px 0;
+  text-align: center;
+  font-size: 14px;
+}
+.event-text {
+  display: block;
+  overflow-wrap: anywhere;
+}

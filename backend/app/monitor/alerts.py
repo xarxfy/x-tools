@@ -4,7 +4,7 @@ import threading
 import time
 
 from app.core.config import get_settings
-from app.monitor import notify, sites, state
+from app.monitor import history, notify, sites, state
 from app.monitor.issues import ALERT_STATE, find_issues
 
 START_DELAY = 30  # let everything come up after a (re)start before alerting
@@ -14,6 +14,8 @@ def check_alerts(now: float | None = None) -> dict | None:
     """One monitoring run. Returns the sent message (for tests) or None."""
     settings = notify.load()
     issues = find_issues()
+    history.record_events(issues)
+    history.record_metrics()
     current = {i["key"]: i for i in issues if settings["events"].get(i["kind"], True) and not i.get("manual")}
     now = now or time.time()
     active = bool(notify.active_channels(settings))

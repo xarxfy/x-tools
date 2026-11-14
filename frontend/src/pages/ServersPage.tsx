@@ -14,6 +14,7 @@ import { Icon } from "../components/Icon";
 import { Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { ago, fmtBytes, fmtDuration, level, pct } from "../components/format";
 import { ServiceDialog } from "./ServicesPage";
+import { MetricsChart } from "../components/history";
 import "./ServersPage.css";
 
 const useAgentQuery = (id: string, enabled: boolean) => useAgentQueryBase(id, enabled);
@@ -259,6 +260,9 @@ function Overview({ srv, onTab }: { srv: ServerView; onTab: (tab: string) => voi
             {snap?.docker && ` · Docker ${snap.docker}`}
           </p>
         )}
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <MetricsChart source={srv.id} />
       </div>
       {px && (
         <>

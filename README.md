@@ -19,6 +19,8 @@ alerts when something breaks.
   others, with external checks (DNS, HTTPS, certificate).
 - **Credentials** – logins per service, encrypted at rest.
 - **Notifications** – Telegram and ntfy.
+- **History** – what went wrong when (with duration), uptime per service, load/memory/disk curves for 30 days.
+- **Account** – change password, two-factor login (TOTP) with recovery codes, encrypted backups from the UI.
 
 ## How it is built
 
@@ -163,6 +165,9 @@ cd x-tools && git pull && sudo sh deploy/setup.sh
 ```
 
 ### Backup
+
+*Settings → Backup* downloads database and secret key as one file, encrypted with a passphrase you choose, and
+restores such a file. On the command line:
 
 Everything lives in the Docker volume `<project>_x-tools-data` (database and `secret.key`). **Back up the whole
 volume.** Without the secret key stored credentials and notification tokens cannot be decrypted. Example:

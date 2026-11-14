@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAppStatus, useLogin, useMe, useSetup } from "../api/auth";
+import { useAppStatus, useLogin, useLoginSecondFactor, useMe, useSetup } from "../api/auth";
 import { Icon } from "../components/Icon";
 import "./AuthPages.css";
 
@@ -27,19 +27,48 @@ export function LoginPage() {
   const status = useAppStatus();
   const me = useMe(status.data ? !status.data.needs_setup : false);
   const login = useLogin();
+  const second = useLoginSecondFactor();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [ticket, setTicket] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   if (status.data?.needs_setup) return <Navigate to="/setup" replace />;
   if (me.data) return <Navigate to="/" replace />;
 
+  const done = () => navigate((location.state as { from?: string } | null)?.from ?? "/", { replace: true });
   const submit = (event: FormEvent) => {
     event.preventDefault();
     login.mutate(
       { username, password },
-      { onSuccess: () => navigate((location.state as { from?: string } | null)?.from ?? "/", { replace: true }) },
+      { onSuccess: (r) => ("totp_required" in r ? setTicket(r.ticket) : done()) },
     );
   };
+
+  if (ticket) {
+    return (
+      <AuthCard title={t("auth.codeTitle")} subtitle={t("auth.codeSubtitle")}>
+        <form className="auth-form" onSubmit={(e) => {
+          e.preventDefault();
+          second.mutate({ ticket, code }, {
+            onSuccess: done,
+            onError: (err) => { if (err.message.includes("expired")) setTicket(null); },
+          });
+        }}>
+          <label className="field">
+            {t("auth.code")} <span className="hint">{t("auth.codeHint")}</span>
+            <input className="input setup-code" autoComplete="one-time-code" inputMode="text" autoFocus required
+                   maxLength={32} value={code} onChange={(e) => setCode(e.target.value)} />
+          </label>
+          {second.error && <p className="error-text" role="alert">{second.error.message}</p>}
+          <button className="btn btn-primary btn-block" disabled={second.isPending}>{t("auth.verify")}</button>
+          <button type="button" className="btn btn-ghost btn-block" onClick={() => { setTicket(null); setCode(""); }}>
+            {t("common.cancel")}
+          </button>
+        </form>
+      </AuthCard>
+    );
+  }
 
   return (
     <AuthCard title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>

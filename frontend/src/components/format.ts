@@ -28,7 +28,8 @@ export function ago(ts?: number): string {
   if (s < 90) return "just now";
   if (s < 3600) return `${Math.round(s / 60)} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
-  return `${Math.round(s / 86400)} days ago`;
+  const days = Math.round(s / 86400);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
 }
 
 export function pct(used?: number, total?: number): number {

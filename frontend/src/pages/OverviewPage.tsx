@@ -4,6 +4,7 @@ import { useFeatures, useOverview } from "../api/monitor";
 import { Icon, type IconName } from "../components/Icon";
 import { Dot, Loading, PageHead } from "../components/ui";
 import { level, pct } from "../components/format";
+import { EventList } from "../components/history";
 import "./OverviewPage.css";
 
 export function OverviewPage() {
@@ -97,6 +98,9 @@ export function OverviewPage() {
           </Link>
         </>
       )}
+
+      <h2 className="section-title">{t("history.title")}</h2>
+      <EventList limit={8} />
 
       {empty && (
         <div className="card card-pad start-card">

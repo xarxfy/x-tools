@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import agents, auth, customers, docker, features, monitor, services
+from app.api import account, agents, auth, backup, customers, docker, features, history, monitor, services
 from app.core.config import VERSION, get_settings
 from app.core.db import run_migrations, session_scope
 from app.core.security import secret_key
@@ -36,6 +36,9 @@ def create_app() -> FastAPI:
     app.include_router(agents.report_router)
     app.include_router(monitor.router)
     app.include_router(features.router)
+    app.include_router(account.router)
+    app.include_router(backup.router)
+    app.include_router(history.router)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):

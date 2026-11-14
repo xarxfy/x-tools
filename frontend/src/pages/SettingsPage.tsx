@@ -9,9 +9,10 @@ import {
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, CopyButton, Dialog, Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago } from "../components/format";
+import { AccountSettings, BackupSettings } from "./SettingsAccount";
 import "./SettingsPage.css";
 
-const TABS = ["general", "notifications", "agents", "about"] as const;
+const TABS = ["general", "account", "notifications", "agents", "backup", "about"] as const;
 const EVENTS = ["port", "container", "docker", "system", "site", "agent"];
 
 export function SettingsPage() {
@@ -29,8 +30,9 @@ export function SettingsPage() {
           </button>
         ))}
       </div>
-      {tab === "general" ? <General /> : tab === "notifications" ? <Notifications />
-        : tab === "agents" ? <Agents /> : <About />}
+      {tab === "general" ? <General /> : tab === "account" ? <AccountSettings />
+        : tab === "notifications" ? <Notifications /> : tab === "agents" ? <Agents />
+          : tab === "backup" ? <BackupSettings /> : <About />}
     </>
   );
 }
@@ -318,6 +320,9 @@ function Agents() {
           <div className="list-title">
             <Link to={`/servers/${a.id}`}>{a.name}</Link>
             {a.disabled && <span className="badge">{t("agents.disabled")}</span>}
+            {a.outdated && (
+              <span className="badge badge-warn" title={t("agents.updateHint")}>{t("agents.update", { version: a.latest_version })}</span>
+            )}
           </div>
           <div className="list-sub">
             {[a.hostname, age === null ? t("servers.neverReported") : t("servers.reported", { when: ago(Date.now() / 1000 - age) }),

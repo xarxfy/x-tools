@@ -147,13 +147,21 @@ const DOCS: Doc[] = [
         server, add an access token.</p>
     </>, "ntfy topic push"),
   ]),
+  doc("history", "History", <>
+    <p>Every problem from the overview is recorded with start and end. The overview shows recent events, services show
+      their uptime of the last 7 days, and server pages show load, memory and disk for up to 30 days (one sample every
+      5 minutes). Metrics are kept for 30 days, solved events for 90 days.</p>
+  </>, "history events uptime metrics chart"),
   doc("security", "Security & backup", <>
     <ul>
       <li>Passwords are hashed with Argon2; sessions are stored hashed; all changes need a CSRF token; repeated
         wrong logins are slowed down.</li>
       <li>Credentials and notification tokens are encrypted with the secret key (<code>secret.key</code> in the data
         volume or <code>XT_SECRET_KEY</code>).</li>
-      <li><strong>Back up the data volume</strong> including the secret key.</li>
+      <li><strong>Back up regularly:</strong> <Link to="/settings?tab=backup">Settings → Backup</Link> downloads an
+        encrypted file with database and secret key; the same page restores it.</li>
+      <li>Turn on two-factor login under <Link to="/settings?tab=account">Settings → Account</Link>. Keep the recovery
+        codes – each one replaces a code once if you lose your phone.</li>
       <li>Run X-TOOLS behind HTTPS (reverse proxy or tunnel) and ideally behind an additional login such as
         Cloudflare Access.</li>
     </ul>

@@ -378,3 +378,14 @@ a.list-title svg,
 .grid-2 > .field > .input {
   margin-top: auto;
 }
+.badge-warn {
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
+  color: var(--warn-text);
+}
+.uptime {
+  font-variant-numeric: tabular-nums;
+}
+.uptime-low {
+  background: color-mix(in srgb, var(--down) 14%, transparent);
+  color: var(--down-text);
+}

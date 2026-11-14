@@ -3,6 +3,7 @@
 import hmac
 import secrets
 import threading
+import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -14,8 +15,8 @@ from app.api.deps import client_ip, current_session, current_user
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
 from app.core.security import (
-    CSRF_COOKIE, SESSION_COOKIE, hash_password, login_throttle, new_token, session_expiry, token_hash,
-    validate_new_password, verify_password,
+    CSRF_COOKIE, SESSION_COOKIE, decrypt_json, hash_password, login_throttle, new_token, recovery_hash,
+    session_expiry, token_hash, totp_verify, validate_new_password, verify_password,
 )
 from app.models import User, UserSession
 
@@ -126,7 +127,36 @@ def setup(body: SetupRequest, request: Request, response: Response, db: Session 
     return UserOut(id=user.id, username=user.username, role=user.role)
 
 
-@router.post("/auth/login", response_model=UserOut)
+# Second login step: after the password, users with two-factor login get a short-lived ticket.
+_tickets: dict[str, tuple[int, float, int]] = {}  # hash → (user id, expires, failed attempts)
+_tickets_lock = threading.Lock()
+TICKET_SECONDS = 300
+TICKET_ATTEMPTS = 5
+
+
+class SecondFactor(BaseModel):
+    ticket: str = Field(min_length=10, max_length=100)
+    code: str = Field(min_length=6, max_length=32)
+
+
+def check_second_factor(user: User, code: str) -> bool:
+    """TOTP code (each one only once) or an unused recovery code (consumed)."""
+    if user.totp_secret:
+        step = totp_verify(decrypt_json(user.totp_secret), code, user.totp_last_step or 0)
+        if step is not None:
+            user.totp_last_step = step
+            return True
+    digest = recovery_hash(code)
+    codes = list(user.recovery_codes or [])
+    for stored in codes:
+        if hmac.compare_digest(stored, digest):
+            codes.remove(stored)
+            user.recovery_codes = codes
+            return True
+    return False
+
+
+@router.post("/auth/login")
 def login(body: Credentials, request: Request, response: Response, db: Session = Depends(get_db)):
     ip = client_ip(request)
     wait = login_throttle.retry_after(body.username, ip)
@@ -140,6 +170,36 @@ def login(body: Credentials, request: Request, response: Response, db: Session =
         login_throttle.failed(body.username, ip)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong username or password")
     login_throttle.succeeded(body.username, ip)
+    if user.totp_enabled:
+        ticket = new_token()
+        with _tickets_lock:
+            now = time.time()
+            for key in [k for k, v in _tickets.items() if v[1] < now]:
+                _tickets.pop(key)
+            _tickets[token_hash(ticket)] = (user.id, now + TICKET_SECONDS, 0)
+        return {"totp_required": True, "ticket": ticket}
+    _start_session(db, user, request, response)
+    return UserOut(id=user.id, username=user.username, role=user.role)
+
+
+@router.post("/auth/login/2fa", response_model=UserOut)
+def login_second_factor(body: SecondFactor, request: Request, response: Response, db: Session = Depends(get_db)):
+    key = token_hash(body.ticket)
+    with _tickets_lock:
+        entry = _tickets.get(key)
+    if entry is None or entry[1] < time.time():
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Login expired – enter your password again")
+    user = db.get(User, entry[0])
+    if user is None or not check_second_factor(user, body.code):
+        with _tickets_lock:
+            attempts = entry[2] + 1
+            if attempts >= TICKET_ATTEMPTS:
+                _tickets.pop(key, None)
+            else:
+                _tickets[key] = (entry[0], entry[1], attempts)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong code")
+    with _tickets_lock:
+        _tickets.pop(key, None)
     _start_session(db, user, request, response)
     return UserOut(id=user.id, username=user.username, role=user.role)
 

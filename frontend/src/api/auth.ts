@@ -39,10 +39,22 @@ export function useMe(enabled = true) {
   });
 }
 
+export type LoginResult = User | { totp_required: true; ticket: string };
+
 export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: Credentials) => api<User>("/auth/login", { method: "POST", body }),
+    mutationFn: (body: Credentials) => api<LoginResult>("/auth/login", { method: "POST", body }),
+    onSuccess: (result) => {
+      if (!("totp_required" in result)) qc.setQueryData(["me"], result);
+    },
+  });
+}
+
+export function useLoginSecondFactor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { ticket: string; code: string }) => api<User>("/auth/login/2fa", { method: "POST", body }),
     onSuccess: (user) => qc.setQueryData(["me"], user),
   });
 }
