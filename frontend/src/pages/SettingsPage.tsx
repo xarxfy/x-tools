@@ -5,6 +5,7 @@ import {
   agentAge, AGENT_STALE, useAbout, useAgents, useCreateAgent, useDeleteAgent, useFeatures, useNewInstall,
   useNotificationSettings, useSaveFeatures, useSaveNotifications, useTestNotification, useUpdateAgent,
   type AgentKind, type AgentSummary, type InstallInfo, type InstallOptions, type NotificationSettings,
+  type StoredInstallOptions, useInstallOptions,
 } from "../api/monitor";
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, CopyButton, Dialog, Dot, Empty, Loading, PageHead } from "../components/ui";
@@ -237,7 +238,11 @@ function KindPicker({ value, onChange }: { value: AgentKind; onChange: (k: Agent
 }
 
 /** Values for the install command: Proxmox API token (Proxmox hosts), Cloudflare service token, folders. */
-function InstallFields({ value, onChange }: { value: InstallOptions; onChange: (v: InstallOptions) => void }) {
+function InstallFields({ value, onChange, stored }: {
+  value: InstallOptions;
+  onChange: (v: InstallOptions) => void;
+  stored?: StoredInstallOptions;
+}) {
   const { t } = useTranslation();
   const [cf, setCf] = useState(!!value.cf_client_id);
   const [more, setMore] = useState(false);
@@ -262,7 +267,9 @@ function InstallFields({ value, onChange }: { value: InstallOptions; onChange: (
           </div>
           <label className="field">
             {t("agents.tokenSecret")}
-            <input className="input secret" required type="password" autoComplete="off" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            {stored?.has_proxmox_token_secret && <span className="hint">{t("agents.secretStored")}</span>}
+            <input className="input secret" required={!stored?.has_proxmox_token_secret} type="password" autoComplete="off"
+                   placeholder={stored?.has_proxmox_token_secret ? "••••••••" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"}
                    value={value.proxmox_token_secret} onChange={(e) => set({ proxmox_token_secret: e.target.value })} />
           </label>
           <label className="inline-check">
@@ -285,7 +292,9 @@ function InstallFields({ value, onChange }: { value: InstallOptions; onChange: (
           </label>
           <label className="field">
             {t("agents.cfSecret")}
-            <input className="input secret" required type="password" autoComplete="off" value={value.cf_client_secret}
+            {stored?.has_cf_client_secret && <span className="hint">{t("agents.secretStored")}</span>}
+            <input className="input secret" required={!stored?.has_cf_client_secret} type="password" autoComplete="off"
+                   placeholder={stored?.has_cf_client_secret ? "••••••••" : ""} value={value.cf_client_secret}
                    onChange={(e) => set({ cf_client_secret: e.target.value })} />
           </label>
         </div>
@@ -464,17 +473,33 @@ function ReinstallDialog({ agent, onClose, onCreated }: {
 }) {
   const { t } = useTranslation();
   const install = useNewInstall();
-  const [opts, setOpts] = useState<InstallOptions>({ ...NO_INSTALL, kind: agent.kind });
+  const stored = useInstallOptions(agent.id);
+  const [opts, setOpts] = useState<InstallOptions | null>(null);
+
+  useEffect(() => {
+    if (stored.data && !opts) {
+      const { has_proxmox_token_secret: _a, has_cf_client_secret: _b, ...rest } = stored.data;
+      setOpts({ ...NO_INSTALL, kind: agent.kind, ...rest, proxmox_token_secret: "", cf_client_secret: "" });
+    }
+  }, [stored.data, opts, agent.kind]);
+
   return (
     <Dialog wide title={t("agents.reinstallTitle", { name: agent.name })} onClose={onClose}
-            onSubmit={() => install.mutate({ id: agent.id, body: opts }, { onSuccess: (r) => onCreated({ name: agent.name, ...r }) })}
+            onSubmit={() => opts && install.mutate({ id: agent.id, body: opts }, { onSuccess: (r) => onCreated({ name: agent.name, ...r }) })}
             footer={<>
               <span className="spacer" />
               <button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
-              <button type="submit" className="btn btn-primary" disabled={install.isPending}>{t("agents.createCommand")}</button>
+              <button type="submit" className="btn btn-primary" disabled={install.isPending || !opts}>{t("agents.createCommand")}</button>
             </>}>
       <p className="notice" style={{ margin: 0 }}>{t("agents.reinstallNote")}</p>
-      <InstallFields value={opts} onChange={setOpts} />
+      {!opts ? <Loading error={stored.error} /> : (
+        <>
+          {stored.data?.proxmox_token_id || stored.data?.cf_client_id ? (
+            <p className="muted small-note" style={{ margin: 0 }}>{t("agents.prefilled")}</p>
+          ) : null}
+          <InstallFields value={opts} onChange={setOpts} stored={stored.data} />
+        </>
+      )}
       {install.error && <p className="error-text">{install.error.message}</p>}
     </Dialog>
   );

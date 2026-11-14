@@ -197,3 +197,40 @@ def test_agent_install_secret_formats(admin):
         r = admin.post("/api/agents", json={"name": "X" + bad[:3], "cf_client_id": "a.access",
                                             "cf_client_secret": bad}, headers=h)
         assert r.status_code == 422, bad
+
+
+def test_install_options_remembered(admin, tmp_path):
+    h = csrf_headers(admin)
+    r = admin.post("/api/agents", json={"name": "PVE", "kind": "proxmox", "control": True,
+                                        "proxmox_url": "https://10.0.0.2:8006", "proxmox_token_id": "root@pam!x",
+                                        "proxmox_token_secret": "1111-2222-3333", "cf_client_id": "abc.access",
+                                        "cf_client_secret": "cfsecret123"}, headers=h).json()
+    assert b"1111-2222-3333" not in (tmp_path / "x-tools.db").read_bytes()
+    opts = admin.get(f"/api/agents/{r['id']}/install-options").json()
+    assert opts["proxmox_token_id"] == "root@pam!x" and opts["control"] is True and opts["kind"] == "proxmox"
+    assert opts["has_proxmox_token_secret"] and opts["has_cf_client_secret"]
+    assert "1111-2222-3333" not in str(opts) and "cfsecret123" not in str(opts)
+
+    # new install command with empty secrets keeps the stored ones
+    body = {k: v for k, v in opts.items() if not k.startswith("has_")}
+    r2 = admin.post(f"/api/agents/{r['id']}/install", json={**body, "proxmox_token_secret": "",
+                                                           "cf_client_secret": ""}, headers=h)
+    assert r2.status_code == 200, r2.text
+    url = r2.json()["install"]["command"].split("'")[-2].replace("http://testserver", "")
+    assert "cfsecret123" in r2.json()["install"]["command"]  # curl needs the service token
+    admin.cookies.clear()
+    script = admin.get(url).text
+    assert "PROXMOX_TOKEN_SECRET=1111-2222-3333" in script and "XT_AGENT_CONTROL=1" in script
+
+    # a new secret replaces the stored one
+    admin.post("/api/auth/login", json={"username": "admin", "password": "correct horse battery"})
+    h = csrf_headers(admin)
+    admin.post(f"/api/agents/{r['id']}/install", json={**body, "proxmox_token_secret": "9999-8888"}, headers=h)
+    r3 = admin.post(f"/api/agents/{r['id']}/install", json={**body}, headers=h)
+    admin.cookies.clear()
+    assert "PROXMOX_TOKEN_SECRET=9999-8888" in admin.get(
+        r3.json()["install"]["command"].split("'")[-2].replace("http://testserver", "")).text
+    # validation still works (proxmox without URL)
+    admin.post("/api/auth/login", json={"username": "admin", "password": "correct horse battery"})
+    assert admin.post(f"/api/agents/{r['id']}/install", json={**body, "proxmox_url": ""},
+                      headers=csrf_headers(admin)).status_code == 422

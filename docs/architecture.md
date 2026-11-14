@@ -29,7 +29,8 @@
   hashed, CSRF protection, login throttling, optional two-factor login (TOTP) with recovery codes.
 - Roles (viewer, operator, admin) are enforced by the API, not only hidden in the UI. Logins, viewed and changed
   credentials, container actions and all changes land in the audit log (user, IP, one year).
-- Credentials, notification tokens and the Cloudflare token are encrypted with the instance's secret key. Backups
+- Credentials, notification tokens, the Cloudflare token and the Proxmox/Cloudflare tokens of agent install commands
+  are encrypted with the instance's secret key; secrets are never sent back to the browser after saving. Backups
   from the UI are encrypted with a passphrase (scrypt + Fernet).
 - Compose files, Dockerfiles and logs are shown with passwords, tokens and keys masked; `.env` files are never read.
 - Agents authenticate with their own key (only a hash is stored) and open no ports. Control (start/stop) is opt-in on

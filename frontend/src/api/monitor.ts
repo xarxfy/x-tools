@@ -193,6 +193,19 @@ export function useCreateAgent() {
   });
 }
 
+export type StoredInstallOptions = Partial<InstallOptions> & {
+  has_proxmox_token_secret?: boolean;
+  has_cf_client_secret?: boolean;
+};
+
+export const useInstallOptions = (id: string) =>
+  useQuery({
+    queryKey: ["agents", id, "install-options"],
+    staleTime: 0,
+    gcTime: 0,
+    queryFn: () => api<StoredInstallOptions>(`/agents/${id}/install-options`),
+  });
+
 export function useNewInstall() {
   const invalidate = useAgentsInvalidate();
   return useMutation({

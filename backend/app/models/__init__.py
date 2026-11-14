@@ -128,6 +128,8 @@ class Agent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_report_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_report: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Options of the last install command (Proxmox/Cloudflare tokens …), encrypted – prefills the next one.
+    install_options: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class Event(Base):

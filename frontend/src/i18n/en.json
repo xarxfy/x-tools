@@ -354,7 +354,7 @@
     "tokenIdHint": "user@realm!token",
     "tokenSecret": "API token secret",
     "verifyTls": "Verify the TLS certificate (off for the default self-signed certificate)",
-    "proxmoxHowto": "Proxmox: Datacenter → Permissions → API Tokens → Add; then Permissions → Add → API Token Permission, path /, role PVEAuditor (read-only) – for control a role with VM.PowerMgmt too, e.g. PVEVMUser. The secret only goes into the install command.",
+    "proxmoxHowto": "Proxmox: Datacenter → Permissions → API Tokens → Add; then Permissions → Add → API Token Permission, path /, role PVEAuditor (read-only) – for control a role with VM.PowerMgmt too, e.g. PVEVMUser. The token is stored encrypted, so the next install command is filled in.",
     "cf": "X-TOOLS is behind Cloudflare Access",
     "cfHint": "Service token so the agent gets through (rule: Service Auth for /api/agent/).",
     "cfId": "Client ID",
@@ -397,7 +397,9 @@
     "control": "Allow control from X-TOOLS",
     "controlHintDocker": "Operators can start, stop and restart containers on this server and read their logs. Off: the agent only reports.",
     "controlHintProxmox": "Operators can start, shut down, stop and reboot LXCs/VMs. The API token then needs VM.PowerMgmt (see the hint above).",
-    "controlBadge": "control on"
+    "controlBadge": "control on",
+    "secretStored": "Stored – leave empty to keep it",
+    "prefilled": "Filled in from the last install command. Stored secrets are kept unless you enter new ones."
   },
   "about": {
     "version": "Version",

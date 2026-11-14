@@ -60,7 +60,8 @@ To switch control off again: *Install command* without the switch, or set `XT_AG
 3. Enter token ID (`root@pam!xtools`) and secret when adding the server. URL from the Proxmox host itself:
    `https://127.0.0.1:8006`.
 
-The secret only goes into the install command and stays on the Proxmox host; X-TOOLS does not keep it.
+Token and secret are stored encrypted with the instance key, so *Install command* on the same agent is filled in
+(the secret is never shown again – leave the field empty to keep it, enter a new one to replace it).
 
 ## Behind Cloudflare Access
 

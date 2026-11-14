@@ -6,8 +6,10 @@ import secrets
 import time
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel, Field
+from cryptography.fernet import InvalidToken
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,7 +18,7 @@ from app.api.deps import current_user, require
 from app.core.audit import audit
 from app.collector.agent import AGENT_VERSION
 from app.core.db import get_db
-from app.core.security import token_hash
+from app.core.security import decrypt_json, encrypt_json, token_hash
 from app.models import Agent
 
 router = APIRouter(prefix="/api/agents", tags=["agents"], dependencies=[Depends(current_user)])
@@ -77,22 +79,56 @@ def create_agent(body: AgentIn, request: Request, db: Session = Depends(get_db))
     if any(a.name.lower() == name.lower() for a in db.scalars(select(Agent))):
         raise HTTPException(409, "An agent with this name already exists")
     key = secrets.token_urlsafe(32)
-    agent = Agent(name=name, kind=body.kind, key_hash=token_hash(key))
+    opts = InstallOptions(**body.model_dump(exclude={"name"}))
+    agent = Agent(name=name, kind=body.kind, key_hash=token_hash(key), install_options=encrypt_json(opts.model_dump()))
     db.add(agent)
     db.commit()
     # The key is shown exactly once; only its hash is stored.
-    opts = InstallOptions(**body.model_dump(exclude={"name"}))
     audit("agent.created", agent.name, agent.kind)
     return {**summary(agent), "key": key, "install": create_install(request, agent.id, key, opts)}
 
 
-@router.post("/{aid}/install", dependencies=[Depends(require("admin"))])
-def new_install(aid: str, body: InstallOptions, request: Request, db: Session = Depends(get_db)):
-    """New install command (e.g. to reinstall or add Proxmox later). Replaces the agent key."""
+SECRET_FIELDS = ("proxmox_token_secret", "cf_client_secret")
+
+
+def stored_options(agent: Agent) -> dict:
+    if not agent.install_options:
+        return {}
+    try:
+        return decrypt_json(agent.install_options)
+    except InvalidToken:
+        return {}
+
+
+@router.get("/{aid}/install-options", dependencies=[Depends(require("admin"))])
+def install_options(aid: str, db: Session = Depends(get_db)):
+    """Options of the last install command for prefilling – secrets are never sent back, only whether one is stored."""
     agent = get_agent(db, aid)
+    opts = stored_options(agent)
+    out = {k: v for k, v in opts.items() if k not in SECRET_FIELDS}
+    out.update({f"has_{k}": bool(opts.get(k)) for k in SECRET_FIELDS})
+    out.setdefault("kind", agent.kind)
+    return out
+
+
+@router.post("/{aid}/install", dependencies=[Depends(require("admin"))])
+def new_install(aid: str, request: Request, body: dict = Body(...), db: Session = Depends(get_db)):
+    """New install command (e.g. to reinstall or add Proxmox later). Replaces the agent key.
+    Empty secret fields keep the stored secrets of the last install command."""
+    agent = get_agent(db, aid)
+    stored = stored_options(agent)
+    merged = {**body}
+    for field in SECRET_FIELDS:
+        if not str(merged.get(field) or "").strip() and stored.get(field):
+            merged[field] = stored[field]
+    try:
+        body = InstallOptions(**merged)
+    except ValidationError as error:
+        raise RequestValidationError(error.errors()) from None
     key = secrets.token_urlsafe(32)
     agent.key_hash = token_hash(key)
     agent.kind = body.kind
+    agent.install_options = encrypt_json(body.model_dump())
     db.commit()
     audit("agent.install_command", agent.name, f"{agent.kind}, new key")
     return {"key": key, "install": create_install(request, agent.id, key, body)}

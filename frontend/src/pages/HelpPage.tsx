@@ -142,8 +142,9 @@ const DOCS: Doc[] = [
       <p>In the Proxmox web UI: Datacenter → Permissions → API Tokens → <em>Add</em> (e.g. user <code>root@pam</code>,
         token ID <code>xtools</code>, <em>Privilege Separation</em> on). Then Permissions → <em>Add → API Token
         Permission</em>: path <code>/</code>, the token, role <code>PVEAuditor</code> (read-only). Enter token ID
-        (<code>root@pam!xtools</code>) and secret when creating the agent. They go straight into the install
-        command and are stored only on the Proxmox host.</p>
+        (<code>root@pam!xtools</code>) and secret when creating the agent. They are stored encrypted, so a new
+        install command for the same agent is filled in – the secret is never shown again; leave the field empty to
+        keep it.</p>
     </>, "proxmox token pveauditor lxc vm"),
   ]),
   doc("cloudflare", "Cloudflare", <>

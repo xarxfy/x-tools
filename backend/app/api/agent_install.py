@@ -5,9 +5,11 @@ Creating an agent (or "new install command") returns a command like
     curl -fsSL https://tools.example.com/api/agent/install/<token> | sh
 
 The token is random, valid for one hour and works once. The install script it
-returns contains the agent key and the optional Proxmox/Cloudflare values, so
-those are kept only encrypted and only until the script is fetched – X-TOOLS
-itself never stores the Proxmox token permanently.
+returns contains the agent key and the optional Proxmox/Cloudflare values; the
+pending script data is encrypted and dropped once fetched. The options of the
+last install command (tokens included) are kept encrypted on the agent row so
+the next install command can be prefilled – secrets are never sent back to the
+browser.
 """
 
 import hashlib
