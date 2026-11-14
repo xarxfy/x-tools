@@ -20,9 +20,12 @@ export function OverviewPage() {
   const empty = counts.services === 0;
 
   const tiles: { to: string; icon: IconName; label: string; value: string; sub?: string }[] = [
-    { to: "/servers", icon: "servers", label: t("nav.servers"), value: String(counts.servers) },
+    ...(counts.guests ? [{
+      to: "/proxmox", icon: "proxmox" as IconName, label: t("overview.guests"),
+      value: `${counts.guests_running}/${counts.guests}`, sub: t("overview.running"),
+    }] : []),
     {
-      to: "/servers/local?tab=docker", icon: "docker", label: t("overview.containers"),
+      to: "/docker", icon: "docker", label: t("overview.containers"),
       value: `${counts.containers_running}/${counts.containers}`, sub: t("overview.running"),
     },
     { to: "/services", icon: "services", label: t("nav.services"), value: String(counts.services) },
@@ -90,7 +93,7 @@ export function OverviewPage() {
       {meters.length > 0 && (
         <>
           <h2 className="section-title">{t("servers.local")}</h2>
-          <Link to="/servers/local" className="card card-pad overview-meters">
+          <Link to="/docker#local" className="card card-pad overview-meters">
             {meters.map(([label, value]) => (
               <div key={label} className="meter">
                 <div className="meter-top"><span>{label}</span><b>{value.toFixed(0)} %</b></div>

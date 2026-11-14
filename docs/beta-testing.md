@@ -55,9 +55,10 @@ Tick a box when it works; for anything else, write a short report (template at t
 - [ ] Edit and delete logins
 - [ ] The *Credentials* page lists services with and without logins
 
-## 7. Servers and Docker (this server)
+## 7. Docker (this server)
 
-- [ ] *Servers → This server* shows load, memory, disk; the chart fills after some hours
+- [ ] Without agents and before the collector reported, *Proxmox* and *Docker* show a hint to set up an agent
+- [ ] *Docker → This server* shows load, memory, disk; *Chart* fills after some hours
 - [ ] *Docker*: containers grouped by compose project, correct state
 - [ ] Stop and start a **test** container; the state updates within seconds
 - [ ] Logs open, time zone correct, secrets in logs masked

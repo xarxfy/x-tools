@@ -76,9 +76,11 @@ const DOCS: Doc[] = [
       <p>Cloudflare error codes (502, 521–530) are explained in plain words, e.g. 530 = the tunnel is not reachable.</p>
     </>, "website checks dns https certificate cloudflare 502 530"),
   ]),
-  doc("servers", "Servers & Docker", <>
-    <p><em>This server</em> is the machine X-TOOLS runs on. Its Docker containers and host metrics come from the
-      collector container <code>x-tools-collector</code>.</p>
+  doc("servers", "Docker & Proxmox", <>
+    <p>The <Link to="/docker">Docker</Link> page shows <em>This server</em> (the machine X-TOOLS runs on – its data
+      comes from the collector container <code>x-tools-collector</code>) and every Docker host with an agent; the
+      <Link to="/proxmox">Proxmox</Link> page every Proxmox host. Each host shows load, memory and disk and a chart of
+      the last 30 days. Without a host, the pages explain how to set up an agent.</p>
   </>, "servers docker collector", [
     doc("servers-collector", "How the collector works", <>
       <p>The web container has no access to Docker. The collector runs in its own container without network, with

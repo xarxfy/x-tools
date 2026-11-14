@@ -356,7 +356,7 @@ function Agents() {
         <Dot state={st} />
         <div className="list-main">
           <div className="list-title">
-            <Link to={`/servers/${a.id}`}>{a.name}</Link>
+            <Link to={`${a.kind === "proxmox" ? "/proxmox" : "/docker"}#agent-${a.id}`}>{a.name}</Link>
             {a.disabled && <span className="badge">{t("agents.disabled")}</span>}
             {a.control && <span className="badge">{t("agents.controlBadge")}</span>}
             {a.outdated && (

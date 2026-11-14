@@ -13,7 +13,8 @@ something breaks.
 | **Overview** | Everything that needs attention on one page, recent events, the state of this server |
 | **Services** | What runs where: host, ports (checked every minute), domains, folder, uptime; credentials encrypted |
 | **Assistant** | New services from templates – compose file, `.env`, proxy/tunnel config and a setup checklist |
-| **Servers & Docker** | Containers per compose project, start/stop/restart, logs, compose files (secrets masked), charts |
+| **Docker** | All Docker hosts on one page: containers per compose project, start/stop/restart, logs, compose files (secrets masked), host metrics and charts |
+| **Proxmox** | Nodes, storage, host network, updates; every LXC/VM with resources, network, IPs, snapshots, backups and its `.conf` file |
 | **Agents** | More servers: Proxmox hosts (nodes, LXCs, VMs) and Docker hosts – one install command, outbound only, optional control (start/stop) |
 | **Cloudflare** | DNS, tunnels, routes and Access apps, checked against your services; optionally edit DNS records and tunnel routes |
 | **Customers** | Optional: contacts, agreements and external website checks for sites you host for others |

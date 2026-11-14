@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Icon, type IconName } from "./Icon";
 import { useAppStatus, useLogout, useMe } from "../api/auth";
 import { useFeatures } from "../api/monitor";
-import { useDockerHosts, useProxmoxHosts } from "../pages/FleetPages";
 import { useCan } from "../api/users";
 import "./Layout.css";
 
@@ -12,7 +11,6 @@ const MAIN: { to: string; key: string; icon: IconName }[] = [
   { to: "/", key: "overview", icon: "overview" },
   { to: "/customers", key: "customers", icon: "customers" },
   { to: "/services", key: "services", icon: "services" },
-  { to: "/servers", key: "servers", icon: "servers" },
   { to: "/proxmox", key: "proxmox", icon: "proxmox" },
   { to: "/docker", key: "docker", icon: "docker" },
   { to: "/domains", key: "domains", icon: "domains" },
@@ -33,17 +31,12 @@ export function Layout() {
   const { data: status } = useAppStatus();
   const logout = useLogout();
   const features = useFeatures();
-  const proxmox = useProxmoxHosts().hosts.length > 0;
-  const dockerHosts = useDockerHosts();
-  const docker = dockerHosts.local || dockerHosts.hosts.length > 0;
   // Optional entries: customers when switched on, Proxmox/Docker only when such a server reports.
   const can = useCan();
   const main = MAIN.filter((item) =>
     (item.key !== "customers" || features.data?.customers) &&
     (item.key !== "credentials" || can("operator")) &&
-    (item.key !== "cloudflare" || features.data?.cloudflare) &&
-    (item.key !== "proxmox" || proxmox) &&
-    (item.key !== "docker" || docker));
+    (item.key !== "cloudflare" || features.data?.cloudflare));
 
   useEffect(() => setOpen(false), [location.pathname]); // close the mobile menu after navigating
 

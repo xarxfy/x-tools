@@ -81,7 +81,7 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
 
     with session_scope() as db:
         services = [(s.id, s.name, s.host, list(s.ports or [])) for s in db.scalars(select(Service))]
-        agents = [(a.id, a.name, a.last_report, a.last_report_at) for a in db.scalars(select(Agent))
+        agents = [(a.id, a.name, a.last_report, a.last_report_at, a.kind) for a in db.scalars(select(Agent))
                   if not a.disabled]
         customer_sites = [(c.id, c.name, d) for c in db.scalars(select(Customer)) for s in c.services
                           for d in (s.domains or [])]
@@ -99,7 +99,7 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
 
     # This server: Docker + system
     snap = load_snapshot()
-    docker_link = "/servers/local?tab=docker"
+    docker_link = "/docker#local"
     if snap is None:
         add("docker:none", "docker", "warn", "No Docker data yet – is x-tools-collector running?", docker_link)
     elif snap.get("error"):
@@ -123,12 +123,13 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
             else:
                 add(f"container:{c['name']}", "container", level, f"Container {c['name']}: {label}", docker_link)
     if snap:
-        system_issues(add, snap.get("system") or {}, "", "This server: ", "/servers/local")
+        system_issues(add, snap.get("system") or {}, "", "This server: ", "/docker#local")
 
     # Agents
-    for aid, name, report, received in agents:
-        link = f"/servers/{aid}"
+    for aid, name, report, received, kind in agents:
+        link = f"{'/proxmox' if kind == 'proxmox' else '/docker'}#agent-{aid}"
         if report is None or received is None:
+            link = "/settings?tab=agents"
             add(f"agent:{aid}", "agent", "warn", f"Server '{name}' has never reported", link)
             continue
         received_ts = (received if received.tzinfo else received.replace(tzinfo=timezone.utc)).timestamp()

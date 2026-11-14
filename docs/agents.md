@@ -20,7 +20,8 @@ Docker containers are only visible to an agent on the same machine; the Proxmox 
    curl -fsSL 'https://tools.example.com/api/agent/install/<one-time token>' | sh
    ```
 
-3. The server appears under *Servers* (and *Proxmox* / *Docker* in the sidebar) within a minute.
+3. The server appears on the *Proxmox* or *Docker* page within a minute (until then it is listed there as
+   "waiting for the first report").
 
 The command works **once and for one hour**. It installs the systemd service `x-tools-agent`: one Python file
 (standard library only, Python 3.10+), read-only file system access, no open ports. *Install command* on an existing

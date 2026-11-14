@@ -1,27 +1,20 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import {
-  agentAction, agentControl, allContainers, containerState, localControl, useDocker,
-  type Container, type DockerControl, type DockerState, type Project, type ProjectFile, type Snapshot, type SystemInfo,
+  agentAction, allContainers, containerState,
+  type Container, type DockerControl, type Project, type ProjectFile, type Snapshot, type SystemInfo,
 } from "../api/docker";
-import {
-  AGENT_STALE, agentAge, useAgent as useAgentQueryBase, useAgents,
-  type AgentReport, type AgentSummary, type Proxmox, type ProxmoxGuest, type PveNodeDetails,
-} from "../api/monitor";
+import { type Proxmox, type ProxmoxGuest, type PveNodeDetails } from "../api/monitor";
 import { Icon } from "../components/Icon";
-import { Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
+import { Dialog, Dot, Empty, Loading, SearchField, matches } from "../components/ui";
 import { ago, fmtBytes, fmtDuration, level, pct } from "../components/format";
 import { ServiceDialog } from "./ServicesPage";
-import { MetricsChart } from "../components/history";
 import { useCan } from "../api/users";
-import "./ServersPage.css";
+import "./HostParts.css";
 
-const useAgentQuery = (id: string, enabled: boolean) => useAgentQueryBase(id, enabled);
-
-function Meter({ label, value, detail }: { label: string; value: number; detail?: string }) {
+export function Meter({ label, value, detail }: { label: string; value: number; detail?: string }) {
   return (
     <div className="meter">
       <div className="meter-top">
@@ -36,7 +29,7 @@ function Meter({ label, value, detail }: { label: string; value: number; detail?
   );
 }
 
-function SystemMeters({ sys, compact }: { sys?: SystemInfo; compact?: boolean }) {
+export function SystemMeters({ sys, compact }: { sys?: SystemInfo; compact?: boolean }) {
   const { t } = useTranslation();
   if (!sys || (!sys.load && !sys.mem_total && !sys.disk_total)) {
     return <span className="muted">{t("servers.noMetrics")}</span>;
@@ -65,271 +58,6 @@ export function counts(snap: Snapshot | null | undefined) {
 }
 
 /** One server as the pages need it – the machine X-TOOLS runs on, or an agent. */
-interface ServerView {
-  id: string;
-  name: string;
-  host: string;
-  state: "up" | "warn" | "down";
-  stateText: string;
-  sys?: SystemInfo;
-  snap: Snapshot | null;
-  stale: boolean;
-  proxmox: Proxmox | null;
-  readonly: boolean;
-  reported: boolean;
-  control: boolean;
-}
-
-function localServer(t: TFunction, data: DockerState): ServerView {
-  const snap = data.snapshot;
-  return {
-    id: "local", name: t("servers.local"), host: snap?.system?.hostname ?? "", snap, stale: data.stale,
-    state: !snap ? "warn" : snap.error || data.stale ? "down" : "up",
-    stateText: !snap ? t("servers.noSnapshot") : snap.error ?? t("servers.updated", { when: ago(snap.collected_at) }),
-    sys: snap?.system, proxmox: null, readonly: false, reported: true, control: true,
-  };
-}
-
-function agentServer(t: TFunction, a: AgentSummary, report?: AgentReport | null): ServerView {
-  const age = agentAge(a);
-  const fresh = age !== null && age < AGENT_STALE;
-  return {
-    id: a.id, name: a.name, host: a.hostname, snap: report?.docker ?? null, stale: false,
-    state: age === null ? "warn" : fresh ? "up" : "down",
-    stateText: age === null ? t("servers.neverReported")
-      : fresh ? t("servers.reported", { when: ago(Date.now() / 1000 - age) })
-        : t("servers.silent", { when: ago(Date.now() / 1000 - age) }),
-    sys: report?.system, proxmox: report?.proxmox ?? null, readonly: !a.control, reported: age !== null,
-    control: a.control,
-  };
-}
-
-export function ServersPage() {
-  const { t } = useTranslation();
-  const docker = useDocker();
-  const agents = useAgents();
-  if (!docker.data) return <Loading error={docker.error} retry={() => docker.refetch()} />;
-  const active = (agents.data ?? []).filter((a) => !a.disabled);
-  const groups: [string, ServerView[]][] = [
-    ["local", [localServer(t, docker.data)]],
-    ["proxmox", active.filter((a) => a.kind === "proxmox").map((a) => agentServer(t, a))],
-    ["docker", active.filter((a) => a.kind !== "proxmox").map((a) => agentServer(t, a))],
-  ];
-  const total = 1 + active.length;
-  return (
-    <>
-      <PageHead title={t("nav.servers")} sub={t("servers.count", { count: total })} />
-      {groups.filter(([, list]) => list.length).map(([key, list]) => (
-        <section key={key}>
-          {total > 1 && <h2 className="section-title">{t(`servers.groups.${key}`)}</h2>}
-          <div className="server-grid">
-            {list.map((srv) => <ServerCard key={srv.id} srv={srv} />)}
-          </div>
-        </section>
-      ))}
-      {total === 1 && (
-        <div className="card card-pad soft-note">
-          <strong>{t("servers.moreTitle")}</strong>
-          <p className="muted">
-            {t("servers.moreText")} <Link to="/settings?tab=agents">{t("servers.setupAgent")}</Link>
-          </p>
-        </div>
-      )}
-    </>
-  );
-}
-
-function ServerCard({ srv }: { srv: ServerView }) {
-  const { t } = useTranslation();
-  const agent = useAgentReport(srv.id);
-  const full = srv.readonly && agent ? { ...srv, sys: agent.system, snap: agent.docker ?? null, proxmox: agent.proxmox ?? null } : srv;
-  const c = counts(full.snap);
-  const guests = full.proxmox?.guests;
-  return (
-    <Link to={`/servers/${srv.id}`} className="card server-card">
-      <span className="list-title">
-        <Dot state={srv.state} />
-        {srv.name}
-        {srv.host && <span className="muted server-host">{srv.host}</span>}
-      </span>
-      <span className="list-sub">{srv.stateText}</span>
-      <SystemMeters sys={full.sys} compact />
-      <span className="chips">
-        {guests && (
-          <span className="chip">
-            {t("servers.guestsRunning", { running: guests.filter((g) => g.status === "running").length, total: guests.length })}
-          </span>
-        )}
-        {full.snap && !full.snap.error && (
-          <span className="chip">{t("servers.containersRunning", { running: c.running, total: c.total })}</span>
-        )}
-      </span>
-    </Link>
-  );
-}
-
-/** Report of an agent for the cards (null for the local server). */
-function useAgentReport(id: string): AgentReport | null {
-  const enabled = id !== "local";
-  const q = useAgentQuery(id, enabled);
-  return enabled ? q.data?.report ?? null : null;
-}
-
-export function ServerPage() {
-  const { id = "" } = useParams();
-  const { t } = useTranslation();
-  const docker = useDocker();
-  const agent = useAgentQuery(id, id !== "local");
-  const [params, setParams] = useSearchParams();
-
-  if (!docker.data || (id !== "local" && !agent.data && !agent.error)) {
-    return <Loading error={docker.error} retry={() => docker.refetch()} />;
-  }
-  if (id !== "local" && !agent.data) {
-    return (
-      <div className="center-state">
-        <div>
-          <h1>{t("servers.notFound")}</h1>
-          <Link to="/servers">{t("servers.back")}</Link>
-        </div>
-      </div>
-    );
-  }
-  const srv = id === "local" ? localServer(t, docker.data) : agentServer(t, agent.data!, agent.data!.report);
-  const snap = srv.snap;
-  const c = counts(snap);
-  const tabs = [
-    "overview",
-    ...(srv.proxmox ? ["proxmox"] : []),
-    ...(snap || !srv.readonly ? ["docker"] : []),
-  ];
-  const tab = tabs.includes(params.get("tab") ?? "") ? params.get("tab")! : "overview";
-
-  return (
-    <>
-      <p style={{ margin: "0 0 6px" }}>
-        <Link to="/servers">‹ {t("nav.servers")}</Link>
-      </p>
-      <PageHead title={srv.name} sub={[srv.host, srv.stateText].filter(Boolean).join(" · ")} />
-      {tabs.length > 1 && (
-        <div className="tabs" role="tablist">
-          {tabs.map((k) => (
-            <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "active" : ""}
-                    onClick={() => setParams(k === "overview" ? {} : { tab: k })}>
-              {t(`servers.tab.${k}`)}
-              {k === "docker" && snap && <span className="tab-count">{c.total}</span>}
-              {k === "proxmox" && srv.proxmox?.guests && <span className="tab-count">{srv.proxmox.guests.length}</span>}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {!srv.reported ? (
-        <Empty>
-          {t("servers.agentPending")} <Link to="/settings?tab=agents">{t("servers.setupAgent")}</Link>
-        </Empty>
-      ) : tab === "proxmox" && srv.proxmox ? (
-        <ProxmoxTab px={srv.proxmox} agentId={srv.id} control={srv.control} />
-      ) : !snap && tab === "docker" ? (
-        <Empty>{t("servers.noSnapshotLong")}</Empty>
-      ) : (
-        <>
-          {snap?.error && <p className="notice">{snap.error}</p>}
-          {srv.stale && snap && !snap.error && <p className="notice">{t("servers.stale", { when: ago(snap.collected_at) })}</p>}
-          {tab === "overview" ? (
-            <Overview srv={srv} onTab={(k) => setParams({ tab: k })} />
-          ) : (
-            snap && (
-              <DockerTab snap={snap} protectedNames={id === "local" ? docker.data.protected : []}
-                         readonly={srv.readonly} agent={id !== "local"}
-                         control={id === "local" ? localControl : srv.control ? agentControl(srv.id) : undefined} />
-            )
-          )}
-        </>
-      )}
-    </>
-  );
-}
-
-function Overview({ srv, onTab }: { srv: ServerView; onTab: (tab: string) => void }) {
-  const { t } = useTranslation();
-  const snap = srv.snap;
-  const c = counts(snap);
-  const problems = allContainers(snap).filter((x) => containerState(x)[0] !== "up");
-  const px = srv.proxmox;
-  return (
-    <>
-      <h2 className="section-title">{t("servers.system")}</h2>
-      <div className="card card-pad">
-        <SystemMeters sys={srv.sys} />
-        {srv.sys?.uptime && (
-          <p className="muted" style={{ margin: "14px 0 0" }}>
-            {t("servers.uptime", { duration: fmtDuration(srv.sys.uptime) })}
-            {snap?.docker && ` · Docker ${snap.docker}`}
-          </p>
-        )}
-      </div>
-      <div style={{ marginTop: 14 }}>
-        <MetricsChart source={srv.id} />
-      </div>
-      {px && (
-        <>
-          <h2 className="section-title">Proxmox</h2>
-          {px.error ? (
-            <p className="notice">{px.error}</p>
-          ) : (
-            <div className="card card-pad">
-              <div className="stat-row">
-                <div>
-                  <b>{px.guests?.filter((g) => g.status === "running").length ?? 0}/{px.guests?.length ?? 0}</b>
-                  <span className="muted">{t("servers.guestsUp")}</span>
-                </div>
-                <div><b>{px.nodes?.length ?? 0}</b><span className="muted">{t("servers.nodes")}</span></div>
-              </div>
-              {px.storage && px.storage.length > 0 && (
-                <div className="meters" style={{ marginTop: 18 }}>
-                  {px.storage.map((st) => (
-                    <Meter key={`${st.node}/${st.storage}`} label={st.storage} value={pct(st.disk, st.maxdisk)}
-                           detail={`${fmtBytes(st.disk)} / ${fmtBytes(st.maxdisk)}`} />
-                  ))}
-                </div>
-              )}
-              <button type="button" className="btn" style={{ marginTop: 14 }} onClick={() => onTab("proxmox")}>
-                {t("servers.allGuests")}
-                <Icon name="chevron" size={14} />
-              </button>
-            </div>
-          )}
-        </>
-      )}
-      {snap && !snap.error && (
-        <>
-          <h2 className="section-title">Docker</h2>
-          <div className="card card-pad">
-            <div className="stat-row">
-              <div><b>{c.running}/{c.total}</b><span className="muted">{t("servers.containersUp")}</span></div>
-              <div><b>{snap.projects.length}</b><span className="muted">{t("servers.projects")}</span></div>
-            </div>
-            {problems.length > 0 && (
-              <ul className="plain-list">
-                {problems.slice(0, 8).map((x) => (
-                  <li key={x.name}>
-                    <Dot state={containerState(x)[0]} /> {x.name} – {t(`docker.state.${containerState(x)[1]}`)}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <button type="button" className="btn" style={{ marginTop: 14 }} onClick={() => onTab("docker")}>
-              {t("servers.allContainers")}
-              <Icon name="chevron" size={14} />
-            </button>
-          </div>
-        </>
-      )}
-    </>
-  );
-}
-
 export function ProxmoxTab({ px, agentId, control = false }: { px: Proxmox; agentId: string; control?: boolean }) {
   const { t } = useTranslation();
   const canControl = useCan()("operator") && control;
@@ -421,7 +149,7 @@ export function ProxmoxTab({ px, agentId, control = false }: { px: Proxmox; agen
                 <Dot state={on ? "up" : "off"} />
                 <div className="list-main">
                   <div className="list-title">
-                    <Link to={`/servers/${agentId}/guest/${g.node}/${g.vmid}`} className="guest-link">
+                    <Link to={`/proxmox/${agentId}/${g.node}/${g.vmid}`} className="guest-link">
                       <span className="muted mono">{g.vmid}</span> {g.name}
                     </Link>
                     <span className="badge">{g.type === "lxc" ? "LXC" : "VM"}</span>

@@ -343,3 +343,43 @@
 .host-net + .host-net {
   margin-top: 12px;
 }
+.host-head-wrap {
+  margin-bottom: 12px;
+  scroll-margin-top: 20px;
+}
+.host-head .spacer {
+  flex: 1;
+}
+.host-meters {
+  max-width: 560px;
+  margin-top: 8px;
+}
+.setup-hint {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.setup-hint h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.setup-hint p {
+  margin: 0 0 14px;
+}
+.setup-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--fill);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.pending-agents {
+  margin-bottom: 16px;
+}
+.pending-agents .plain-list {
+  margin: 8px 0;
+}

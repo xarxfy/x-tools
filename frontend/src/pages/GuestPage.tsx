@@ -8,7 +8,7 @@ import { useCan } from "../api/users";
 import { Icon } from "../components/Icon";
 import { Dialog, Empty, Loading, PageHead } from "../components/ui";
 import { ago, fmtBytes, fmtDuration, level, pct } from "../components/format";
-import { GuestActions } from "./ServersPage";
+import { GuestActions } from "./HostParts";
 import { FileBlock } from "./AssistantPage";
 import "./GuestPage.css";
 
@@ -25,7 +25,7 @@ export function GuestPage() {
   if (!agent.data) return <Loading error={agent.error} retry={() => agent.refetch()} />;
   const px = agent.data.report?.proxmox;
   const guest = px?.guests?.find((g) => g.node === node && String(g.vmid) === vmid);
-  const back = <p style={{ margin: "0 0 6px" }}><Link to={`/servers/${id}?tab=proxmox`}>‹ {agent.data.name}</Link></p>;
+  const back = <p style={{ margin: "0 0 6px" }}><Link to={`/proxmox#agent-${id}`}>‹ Proxmox · {agent.data.name}</Link></p>;
   if (!guest) return <>{back}<Empty>{t("guest.notFound")}</Empty></>;
   const details = px?.details?.guests?.[`${node}/${vmid}`];
   const cfg = details?.config;

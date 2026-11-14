@@ -277,7 +277,8 @@
     "start1": "Add your services",
     "start2": "Add customers and assign their sites",
     "start3": "Set up notifications",
-    "start4": "Connect more servers with an agent"
+    "start4": "Connect more servers with an agent",
+    "guests": "LXCs/VMs"
   },
   "sites": {
     "title": "Website checks",
@@ -388,7 +389,7 @@
     "runThisHint": "On Proxmox you are root in the shell; elsewhere replace “| sh” with “| sudo sh”.",
     "fact1": "Works once and only for one hour.",
     "fact2": "Installs the systemd service x-tools-agent (Python 3.10+, nothing else) – read-only, no open ports.",
-    "fact3": "The server shows up under Servers within a minute.",
+    "fact3": "The server shows up on the Proxmox or Docker page within a minute.",
     "dockerAlt": "Prefer Docker?",
     "dockerAltHint": "Use deploy/agent from the repository with this .env (the key is shown only now):",
     "kind": "Kind of server",
@@ -445,7 +446,18 @@
     "dockerSub_other": "{{count}} Docker hosts",
     "noProxmox": "No Proxmox host reports yet.",
     "noDocker": "No Docker host reports yet.",
-    "noData": "No data in the last report."
+    "noData": "No data in the last report.",
+    "showChart": "Chart",
+    "hideChart": "Hide chart",
+    "installAgent": "Set up an agent",
+    "askAdmin": "Ask an admin to set up an agent.",
+    "proxmoxEmptyTitle": "No Proxmox host connected",
+    "proxmoxEmptyText": "Install the X-TOOLS agent on your Proxmox host (Settings → Agents → Add server → Proxmox host). It shows nodes, storage, all LXCs and VMs with their configuration – outbound only, no open ports.",
+    "dockerEmptyTitle": "No Docker data yet",
+    "dockerEmptyText": "Containers of this server come from the collector container x-tools-collector (started by setup.sh). For other servers, LXCs or VMs with Docker install an agent (Settings → Agents → Add server → Docker host).",
+    "pendingTitle": "Waiting for the first report",
+    "pending": "created, but has not reported yet",
+    "pendingLink": "Show the install command again →"
   },
   "history": {
     "load": "Load",

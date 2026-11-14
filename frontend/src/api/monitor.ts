@@ -17,6 +17,8 @@ export interface Overview {
     services: number;
     customers: number;
     servers: number;
+    guests: number;
+    guests_running: number;
     containers: number;
     containers_running: number;
     sites: number;

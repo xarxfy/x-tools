@@ -25,6 +25,7 @@ def overview(db: Session = Depends(get_db)):
     snap = load_snapshot()
     containers = all_containers(snap)
     agents = list(db.scalars(select(Agent).where(Agent.disabled.is_(False))))
+    guests = [g for a in agents for g in ((a.last_report or {}).get("proxmox") or {}).get("guests") or []]
     count = lambda model: db.scalar(select(func.count()).select_from(model)) or 0  # noqa: E731
     checks = sites.load_results()
     return {
@@ -33,6 +34,8 @@ def overview(db: Session = Depends(get_db)):
             "services": count(Service),
             "customers": count(Customer),
             "servers": 1 + len(agents),
+            "guests": len(guests),
+            "guests_running": sum(1 for g in guests if g.get("status") == "running"),
             "containers": len(containers),
             "containers_running": sum(container_state(c)[0] == "up" for c in containers),
             "sites": len(checks),
