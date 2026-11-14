@@ -174,3 +174,16 @@ def test_features(admin):
     assert admin.get("/api/features").json() == {"customers": True}  # undecided: on when customers exist
     admin.put("/api/features", json={"customers": False}, headers=h)
     assert admin.get("/api/features").json() == {"customers": False}
+
+
+def test_agent_install_secret_formats(admin):
+    h = csrf_headers(admin)
+    secret = "a1B2c3D4e5F6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+    r = admin.post("/api/agents", json={"name": "CF", "cf_client_id": "abc123.access",
+                                        "cf_client_secret": f"CF-Access-Client-Secret: {secret}"}, headers=h)
+    assert r.status_code == 201, r.text
+    assert f"CF-Access-Client-Secret: {secret}'" in r.json()["install"]["command"]
+    for bad in ("with space", "qu'ote", "dollar$x", "back`tick"):
+        r = admin.post("/api/agents", json={"name": "X" + bad[:3], "cf_client_id": "a.access",
+                                            "cf_client_secret": bad}, headers=h)
+        assert r.status_code == 422, bad

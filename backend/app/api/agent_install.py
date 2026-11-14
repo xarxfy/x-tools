@@ -30,9 +30,10 @@ VALID_SECONDS = 3600
 PATTERNS = {
     "proxmox_url": r"^https?://[A-Za-z0-9.\-\[\]:]+(:\d{1,5})?/?$",
     "proxmox_token_id": r"^[A-Za-z0-9._@!\-]{1,100}$",
-    "proxmox_token_secret": r"^[A-Za-z0-9\-]{1,100}$",
-    "cf_client_id": r"^[A-Za-z0-9.\-]{1,100}$",
-    "cf_client_secret": r"^[A-Za-z0-9]{1,128}$",
+    # Secrets: anything except whitespace, quotes, backslash, $ and backtick (they end up in a shell script).
+    "proxmox_token_secret": r"^[A-Za-z0-9._~+/=:@!%^&*(),;?\-]{1,200}$",
+    "cf_client_id": r"^[A-Za-z0-9._\-]{1,200}$",
+    "cf_client_secret": r"^[A-Za-z0-9._~+/=:@!%^&*(),;?\-]{1,256}$",
     "compose_roots": r"^[A-Za-z0-9_/.,\-]{0,300}$",
 }
 
@@ -50,8 +51,12 @@ class InstallOptions(BaseModel):
     @classmethod
     def check(cls, value, info):
         value = str(value or "").strip()
+        # Accept values pasted together with their name, e.g. "CF-Access-Client-Secret: abc" or "PROXMOX_TOKEN_ID=…"
+        value = re.sub(r"^(CF[-_]ACCESS[-_]CLIENT[-_](ID|SECRET)|PROXMOX[-_]TOKEN[-_](ID|SECRET)|PROXMOX[-_]URL)\s*[:=]\s*",
+                       "", value, flags=re.I).strip().strip("\"'")
         if value and not re.match(PATTERNS[info.field_name], value):
-            raise ValueError("contains characters that are not allowed")
+            raise ValueError("contains characters that are not allowed (spaces, quotes, $, ` and \\ are not "
+                             "possible) – paste only the value")
         return value
 
     @model_validator(mode="after")
