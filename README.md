@@ -10,36 +10,137 @@ alerts when something breaks.
 
 - **Overview** – everything that needs attention on one page: ports not answering, stopped containers, unreachable
   websites, silent servers, full disks.
-- **Services** – what runs where: ports, domains, folders.
+- **Services** – what runs where: ports (checked every minute), domains, folders, customer.
 - **Servers & Docker** – containers grouped by compose project, start/stop/restart, logs, compose files and
-  Dockerfiles (secrets masked).
+  Dockerfiles (secrets masked), git status of the project folder.
 - **Agents** – connect more servers (e.g. a Proxmox host at home). Agents only report outbound over HTTPS; no open
-  ports, no VPN, nothing can be triggered on them.
-- **Customers** – contacts and agreements for the sites you host, with external checks (DNS, HTTPS, certificate),
-  last commit and last deploy.
+  ports, no VPN, nothing can be triggered on them. Proxmox nodes, storage, LXCs and VMs via a read-only API token.
+- **Customers** – contacts and agreements for the sites you host, with external checks (DNS, HTTPS, certificate).
 - **Credentials** – logins per service, encrypted at rest.
 - **Notifications** – Telegram and ntfy.
 
-## Quick start (Docker)
+## How it is built
+
+```
+                 HTTPS                    HTTP (localhost)
+  Browser  ───────────────▶  Reverse proxy  ───────────────▶  x-tools            ── SQLite + secret key
+                             (Caddy, nginx,                   web UI + API          (volume "data")
+                              Traefik, Cloudflare             port checks,
+                              Tunnel …)                       site checks, alerts
+                                                                  │
+                                                                  │ files only (volume "exchange")
+                                                                  ▼
+                                                              x-tools-collector  ── Docker socket,
+                                                              no network            compose folders (read-only)
+
+  Other server:  x-tools-agent  ── HTTPS POST /api/agent/report ──▶  x-tools
+```
+
+- **One image, three roles:** `x-tools serve` (web UI + API), `x-tools collect` (Docker collector) and
+  `x-tools agent` (reports another server).
+- **The web container never touches Docker.** Container actions are written as small command files into the shared
+  `exchange` volume; the collector validates them (known container, not protected, only start/stop/restart/logs)
+  and executes them. The collector has no network and never sees the database or the secret key.
+- The web container uses the **host network** so it can check whether the ports of your services answer. It listens
+  on `127.0.0.1:8080` only – put a reverse proxy in front of it. (Linux only; Docker Desktop has no host network.)
+- Backend: Python, FastAPI, SQLAlchemy, SQLite (migrations run automatically). Frontend: React, TypeScript, Vite.
+
+## Installation
+
+Requirements: a Linux server with Docker and the compose plugin.
 
 ```sh
 git clone <repository> x-tools
 cd x-tools/deploy
-cp .env.example .env      # adjust XT_BASE_URL, XT_TIMEZONE …
-sudo sh setup.sh          # builds the image, starts the container, waits until it answers
+cp .env.example .env      # set XT_BASE_URL, XT_TIMEZONE, XT_COMPOSE_ROOTS …
+sudo sh setup.sh          # builds the image, starts both containers, waits until X-TOOLS answers
 ```
 
-This starts two containers: `x-tools` (web UI + API, host network, listening on `127.0.0.1:8080`) and
-`x-tools-collector` (reads Docker and compose files; no network, folders read-only). They only share an "exchange"
-volume – the collector never sees the database or the secret key.
+X-TOOLS now runs on `http://127.0.0.1:8080` – reachable from the server itself only. Make it reachable in one of the
+ways below, then open it and create the administrator account.
 
-Open the UI (port 8080 on localhost; put a reverse proxy or tunnel in front for HTTPS) and create the administrator
-account. X-TOOLS generates a secret key in its data volume on first start – **back up the data volume**, stored
-credentials can only be decrypted with that key.
+### First login: the setup code
+
+As long as no account exists, X-TOOLS prints a one-time **setup code** to its log:
+
+```sh
+sudo docker logs x-tools
+#   X-TOOLS is not set up yet.
+#   Setup code: ABCD-EFGH
+```
+
+The setup page asks for this code, so nobody who stumbles upon a fresh installation can claim it. After the account
+is created the setup page is gone. (A restart before the setup generates a new code.)
+
+### Making it reachable
+
+Pick one. In every case X-TOOLS itself stays on `127.0.0.1:8080`.
+
+**A) Caddy (own domain, automatic HTTPS) – no Cloudflare needed.**
+Point a DNS record (e.g. `tools.example.com`) to your server, open ports 80 and 443, install Caddy and add to
+`/etc/caddy/Caddyfile`:
+
+```
+tools.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+`sudo systemctl reload caddy` – Caddy gets a Let's Encrypt certificate by itself. Set
+`XT_BASE_URL=https://tools.example.com` in `deploy/.env` and run `sudo sh setup.sh` again.
+
+**B) nginx or Traefik** – same idea: terminate HTTPS and proxy to `http://127.0.0.1:8080`, passing
+`X-Forwarded-For` and `X-Forwarded-Proto`. Example for nginx (certificate e.g. via certbot):
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name tools.example.com;
+    # ssl_certificate …; ssl_certificate_key …;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+**C) Cloudflare Tunnel (no open ports at all).**
+Zero Trust → Networks → Tunnels → your tunnel → *Public hostname*: `tools.example.com` → `HTTP` → `localhost:8080`.
+Recommended: put a Cloudflare Access application in front of it as a second login.
+
+**D) Private only (VPN or SSH).**
+Keep it off the internet entirely: reach it through WireGuard/Tailscale (proxy to the VPN address), or simply with an
+SSH tunnel from your computer:
+
+```sh
+ssh -L 8080:127.0.0.1:8080 you@your-server   # then open http://localhost:8080
+```
+
+Leave `XT_BASE_URL` empty or set it to the address you use. Without `https://` cookies are not marked Secure – only
+do that on a private connection.
+
+### Updating
+
+```sh
+cd x-tools && git pull && sudo sh deploy/setup.sh
+```
+
+### Backup
+
+Everything lives in the Docker volume `<project>_x-tools-data` (database and `secret.key`). **Back up the whole
+volume.** Without the secret key stored credentials and notification tokens cannot be decrypted. Example:
+
+```sh
+sudo docker run --rm -v deploy_x-tools-data:/data -v "$PWD":/backup busybox tar czf /backup/x-tools-data.tgz -C /data .
+```
+
+(The volume name starts with the compose project name – by default the folder name `deploy`.)
 
 ## More servers (agents)
 
-Create an agent under *Settings → Agents*, then on the other server:
+Create an agent under *Settings → Agents* – the key is shown once. Then on the other server:
 
 ```sh
 git clone <repository> x-tools
@@ -48,8 +149,37 @@ cp .env.example .env      # XT_AGENT_URL, XT_AGENT_KEY, optional Proxmox token
 docker compose up -d --build
 ```
 
-The agent reports every minute over HTTPS (outbound only). Behind Cloudflare Access, add a service token and a
-"Service Auth" rule for `/api/agent/report`. Agents of Server-Info keep working after the import.
+The agent reports every minute over HTTPS (outbound only); the server shows up within a minute.
+
+- **Proxmox:** create an API token with role `PVEAuditor` (read-only) and set `PROXMOX_URL`, `PROXMOX_TOKEN_ID`,
+  `PROXMOX_TOKEN_SECRET`.
+- **Behind Cloudflare Access:** create a service token, add a policy with action *Service Auth* for the path
+  `/api/agent/report`, and set `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` in the agent's `.env`.
+- Behind any other proxy or basic auth: make sure `/api/agent/report` is reachable for the agent; it authenticates
+  with its own key (`X-Agent-Key`, only a hash is stored).
+
+## Configuration
+
+All settings are environment variables prefixed with `XT_` in `deploy/.env` (see `deploy/.env.example`):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `XT_BASE_URL` | – | Public address, used in notification links; `https://` marks cookies Secure |
+| `XT_TIMEZONE` | `UTC` | Time zone for displayed times and logs |
+| `XT_COMPOSE_ROOTS` | `/opt,/srv,/home` | Folders that may contain compose projects (mounted into the collector) |
+| `XT_HOME_DIR` | – | Home folder shown as `~` in paths |
+| `XT_HOST` / `XT_PORT` | `127.0.0.1` / `8080` | Address of the web UI |
+| `XT_CHECK_HOST` | `127.0.0.1` | Host on which service ports are checked |
+| `XT_PROTECTED_CONTAINERS` | `x-tools,x-tools-collector` | Containers that cannot be stopped from the UI |
+| `XT_TRUST_PROXY` | `true` | Trust `X-Forwarded-*` headers (keep X-TOOLS on 127.0.0.1 behind the proxy) |
+| `XT_COLLECT_INTERVAL` | `60` | Seconds between Docker snapshots |
+| `XT_SITE_INTERVAL` | `300` | Seconds between website checks |
+| `XT_SECRET_KEY` | generated | Fernet key for encrypted data (default: `secret.key` in the data volume) |
+| `XT_DATA_DIR` | `/data` | Database and secret key |
+| `XT_API_DOCS` | `false` | Interactive API docs at `/api/docs` |
+
+Compose projects outside `/home`, `/opt` and `/srv`: add the folder to `XT_COMPOSE_ROOTS` **and** as a read-only
+volume of the collector in `deploy/docker-compose.yml`.
 
 ## Importing from Server-Info
 
@@ -58,24 +188,19 @@ sudo docker run --rm -v deploy_x-tools-data:/data -v /path/to/server-info:/si:ro
   python /app/migrate/import_server_info.py --source /si/data --old-env /si/.env
 ```
 
-## Configuration
+Services, customers, credentials (re-encrypted), notification settings and agents are taken over; existing agents
+keep working once their URL points to X-TOOLS. Running it twice does not duplicate anything.
 
-All settings are environment variables prefixed with `XT_` (see `deploy/.env.example`):
+## Security
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `XT_BASE_URL` | – | Public address, used in notification links; `https://` marks cookies Secure |
-| `XT_TIMEZONE` | `UTC` | Time zone for displayed times |
-| `XT_COMPOSE_ROOTS` | `/opt,/srv,/home` | Folders that may contain compose projects |
-| `XT_HOME_DIR` | – | Home folder shown as `~` in paths |
-| `XT_HOST` / `XT_PORT` | `127.0.0.1` / `8080` | Address of the web UI (compose setup) |
-| `XT_CHECK_HOST` | `127.0.0.1` | Host on which service ports are checked |
-| `XT_COLLECT_INTERVAL` | `60` | Seconds between Docker snapshots |
-| `XT_PROTECTED_CONTAINERS` | `x-tools,x-tools-collector` | Containers that cannot be stopped from the UI |
-| `XT_TRUST_PROXY` | `true` | Trust `X-Forwarded-*` headers from a reverse proxy |
-| `XT_SECRET_KEY` | generated | Fernet key for encrypted data |
-| `XT_DATA_DIR` | `/data` | Database and secret key |
-| `XT_API_DOCS` | `false` | Interactive API docs at `/api/docs` |
+- Admin account protected by a one-time setup code; Argon2 password hashes, session tokens stored hashed, CSRF
+  protection, login throttling.
+- The web process has no Docker access; the collector only allows start/stop/restart/logs of known, unprotected
+  containers and has no network.
+- Compose files, Dockerfiles and logs are shown with passwords, tokens and keys masked; `.env` files are never read.
+- Credentials and notification tokens are encrypted with the instance's secret key.
+- Always run X-TOOLS behind HTTPS or on a private connection; an additional login in front (Cloudflare Access,
+  VPN) is recommended for anything with credentials in it.
 
 ## Development
 
@@ -95,15 +220,6 @@ npm run dev
 
 Database changes: edit `backend/app/models`, then
 `XT_DATA_DIR=./dev-data alembic revision --autogenerate -m "describe change"`. Migrations run automatically on start.
-
-## Security
-
-- Session login (Argon2 password hashes, session tokens stored hashed, CSRF protection, login throttling).
-- The web process has no Docker access; container actions go through the separate collector, which only allows
-  start/stop/restart/logs of known, unprotected containers.
-- Compose files, Dockerfiles and logs are shown with passwords, tokens and keys masked; `.env` files are never read.
-- Credentials and notification tokens are encrypted with the instance's secret key.
-- Run X-TOOLS behind HTTPS.
 
 ## License
 
