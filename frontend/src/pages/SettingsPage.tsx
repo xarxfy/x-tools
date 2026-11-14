@@ -199,6 +199,12 @@ export function Toggle({ checked, onChange, label, hint }: { checked: boolean; o
   );
 }
 
+/** Removes the agent from the target system – systemd installation and Docker variant. Contains no secrets. */
+const UNINSTALL =
+  "systemctl disable --now x-tools-agent 2>/dev/null; " +
+  "rm -rf /opt/x-tools-agent /etc/x-tools-agent /etc/systemd/system/x-tools-agent.service; " +
+  "systemctl daemon-reload 2>/dev/null; docker rm -f x-tools-agent 2>/dev/null; echo 'X-TOOLS agent removed'";
+
 const NO_INSTALL: InstallOptions = {
   kind: "docker", proxmox_url: "https://127.0.0.1:8006", proxmox_token_id: "", proxmox_token_secret: "",
   proxmox_verify_tls: false, cf_client_id: "", cf_client_secret: "", compose_roots: "/opt,/srv,/home,/root",
@@ -298,6 +304,7 @@ function Agents() {
   const [creating, setCreating] = useState(false);
   const [reinstall, setReinstall] = useState<AgentSummary | null>(null);
   const [renaming, setRenaming] = useState<AgentSummary | null>(null);
+  const [removed, setRemoved] = useState<AgentSummary | null>(null);
   const [result, setResult] = useState<{ name: string; key: string; install: InstallInfo } | null>(null);
   if (!agents.data) return <Loading error={agents.error} />;
 
@@ -326,7 +333,7 @@ function Agents() {
           <button type="button" className="btn btn-small" onClick={() => update.mutate({ id: a.id, disabled: !a.disabled })}>
             {a.disabled ? t("agents.enable") : t("agents.disable")}
           </button>
-          <ConfirmDelete onConfirm={() => remove.mutate(a.id)} busy={remove.isPending} />
+          <ConfirmDelete onConfirm={() => remove.mutate(a.id, { onSuccess: () => setRemoved(a) })} busy={remove.isPending} />
         </div>
       </div>
     );
@@ -362,8 +369,28 @@ function Agents() {
                          onCreated={(r) => { setReinstall(null); setResult(r); }} />
       )}
       {renaming && <RenameDialog agent={renaming} onClose={() => setRenaming(null)} />}
+      {removed && <UninstallDialog agent={removed} onClose={() => setRemoved(null)} />}
       {result && <InstallDialog result={result} onClose={() => setResult(null)} />}
     </>
+  );
+}
+
+function UninstallDialog({ agent, onClose }: { agent: AgentSummary; onClose: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <Dialog wide title={t("agents.removedTitle", { name: agent.name })} onClose={onClose}
+            footer={<><span className="spacer" /><button type="button" className="btn btn-primary" onClick={onClose}>{t("common.done")}</button></>}>
+      <p style={{ margin: 0 }}>{t("agents.removedText", { host: agent.hostname || agent.name })}</p>
+      <div className="field">
+        {t("agents.uninstallRun")}
+        <span className="hint">{t("agents.uninstallHint")}</span>
+        <div className="key-row">
+          <pre className="code command">{UNINSTALL}</pre>
+          <CopyButton value={UNINSTALL} label={t("common.copy")} />
+        </div>
+      </div>
+      <p className="muted small-note" style={{ margin: 0 }}>{t("agents.uninstallNote")}</p>
+    </Dialog>
   );
 }
 

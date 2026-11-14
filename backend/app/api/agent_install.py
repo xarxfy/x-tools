@@ -195,7 +195,7 @@ else
   exit 1
 fi
 echo "Log: journalctl -u x-tools-agent -f"
-echo "Remove: systemctl disable --now x-tools-agent && rm -rf /opt/x-tools-agent /etc/x-tools-agent /etc/systemd/system/x-tools-agent.service"
+echo "Remove: systemctl disable --now x-tools-agent; rm -rf /opt/x-tools-agent /etc/x-tools-agent /etc/systemd/system/x-tools-agent.service; systemctl daemon-reload"
 """
 
 

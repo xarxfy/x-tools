@@ -107,6 +107,13 @@ const DOCS: Doc[] = [
         the agent creates a new one (and a new key). Prefer Docker? Use <code>deploy/agent</code> from the repository.</p>
       <p>Agents of the predecessor Server-Info keep working after the import – just point their URL to X-TOOLS.</p>
     </>, "setup agent key env compose"),
+    doc("agents-remove", "Remove an agent", <>
+      <p>Delete the agent under <Link to="/settings?tab=agents">Settings → Agents</Link> – X-TOOLS then rejects its
+        reports – and run this as root on that server (works for the systemd service and the Docker variant):</p>
+      <pre className="code command">{"systemctl disable --now x-tools-agent 2>/dev/null; rm -rf /opt/x-tools-agent " +
+        "/etc/x-tools-agent /etc/systemd/system/x-tools-agent.service; systemctl daemon-reload 2>/dev/null; " +
+        "docker rm -f x-tools-agent 2>/dev/null; echo 'X-TOOLS agent removed'"}</pre>
+    </>, "remove uninstall delete agent"),
     doc("agents-access", "Behind Cloudflare Access", <>
       <p>If X-TOOLS is protected by Cloudflare Access, the agent cannot log in interactively. Create a service token
         (Zero Trust → Access → Service Auth), add a policy with action “Service Auth” for the path

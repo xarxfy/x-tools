@@ -358,7 +358,12 @@
     "groups": {
       "proxmox": "Proxmox hosts",
       "docker": "Docker hosts"
-    }
+    },
+    "removedTitle": "“{{name}}” deleted",
+    "removedText": "X-TOOLS no longer accepts reports from this agent. To remove it from {{host}} as well, run this there:",
+    "uninstallRun": "Uninstall command (as root)",
+    "uninstallHint": "Removes the systemd service and its files, or the Docker container – whichever is installed.",
+    "uninstallNote": "Without it the agent keeps trying to report and is rejected. Later you can also find the command under Help → Agents."
   },
   "about": {
     "version": "Version",
