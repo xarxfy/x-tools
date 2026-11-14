@@ -158,11 +158,53 @@ function useAgentsInvalidate() {
   };
 }
 
+export interface InstallOptions {
+  proxmox_url: string;
+  proxmox_token_id: string;
+  proxmox_token_secret: string;
+  proxmox_verify_tls: boolean;
+  cf_client_id: string;
+  cf_client_secret: string;
+  compose_roots: string;
+}
+
+export interface InstallInfo {
+  command: string;
+  expires_at: number;
+  base_url: string;
+}
+
 export function useCreateAgent() {
   const invalidate = useAgentsInvalidate();
   return useMutation({
-    mutationFn: (name: string) => api<AgentSummary & { key: string }>("/agents", { method: "POST", body: { name } }),
+    mutationFn: (body: InstallOptions & { name: string }) =>
+      api<AgentSummary & { key: string; install: InstallInfo }>("/agents", { method: "POST", body }),
     onSuccess: invalidate,
+  });
+}
+
+export function useNewInstall() {
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: InstallOptions }) =>
+      api<{ key: string; install: InstallInfo }>(`/agents/${id}/install`, { method: "POST", body }),
+  });
+}
+
+export interface Features {
+  customers: boolean;
+}
+
+export const useFeatures = () =>
+  useQuery({ queryKey: ["features"], queryFn: () => api<Features>("/features"), staleTime: 60_000 });
+
+export function useSaveFeatures() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Features) => api<Features>("/features", { method: "PUT", body }),
+    onSuccess: (data) => {
+      qc.setQueryData(["features"], data);
+      qc.invalidateQueries({ queryKey: ["overview"] });
+    },
   });
 }
 

@@ -2,33 +2,35 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  agentAge, AGENT_STALE, useAbout, useAgents, useCreateAgent, useDeleteAgent, useNotificationSettings,
-  useSaveNotifications, useTestNotification, useUpdateAgent, type NotificationSettings,
+  agentAge, AGENT_STALE, useAbout, useAgents, useCreateAgent, useDeleteAgent, useFeatures, useNewInstall,
+  useNotificationSettings, useSaveFeatures, useSaveNotifications, useTestNotification, useUpdateAgent,
+  type InstallInfo, type InstallOptions, type NotificationSettings,
 } from "../api/monitor";
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, CopyButton, Dialog, Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago } from "../components/format";
 import "./SettingsPage.css";
 
-const TABS = ["notifications", "agents", "about"] as const;
+const TABS = ["general", "notifications", "agents", "about"] as const;
 const EVENTS = ["port", "container", "docker", "system", "site", "agent"];
 
 export function SettingsPage() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
-  const tab = TABS.find((k) => k === params.get("tab")) ?? "notifications";
+  const tab = TABS.find((k) => k === params.get("tab")) ?? "general";
   return (
     <>
       <PageHead title={t("nav.settings")} />
       <div className="tabs" role="tablist">
         {TABS.map((k) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "active" : ""}
-                  onClick={() => setParams(k === "notifications" ? {} : { tab: k })}>
+                  onClick={() => setParams(k === "general" ? {} : { tab: k })}>
             {t(`settings.tab.${k}`)}
           </button>
         ))}
       </div>
-      {tab === "notifications" ? <Notifications /> : tab === "agents" ? <Agents /> : <About />}
+      {tab === "general" ? <General /> : tab === "notifications" ? <Notifications />
+        : tab === "agents" ? <Agents /> : <About />}
     </>
   );
 }
@@ -184,7 +186,7 @@ function ChannelActions({ channel, hasToken, test, onClear }: {
   );
 }
 
-function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
+export function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
   return (
     <label className="toggle">
       <input type="checkbox" role="switch" checked={checked} onChange={(e) => onChange(e.target.checked)} />
@@ -197,39 +199,102 @@ function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange
   );
 }
 
+const NO_INSTALL: InstallOptions = {
+  proxmox_url: "", proxmox_token_id: "", proxmox_token_secret: "", proxmox_verify_tls: false,
+  cf_client_id: "", cf_client_secret: "", compose_roots: "/opt,/srv,/home,/root",
+};
+
+/** Proxmox / Cloudflare / folders – used when creating an agent and for a new install command. */
+function InstallFields({ value, onChange }: { value: InstallOptions; onChange: (v: InstallOptions) => void }) {
+  const { t } = useTranslation();
+  const [proxmox, setProxmox] = useState(!!value.proxmox_url);
+  const [cf, setCf] = useState(!!value.cf_client_id);
+  const [more, setMore] = useState(false);
+  const set = (patch: Partial<InstallOptions>) => onChange({ ...value, ...patch });
+  return (
+    <>
+      <Toggle checked={proxmox} label={t("agents.proxmox")} hint={t("agents.proxmoxHint")}
+              onChange={(v) => { setProxmox(v); set(v ? { proxmox_url: value.proxmox_url || "https://127.0.0.1:8006" } : { proxmox_url: "", proxmox_token_id: "", proxmox_token_secret: "" }); }} />
+      {proxmox && (
+        <div className="sub-fields">
+          <div className="grid-2">
+            <label className="field">
+              {t("agents.proxmoxUrl")}
+              <span className="hint">{t("agents.proxmoxUrlHint")}</span>
+              <input className="input" required value={value.proxmox_url} onChange={(e) => set({ proxmox_url: e.target.value })} />
+            </label>
+            <label className="field">
+              {t("agents.tokenId")}
+              <span className="hint">{t("agents.tokenIdHint")}</span>
+              <input className="input" required placeholder="xtools@pve!agent" value={value.proxmox_token_id}
+                     onChange={(e) => set({ proxmox_token_id: e.target.value })} />
+            </label>
+          </div>
+          <label className="field">
+            {t("agents.tokenSecret")}
+            <input className="input secret" required type="password" autoComplete="off" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                   value={value.proxmox_token_secret} onChange={(e) => set({ proxmox_token_secret: e.target.value })} />
+          </label>
+          <label className="inline-check">
+            <input type="checkbox" checked={value.proxmox_verify_tls} onChange={(e) => set({ proxmox_verify_tls: e.target.checked })} />
+            {t("agents.verifyTls")}
+          </label>
+          <p className="muted small-note" style={{ margin: 0 }}>{t("agents.proxmoxHowto")}</p>
+        </div>
+      )}
+      <Toggle checked={cf} label={t("agents.cf")} hint={t("agents.cfHint")}
+              onChange={(v) => { setCf(v); if (!v) set({ cf_client_id: "", cf_client_secret: "" }); }} />
+      {cf && (
+        <div className="sub-fields grid-2">
+          <label className="field">
+            {t("agents.cfId")}
+            <input className="input" required value={value.cf_client_id} onChange={(e) => set({ cf_client_id: e.target.value })} />
+          </label>
+          <label className="field">
+            {t("agents.cfSecret")}
+            <input className="input secret" required type="password" autoComplete="off" value={value.cf_client_secret}
+                   onChange={(e) => set({ cf_client_secret: e.target.value })} />
+          </label>
+        </div>
+      )}
+      <button type="button" className="btn btn-ghost add-link" onClick={() => setMore((m) => !m)}>
+        {more ? t("agents.lessOptions") : t("agents.moreOptions")}
+      </button>
+      {more && (
+        <label className="field">
+          {t("agents.composeRoots")}
+          <span className="hint">{t("agents.composeRootsHint")}</span>
+          <input className="input" value={value.compose_roots} onChange={(e) => set({ compose_roots: e.target.value })} />
+        </label>
+      )}
+    </>
+  );
+}
+
 function Agents() {
   const { t } = useTranslation();
   const agents = useAgents();
-  const create = useCreateAgent();
   const update = useUpdateAgent();
   const remove = useDeleteAgent();
-  const [name, setName] = useState("");
-  const [created, setCreated] = useState<{ name: string; key: string } | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [reinstall, setReinstall] = useState<{ id: string; name: string } | null>(null);
+  const [result, setResult] = useState<{ name: string; key: string; install: InstallInfo } | null>(null);
   if (!agents.data) return <Loading error={agents.error} />;
 
   return (
     <>
-      <p className="muted intro">{t("agents.intro")}</p>
-      <form className="card card-pad add-agent" onSubmit={(e) => {
-        e.preventDefault();
-        create.mutate(name, { onSuccess: (a) => { setCreated({ name: a.name, key: a.key }); setName(""); } });
-      }}>
-        <label className="field" style={{ flex: 1 }}>
-          {t("agents.name")}
-          <input className="input" required maxLength={60} placeholder={t("agents.namePlaceholder")} value={name}
-                 onChange={(e) => setName(e.target.value)} />
-        </label>
-        <button type="submit" className="btn btn-primary" disabled={create.isPending}>
+      <div className="section-row">
+        <p className="muted intro">{t("agents.intro")}</p>
+        <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
           <Icon name="plus" size={16} />
           {t("agents.create")}
         </button>
-        {create.error && <p className="error-text" style={{ flexBasis: "100%" }}>{create.error.message}</p>}
-      </form>
+      </div>
 
       {agents.data.length === 0 ? (
         <Empty>{t("agents.none")}</Empty>
       ) : (
-        <div className="card list" style={{ marginTop: 16 }}>
+        <div className="card list">
           {agents.data.map((a) => {
             const age = agentAge(a);
             const st = a.disabled ? "off" : age === null ? "warn" : age < AGENT_STALE ? "up" : "down";
@@ -247,6 +312,9 @@ function Agents() {
                   </div>
                 </div>
                 <div className="list-side">
+                  <button type="button" className="btn btn-small" onClick={() => setReinstall({ id: a.id, name: a.name })}>
+                    {t("agents.installCommand")}
+                  </button>
                   <button type="button" className="btn btn-small" onClick={() => update.mutate({ id: a.id, disabled: !a.disabled })}>
                     {a.disabled ? t("agents.enable") : t("agents.disable")}
                   </button>
@@ -258,43 +326,112 @@ function Agents() {
         </div>
       )}
 
-      {created && <AgentSetup agent={created} onClose={() => setCreated(null)} />}
+      {creating && <CreateAgentDialog onClose={() => setCreating(false)} onCreated={(r) => { setCreating(false); setResult(r); }} />}
+      {reinstall && (
+        <ReinstallDialog agent={reinstall} onClose={() => setReinstall(null)}
+                         onCreated={(r) => { setReinstall(null); setResult(r); }} />
+      )}
+      {result && <InstallDialog result={result} onClose={() => setResult(null)} />}
     </>
   );
 }
 
-function AgentSetup({ agent, onClose }: { agent: { name: string; key: string }; onClose: () => void }) {
+type InstallResult = { name: string; key: string; install: InstallInfo };
+
+function CreateAgentDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (r: InstallResult) => void }) {
   const { t } = useTranslation();
-  const about = useAbout();
-  const base = about.data?.base_url || window.location.origin;
-  const env = `XT_AGENT_URL=${base}\nXT_AGENT_KEY=${agent.key}\nCF_ACCESS_CLIENT_ID=\nCF_ACCESS_CLIENT_SECRET=\nXT_TIMEZONE=${about.data?.timezone ?? "UTC"}\n`;
+  const create = useCreateAgent();
+  const [name, setName] = useState("");
+  const [opts, setOpts] = useState<InstallOptions>(NO_INSTALL);
   return (
-    <Dialog wide title={t("agents.createdTitle", { name: agent.name })} onClose={onClose}
-            footer={<><span className="spacer" /><button type="button" className="btn btn-primary" onClick={onClose}>{t("common.done")}</button></>}>
-      <p className="notice" style={{ margin: 0 }}>{t("agents.keyOnce")}</p>
-      <div className="field">
-        {t("agents.key")}
-        <div className="key-row">
-          <code className="secret">{agent.key}</code>
-          <CopyButton value={agent.key} label={t("common.copy")} />
-        </div>
-      </div>
-      <div className="field">
-        {t("agents.steps")}
-        <ol className="steps">
-          <li>{t("agents.step1")} <code>git clone … x-tools &amp;&amp; cd x-tools/deploy/agent</code></li>
-          <li>{t("agents.step2")}</li>
-        </ol>
-        <div className="key-row">
-          <pre className="code" style={{ flex: 1 }}>{env}</pre>
-          <CopyButton value={env} label={t("common.copy")} />
-        </div>
-        <ol className="steps" start={3}>
-          <li>{t("agents.step3")} <code>docker compose up -d --build</code></li>
-          <li>{t("agents.step4")}</li>
-        </ol>
-      </div>
+    <Dialog wide title={t("agents.create")} onClose={onClose}
+            onSubmit={() => create.mutate({ name, ...opts }, { onSuccess: (a) => onCreated({ name: a.name, key: a.key, install: a.install }) })}
+            footer={<>
+              <span className="spacer" />
+              <button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
+              <button type="submit" className="btn btn-primary" disabled={create.isPending}>{t("agents.createAndInstall")}</button>
+            </>}>
+      <label className="field">
+        {t("agents.name")}
+        <input className="input" required autoFocus maxLength={60} placeholder={t("agents.namePlaceholder")} value={name}
+               onChange={(e) => setName(e.target.value)} />
+      </label>
+      <InstallFields value={opts} onChange={setOpts} />
+      {create.error && <p className="error-text">{create.error.message}</p>}
     </Dialog>
+  );
+}
+
+function ReinstallDialog({ agent, onClose, onCreated }: {
+  agent: { id: string; name: string };
+  onClose: () => void;
+  onCreated: (r: InstallResult) => void;
+}) {
+  const { t } = useTranslation();
+  const install = useNewInstall();
+  const [opts, setOpts] = useState<InstallOptions>(NO_INSTALL);
+  return (
+    <Dialog wide title={t("agents.reinstallTitle", { name: agent.name })} onClose={onClose}
+            onSubmit={() => install.mutate({ id: agent.id, body: opts }, { onSuccess: (r) => onCreated({ name: agent.name, ...r }) })}
+            footer={<>
+              <span className="spacer" />
+              <button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
+              <button type="submit" className="btn btn-primary" disabled={install.isPending}>{t("agents.createCommand")}</button>
+            </>}>
+      <p className="notice" style={{ margin: 0 }}>{t("agents.reinstallNote")}</p>
+      <InstallFields value={opts} onChange={setOpts} />
+      {install.error && <p className="error-text">{install.error.message}</p>}
+    </Dialog>
+  );
+}
+
+function InstallDialog({ result, onClose }: { result: InstallResult; onClose: () => void }) {
+  const { t } = useTranslation();
+  const [docker, setDocker] = useState(false);
+  const env = `XT_AGENT_URL=${result.install.base_url}\nXT_AGENT_KEY=${result.key}\n`;
+  return (
+    <Dialog wide title={t("agents.installTitle", { name: result.name })} onClose={onClose}
+            footer={<><span className="spacer" /><button type="button" className="btn btn-primary" onClick={onClose}>{t("common.done")}</button></>}>
+      <div className="field">
+        {t("agents.runThis")}
+        <span className="hint">{t("agents.runThisHint")}</span>
+        <div className="key-row">
+          <pre className="code command">{result.install.command}</pre>
+          <CopyButton value={result.install.command} label={t("common.copy")} />
+        </div>
+      </div>
+      <ul className="facts">
+        <li>{t("agents.fact1")}</li>
+        <li>{t("agents.fact2")}</li>
+        <li>{t("agents.fact3")}</li>
+      </ul>
+      <button type="button" className="btn btn-ghost add-link" onClick={() => setDocker((d) => !d)}>
+        {t("agents.dockerAlt")}
+      </button>
+      {docker && (
+        <div className="field">
+          <span className="hint">{t("agents.dockerAltHint")}</span>
+          <div className="key-row">
+            <pre className="code" style={{ flex: 1 }}>{env}</pre>
+            <CopyButton value={env} label={t("common.copy")} />
+          </div>
+        </div>
+      )}
+    </Dialog>
+  );
+}
+
+function General() {
+  const { t } = useTranslation();
+  const features = useFeatures();
+  const save = useSaveFeatures();
+  if (!features.data) return <Loading error={features.error} />;
+  return (
+    <section className="card card-pad stack-lg" style={{ marginTop: 16 }}>
+      <Toggle checked={features.data.customers} label={t("general.customers")} hint={t("general.customersHint")}
+              onChange={(v) => save.mutate({ ...features.data!, customers: v })} />
+      {save.error && <p className="error-text">{save.error.message}</p>}
+    </section>
   );
 }
 

@@ -82,7 +82,10 @@
     "addPort": "Add port",
     "notes": "Notes",
     "forCustomer": "for {{name}}",
-    "openCustomer": "Open customer"
+    "openCustomer": "Open customer",
+    "host": "Host",
+    "hostHint": "Where the ports are checked – empty: this server",
+    "folderHint": "Links the service to its compose project"
   },
   "credentials": {
     "sub": "Logins per service, encrypted at rest.",
@@ -236,7 +239,8 @@
     "startTitle": "Get started",
     "start1": "Add your services",
     "start2": "Add customers and assign their sites",
-    "start3": "Set up notifications"
+    "start3": "Set up notifications",
+    "start4": "Connect more servers with an agent"
   },
   "sites": {
     "title": "Website checks",
@@ -251,7 +255,8 @@
     "tab": {
       "notifications": "Notifications",
       "agents": "Agents",
-      "about": "About"
+      "about": "About",
+      "general": "General"
     }
   },
   "notify": {
@@ -292,7 +297,7 @@
     "intro": "Agents report other servers (e.g. at home) to X-TOOLS – outbound only, they never receive commands.",
     "name": "Name",
     "namePlaceholder": "e.g. Proxmox at home",
-    "create": "Create agent",
+    "create": "Add server",
     "none": "No agents yet.",
     "disabled": "disabled",
     "enable": "Enable",
@@ -305,7 +310,37 @@
     "step1": "Get X-TOOLS:",
     "step2": "Create .env with these values:",
     "step3": "Start the agent:",
-    "step4": "Behind Cloudflare Access: add a service token and a “Service Auth” rule for /api/agent/report (see Help)."
+    "step4": "Behind Cloudflare Access: add a service token and a “Service Auth” rule for /api/agent/report (see Help).",
+    "createAndInstall": "Create install command",
+    "createCommand": "Create install command",
+    "proxmox": "This is a Proxmox host",
+    "proxmoxHint": "Also report nodes, storage, LXCs and VMs through the Proxmox API (read-only).",
+    "proxmoxUrl": "Proxmox URL",
+    "proxmoxUrlHint": "Seen from that server – usually https://127.0.0.1:8006",
+    "tokenId": "API token ID",
+    "tokenIdHint": "user@realm!token",
+    "tokenSecret": "API token secret",
+    "verifyTls": "Verify the TLS certificate (off for the default self-signed certificate)",
+    "proxmoxHowto": "Proxmox: Datacenter → Permissions → API Tokens → Add; then Permissions → Add → API Token Permission, path /, role PVEAuditor. The secret only goes into the install command.",
+    "cf": "X-TOOLS is behind Cloudflare Access",
+    "cfHint": "Service token so the agent gets through (rule: Service Auth for /api/agent/).",
+    "cfId": "Client ID",
+    "cfSecret": "Client secret",
+    "moreOptions": "More options",
+    "lessOptions": "Fewer options",
+    "composeRoots": "Compose folders",
+    "composeRootsHint": "Where to look for compose files on that server (comma-separated)",
+    "installCommand": "Install command",
+    "reinstallTitle": "New install command – {{name}}",
+    "reinstallNote": "This creates a new key. The agent installed so far stops reporting until you run the new command.",
+    "installTitle": "Install “{{name}}”",
+    "runThis": "Run this on the server, as root",
+    "runThisHint": "On Proxmox you are root in the shell; elsewhere replace “| sh” with “| sudo sh”.",
+    "fact1": "Works once and only for one hour.",
+    "fact2": "Installs the systemd service x-tools-agent (Python 3.10+, nothing else) – read-only, no open ports.",
+    "fact3": "The server shows up under Servers within a minute.",
+    "dockerAlt": "Prefer Docker?",
+    "dockerAltHint": "Use deploy/agent from the repository with this .env (the key is shown only now):"
   },
   "about": {
     "version": "Version",
@@ -322,5 +357,9 @@
     "keyFile": "The secret key is stored in {{dir}}/secret.key.",
     "backupHint": "Back up the whole data volume including the key. Without it stored credentials and tokens cannot be decrypted.",
     "config": "These values are set through environment variables (deploy/.env)."
+  },
+  "general": {
+    "customers": "Customers & website checks",
+    "customersHint": "For sites you host for others: contacts, agreements and external checks of their domains. Stored customers are kept when you switch it off."
   }
 }

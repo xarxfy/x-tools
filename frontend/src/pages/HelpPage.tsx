@@ -21,8 +21,9 @@ const DOCS: Doc[] = [
       everything that needs attention.</p>
     <ol>
       <li>Add your <Link to="/services">services</Link> – name, ports, domains and folder are enough.</li>
-      <li>Add <Link to="/customers">customers</Link> and assign their services; their websites are checked from outside.</li>
-      <li>Set up <Link to="/settings">notifications</Link> so you hear about problems.</li>
+      <li>Optional: switch on <Link to="/settings">customers</Link> if you host sites for others; their websites are
+        checked from outside.</li>
+      <li>Set up <Link to="/settings?tab=notifications">notifications</Link> so you hear about problems.</li>
       <li>Connect more servers with an <Link to="/settings?tab=agents">agent</Link>.</li>
     </ol>
   </>, "start first steps services customers notifications agent", [
@@ -37,6 +38,10 @@ const DOCS: Doc[] = [
     <p>A service is anything that runs somewhere: a compose project, a systemd unit, an LXC. Ports are checked
       every minute on the host X-TOOLS runs on (green = answers).</p>
   </>, "services ports domains folder type", [
+    doc("services-host", "Host", <>
+      <p>By default ports are checked on the machine X-TOOLS runs on. For a service on another machine (e.g. an LXC
+        at home) enter its IP address or host name under <em>Host</em> – the ports are then checked there.</p>
+    </>, "host ip port check lxc homelab"),
     doc("services-credentials", "Credentials", <>
       <p>Each service can hold logins (label, address, username, password, note). They are encrypted with the
         secret key of this installation and only decrypted when you open them. Passwords stay hidden until you
@@ -51,6 +56,8 @@ const DOCS: Doc[] = [
   doc("customers", "Customers", <>
     <p>Customers bundle contact details, agreements and the services/sites you host for them. A service belongs
       to at most one customer.</p>
+    <p>The area is optional: switch it on or off under <Link to="/settings">Settings → General</Link>. When it is
+      off, the menu entry and the website checks disappear; stored customers are kept.</p>
   </>, "customers contact agreements", [
     doc("customers-checks", "Website checks", <>
       <p>All domains of customer services are checked from outside every five minutes, the way visitors see them:
@@ -88,24 +95,29 @@ const DOCS: Doc[] = [
   </>, "agents servers home outbound", [
     doc("agents-setup", "Set up an agent", <>
       <ol>
-        <li>Settings → Agents → create an agent. The key is shown once; only its hash is stored.</li>
-        <li>On the other server: clone the repository, go to <code>deploy/agent</code>, create <code>.env</code> from
-          <code>.env.example</code> with the address and the key.</li>
-        <li><code>docker compose up -d --build</code> – the server shows up within a minute.</li>
+        <li><Link to="/settings?tab=agents">Settings → Agents</Link> → <em>Create agent</em>. For a Proxmox host,
+          switch on Proxmox and enter the API token.</li>
+        <li>Copy the install command and run it as root on the other server. It installs a small service
+          (<code>x-tools-agent</code>, Python standard library only, no Docker needed).</li>
+        <li>The server shows up within a minute.</li>
       </ol>
+      <p>The command works once and for one hour. Lost it, or want to add Proxmox later? <em>Install command</em> on
+        the agent creates a new one (and a new key). Prefer Docker? Use <code>deploy/agent</code> from the repository.</p>
       <p>Agents of the predecessor Server-Info keep working after the import – just point their URL to X-TOOLS.</p>
     </>, "setup agent key env compose"),
     doc("agents-access", "Behind Cloudflare Access", <>
       <p>If X-TOOLS is protected by Cloudflare Access, the agent cannot log in interactively. Create a service token
         (Zero Trust → Access → Service Auth), add a policy with action “Service Auth” for the path
-        <code>/api/agent/report</code> and put client ID and secret into the agent’s <code>.env</code>
-        (<code>CF_ACCESS_CLIENT_ID</code>, <code>CF_ACCESS_CLIENT_SECRET</code>). A 403 or a login page in the agent
+        <code>/api/agent/</code> and enter client ID and secret when you create the agent (they go into the install
+        command and the agent’s configuration). A 403 or a login page in the agent
         log means the token or the path rule does not match.</p>
     </>, "cloudflare access service token 403"),
     doc("agents-proxmox", "Proxmox", <>
-      <p>Create an API token with the role <code>PVEAuditor</code> (read-only), e.g. <code>xtools@pve!agent</code>,
-        and set <code>PROXMOX_URL</code>, <code>PROXMOX_TOKEN_ID</code> and <code>PROXMOX_TOKEN_SECRET</code> in the
-        agent’s <code>.env</code>. The server page then shows nodes, storage and all LXCs and VMs.</p>
+      <p>In the Proxmox web UI: Datacenter → Permissions → API Tokens → <em>Add</em> (e.g. user <code>root@pam</code>,
+        token ID <code>xtools</code>, <em>Privilege Separation</em> on). Then Permissions → <em>Add → API Token
+        Permission</em>: path <code>/</code>, the token, role <code>PVEAuditor</code> (read-only). Enter token ID
+        (<code>root@pam!xtools</code>) and secret when creating the agent. They go straight into the install
+        command and are stored only on the Proxmox host.</p>
     </>, "proxmox token pveauditor lxc vm"),
   ]),
   doc("notifications", "Notifications", <>

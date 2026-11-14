@@ -14,7 +14,7 @@ from app.core.config import get_settings
 from app.core.db import session_scope
 from app.models import Agent, Customer, Service
 from app.monitor import sites, state
-from app.monitor.ports import port_status
+from app.monitor.ports import port_key, port_status
 
 ALERT_STATE = "alert_state"
 AGENT_STALE = 300  # seconds without a report
@@ -80,7 +80,7 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
         issues.append({"key": key, "kind": kind, "level": level, "text": text, "link": link, **extra})
 
     with session_scope() as db:
-        services = [(s.id, s.name, list(s.ports or [])) for s in db.scalars(select(Service))]
+        services = [(s.id, s.name, s.host, list(s.ports or [])) for s in db.scalars(select(Service))]
         agents = [(a.id, a.name, a.last_report, a.last_report_at) for a in db.scalars(select(Agent))
                   if not a.disabled]
         customer_sites = [(c.id, c.name, d) for c in db.scalars(select(Customer)) for s in c.services
@@ -88,13 +88,14 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
 
     # Ports
     if ports is None:
-        ports = port_status(p["port"] for _, _, ps in services for p in ps)
-    for sid, name, ps in services:
+        ports = port_status((host, p["port"]) for _, _, host, ps in services for p in ps)
+    for sid, name, host, ps in services:
         for p in ps:
-            if not ports.get(p["port"]):
+            if not ports.get(port_key(host, p["port"])):
                 label = f" ({p['label']})" if p.get("label") else ""
-                add(f"port:{sid}:{p['port']}", "port", "down", f"{name}: port {p['port']}{label} does not answer",
-                    "/services")
+                where = f" on {host}" if host else ""
+                add(f"port:{sid}:{p['port']}", "port", "down",
+                    f"{name}: port {p['port']}{label}{where} does not answer", "/services")
 
     # This server: Docker + system
     snap = load_snapshot()
@@ -143,7 +144,8 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
             add(f"agent:{aid}:broken", "agent", "warn", f"{name}: report cannot be read ({error})", link)
 
     # Customer websites
-    checks = sites.load_results()
+    from app.api.features import load as features
+    checks = sites.load_results() if features().customers else {}
     seen = set()
     for cid, cname, domain in customer_sites:
         ch = checks.get(domain)

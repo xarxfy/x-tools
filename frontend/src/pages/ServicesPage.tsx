@@ -2,18 +2,19 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  useCustomers, useDeleteService, usePortStatus, useSaveService, useServices,
+  portKey, useCustomers, useDeleteService, usePortStatus, useSaveService, useServices,
   type Port, type Service, type ServiceInput,
 } from "../api/data";
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { CredentialsDialog } from "./CredentialsPage";
+import { useFeatures } from "../api/monitor";
 
-const EMPTY: ServiceInput = { name: "", domains: [], ports: [], folder: "", type: "", notes: "", customer_id: null };
+const EMPTY: ServiceInput = { name: "", host: "", domains: [], ports: [], folder: "", type: "", notes: "", customer_id: null };
 
 export function serviceState(s: Service, ports?: Record<string, boolean>): "up" | "down" | "warn" | "off" {
   if (!s.ports.length || !ports) return "off";
-  const states = s.ports.map((p) => ports[String(p.port)]);
+  const states = s.ports.map((p) => ports[portKey(s.host, p.port)]);
   if (states.every(Boolean)) return "up";
   return states.some(Boolean) ? "warn" : "down";
 }
@@ -25,10 +26,11 @@ export function ServicesPage() {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Service | "new" | null>(null);
   const [keys, setKeys] = useState<Service | null>(null);
+  const customersOn = useFeatures().data?.customers ?? false;
 
   if (!services.data) return <Loading error={services.error} retry={() => services.refetch()} />;
   const list = services.data.filter((s) =>
-    matches(query, s.name, s.type, s.folder, s.customer_name, ...s.domains, ...s.ports.map((p) => String(p.port))),
+    matches(query, s.name, s.type, s.folder, s.host, s.customer_name, ...s.domains, ...s.ports.map((p) => String(p.port))),
   );
 
   return (
@@ -55,7 +57,7 @@ export function ServicesPage() {
                   {s.type && <span className="badge">{s.type}</span>}
                 </div>
                 <div className="list-sub">
-                  {[s.folder, s.customer_name && t("services.forCustomer", { name: s.customer_name })]
+                  {[s.host, s.folder, customersOn && s.customer_name && t("services.forCustomer", { name: s.customer_name })]
                     .filter(Boolean)
                     .join(" · ")}
                 </div>
@@ -63,7 +65,7 @@ export function ServicesPage() {
                   <div className="chips">
                     {s.ports.map((p) => (
                       <span key={p.port} className="chip">
-                        <Dot state={ports.data ? (ports.data[String(p.port)] ? "up" : "down") : "off"} />
+                        <Dot state={ports.data ? (ports.data[portKey(s.host, p.port)] ? "up" : "down") : "off"} />
                         {p.port}
                         {p.label && <span className="muted">{p.label}</span>}
                       </span>
@@ -107,6 +109,7 @@ export function ServiceDialog({
 }) {
   const { t } = useTranslation();
   const customers = useCustomers();
+  const customersOn = useFeatures().data?.customers ?? false;
   const save = useSaveService();
   const remove = useDeleteService();
   const start: ServiceInput = { ...EMPTY, ...initial, ...service };
@@ -157,19 +160,27 @@ export function ServiceDialog({
             {["Docker Compose", "Docker", "Systemd", "LXC", "VM", "Static site"].map((v) => <option key={v} value={v} />)}
           </datalist>
         </label>
-        <label className="field">
+        {customersOn && <label className="field">
           {t("services.customer")}
           <select className="input" value={form.customer_id ?? ""}
                   onChange={(e) => setForm((f) => ({ ...f, customer_id: e.target.value || null }))}>
             <option value="">{t("services.noCustomer")}</option>
             {customers.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+        </label>}
+      </div>
+      <div className="grid-2">
+        <label className="field">
+          {t("services.host")}
+          <span className="hint">{t("services.hostHint")}</span>
+          <input className="input" maxLength={255} placeholder="192.168.1.20" value={form.host} onChange={set("host")} />
+        </label>
+        <label className="field">
+          {t("services.folder")}
+          <span className="hint">{t("services.folderHint")}</span>
+          <input className="input" maxLength={200} placeholder="~/my-app" value={form.folder} onChange={set("folder")} />
         </label>
       </div>
-      <label className="field">
-        {t("services.folder")}
-        <input className="input" maxLength={200} placeholder="~/my-app" value={form.folder} onChange={set("folder")} />
-      </label>
       <label className="field">
         {t("services.domains")}
         <span className="hint">{t("services.domainsHint")}</span>
@@ -206,7 +217,7 @@ export function ServiceDialog({
         {t("services.notes")}
         <textarea className="input" maxLength={300} value={form.notes} onChange={set("notes")} />
       </label>
-      {service?.customer_id && (
+      {customersOn && service?.customer_id && (
         <Link to={`/customers/${service.customer_id}`} onClick={onClose}>{t("services.openCustomer")}</Link>
       )}
       {save.error && <p className="error-text">{save.error.message}</p>}

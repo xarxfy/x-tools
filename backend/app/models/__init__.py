@@ -75,6 +75,8 @@ class Service(Base):
     # ["app.example.com"]
     domains: Mapped[list] = mapped_column(JSON, default=list)
     folder: Mapped[str] = mapped_column(String(200), default="")
+    # Where the ports are checked; empty = XT_CHECK_HOST (the X-TOOLS host).
+    host: Mapped[str] = mapped_column(String(255), default="", server_default="")
     type: Mapped[str] = mapped_column(String(60), default="")
     notes: Mapped[str] = mapped_column(String(300), default="")
     # A service belongs to at most one customer.

@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.agent_install import InstallOptions, bundle_response, create_install, install_script
 from app.api.deps import current_user
 from app.core.db import get_db
 from app.core.security import token_hash
@@ -23,7 +24,7 @@ MAX_REPORT = 5 * 1024 * 1024
 MIN_INTERVAL = 5  # seconds between two reports of one agent
 
 
-class AgentIn(BaseModel):
+class AgentIn(InstallOptions):
     name: str = Field(min_length=1, max_length=60)
 
 
@@ -61,7 +62,7 @@ def read_agent(aid: str, db: Session = Depends(get_db)):
 
 
 @router.post("", status_code=201)
-def create_agent(body: AgentIn, db: Session = Depends(get_db)):
+def create_agent(body: AgentIn, request: Request, db: Session = Depends(get_db)):
     name = body.name.strip()
     if not name:
         raise HTTPException(422, "Name is missing")
@@ -72,7 +73,18 @@ def create_agent(body: AgentIn, db: Session = Depends(get_db)):
     db.add(agent)
     db.commit()
     # The key is shown exactly once; only its hash is stored.
-    return {**summary(agent), "key": key}
+    opts = InstallOptions(**body.model_dump(exclude={"name"}))
+    return {**summary(agent), "key": key, "install": create_install(request, agent.id, key, opts)}
+
+
+@router.post("/{aid}/install")
+def new_install(aid: str, body: InstallOptions, request: Request, db: Session = Depends(get_db)):
+    """New install command (e.g. to reinstall or add Proxmox later). Replaces the agent key."""
+    agent = get_agent(db, aid)
+    key = secrets.token_urlsafe(32)
+    agent.key_hash = token_hash(key)
+    db.commit()
+    return {"key": key, "install": create_install(request, agent.id, key, body)}
 
 
 @router.put("/{aid}")
@@ -105,14 +117,32 @@ def normalize(value):
     return value
 
 
+def agent_for_key(db: Session, key: str) -> Agent | None:
+    if not 0 < len(key) <= 200:
+        return None
+    digest = token_hash(key)
+    return next((a for a in db.scalars(select(Agent)) if hmac.compare_digest(a.key_hash, digest)), None)
+
+
+@report_router.get("/install/{token}", include_in_schema=False)
+def agent_install_script(token: str, request: Request):
+    """Install script for one agent. Public, but only with a valid one-time token."""
+    return install_script(request, token)
+
+
+@report_router.get("/bundle", include_in_schema=False)
+def agent_bundle_download(request: Request, db: Session = Depends(get_db)):
+    """The standalone agent (Python zipapp) – only for a known agent key."""
+    agent = agent_for_key(db, request.headers.get("x-agent-key", ""))
+    if agent is None or agent.disabled:
+        raise HTTPException(401, "Unknown agent key")
+    return bundle_response()
+
+
 @report_router.post("/report")
 async def agent_report(request: Request, db: Session = Depends(get_db)):
     """Report of an agent. No session login – authenticated by the agent key (X-Agent-Key)."""
-    key = request.headers.get("x-agent-key", "")
-    agent = None
-    if 0 < len(key) <= 200:
-        digest = token_hash(key)
-        agent = next((a for a in db.scalars(select(Agent)) if hmac.compare_digest(a.key_hash, digest)), None)
+    agent = agent_for_key(db, request.headers.get("x-agent-key", ""))
     if agent is None:
         raise HTTPException(401, "Unknown agent key")
     if agent.disabled:

@@ -127,3 +127,50 @@ def test_site_check_dns_failure():
     from app.monitor.sites import check_site
     result = check_site("does-not-exist.invalid")
     assert result["level"] == "down" and "DNS" in result["label"]
+
+
+def test_agent_install(admin, tmp_path):
+    import subprocess
+    h = csrf_headers(admin)
+    bad = admin.post("/api/agents", json={"name": "PVE", "proxmox_url": "https://10.0.0.2:8006"}, headers=h)
+    assert bad.status_code == 422  # proxmox needs all three values
+    bad = admin.post("/api/agents", json={"name": "PVE", "proxmox_url": "https://x';rm -rf /;'",
+                                          "proxmox_token_id": "a", "proxmox_token_secret": "b"}, headers=h)
+    assert bad.status_code == 422
+    r = admin.post("/api/agents", json={"name": "PVE", "proxmox_url": "https://10.0.0.2:8006",
+                                        "proxmox_token_id": "xtools@pve!agent",
+                                        "proxmox_token_secret": "1111-2222-3333"}, headers=h)
+    assert r.status_code == 201, r.text
+    cmd = r.json()["install"]["command"]
+    assert cmd.startswith("curl -fsSL 'http://testserver/api/agent/install/") and cmd.endswith("| sh")
+    url = cmd.split("'")[1].replace("http://testserver", "")
+    assert b"1111-2222-3333" not in (tmp_path / "x-tools.db").read_bytes()  # only encrypted, temporarily
+
+    admin.cookies.clear()
+    script = admin.get(url)
+    assert script.status_code == 200
+    text = script.text
+    assert r.json()["key"] in text and "PROXMOX_TOKEN_SECRET=1111-2222-3333" in text and "__" not in text
+    (tmp_path / "install.sh").write_text(text)
+    assert subprocess.run(["sh", "-n", str(tmp_path / "install.sh")]).returncode == 0
+    assert admin.get(url).status_code == 404  # one-time
+
+    assert admin.get("/api/agent/bundle").status_code == 401
+    bundle = admin.get("/api/agent/bundle", headers={"X-Agent-Key": r.json()["key"]})
+    assert bundle.status_code == 200 and bundle.content[:2] == b"PK"
+
+    # a new install command replaces the key
+    admin.post("/api/auth/login", json={"username": "admin", "password": "correct horse battery"})
+    r2 = admin.post(f"/api/agents/{r.json()['id']}/install", json={}, headers=csrf_headers(admin))
+    assert r2.status_code == 200 and r2.json()["key"] != r.json()["key"]
+    admin.cookies.clear()
+    assert admin.get("/api/agent/bundle", headers={"X-Agent-Key": r.json()["key"]}).status_code == 401
+
+
+def test_features(admin):
+    h = csrf_headers(admin)
+    assert admin.get("/api/features").json() == {"customers": False}
+    admin.post("/api/customers", json={"name": "ACME"}, headers=h)
+    assert admin.get("/api/features").json() == {"customers": True}  # undecided: on when customers exist
+    admin.put("/api/features", json={"customers": False}, headers=h)
+    assert admin.get("/api/features").json() == {"customers": False}

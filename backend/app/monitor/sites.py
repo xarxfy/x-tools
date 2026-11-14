@@ -101,7 +101,10 @@ def check_site(domain: str) -> dict:
 
 
 def customer_domains() -> list[str]:
-    """Domains of all services that belong to a customer."""
+    """Domains of all services that belong to a customer (none while the customers area is off)."""
+    from app.api.features import load as features
+    if not features().customers:
+        return []
     with session_scope() as db:
         services = db.scalars(select(Service).where(Service.customer_id.is_not(None)))
         return sorted({d for s in services for d in (s.domains or [])})

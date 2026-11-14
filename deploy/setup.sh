@@ -27,5 +27,9 @@ until curl -fs -o /dev/null "http://127.0.0.1:${PORT}/api/health"; do
   fi
   sleep 1
 done
-echo "X-TOOLS is running on http://127.0.0.1:${PORT}"
+BASE=$(sed -n 's/^XT_BASE_URL=//p' .env | tail -n1)
+echo "X-TOOLS is running on http://127.0.0.1:${PORT}${BASE:+ – open $BASE}"
+if curl -fs "http://127.0.0.1:${PORT}/api/status" | grep -q '"needs_setup":true'; then
+  docker logs x-tools 2>&1 | grep "Setup code:" | tail -n1
+fi
 echo "Collector log: sudo docker logs --tail 20 x-tools-collector"

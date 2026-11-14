@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useOverview } from "../api/monitor";
+import { useFeatures, useOverview } from "../api/monitor";
 import { Icon, type IconName } from "../components/Icon";
 import { Dot, Loading, PageHead } from "../components/ui";
 import { level, pct } from "../components/format";
@@ -9,11 +9,12 @@ import "./OverviewPage.css";
 export function OverviewPage() {
   const { t } = useTranslation();
   const overview = useOverview();
+  const customersOn = useFeatures().data?.customers ?? false;
   if (!overview.data) return <Loading error={overview.error} retry={() => overview.refetch()} />;
   const { issues, counts, system, notifications } = overview.data;
   const open = issues.filter((i) => !i.manual);
   const manual = issues.filter((i) => i.manual);
-  const empty = counts.services === 0 && counts.customers === 0;
+  const empty = counts.services === 0;
 
   const tiles: { to: string; icon: IconName; label: string; value: string; sub?: string }[] = [
     { to: "/servers", icon: "servers", label: t("nav.servers"), value: String(counts.servers) },
@@ -22,10 +23,10 @@ export function OverviewPage() {
       value: `${counts.containers_running}/${counts.containers}`, sub: t("overview.running"),
     },
     { to: "/services", icon: "services", label: t("nav.services"), value: String(counts.services) },
-    {
-      to: "/customers", icon: "customers", label: t("nav.customers"), value: String(counts.customers),
+    ...(customersOn ? [{
+      to: "/customers", icon: "customers" as IconName, label: t("nav.customers"), value: String(counts.customers),
       sub: counts.sites ? t("overview.sitesUp", { up: counts.sites_up, total: counts.sites }) : undefined,
-    },
+    }] : []),
   ];
   const meters = system
     ? ([
@@ -47,7 +48,7 @@ export function OverviewPage() {
             <p className="muted">
               {notifications ? t("overview.notifyOn") : (
                 <>
-                  {t("overview.notifyOff")} <Link to="/settings">{t("overview.setUp")}</Link>
+                  {t("overview.notifyOff")} <Link to="/settings?tab=notifications">{t("overview.setUp")}</Link>
                 </>
               )}
             </p>
@@ -73,7 +74,7 @@ export function OverviewPage() {
         )}
       </section>
 
-      <div className="tile-grid">
+      <div className={`tile-grid tiles-${tiles.length}`}>
         {tiles.map((tile) => (
           <Link key={tile.to} to={tile.to} className="card tile">
             <span className="tile-icon"><Icon name={tile.icon} size={18} /></span>
@@ -102,8 +103,9 @@ export function OverviewPage() {
           <strong>{t("overview.startTitle")}</strong>
           <ol>
             <li><Link to="/services">{t("overview.start1")}</Link></li>
-            <li><Link to="/customers">{t("overview.start2")}</Link></li>
-            <li><Link to="/settings">{t("overview.start3")}</Link></li>
+            {customersOn && <li><Link to="/customers">{t("overview.start2")}</Link></li>}
+            <li><Link to="/settings?tab=notifications">{t("overview.start3")}</Link></li>
+            <li><Link to="/settings?tab=agents">{t("overview.start4")}</Link></li>
           </ol>
         </div>
       )}

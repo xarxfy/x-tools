@@ -8,6 +8,7 @@ export interface Port {
 
 export interface ServiceInput {
   name: string;
+  host: string;
   domains: string[];
   ports: Port[];
   folder: string;
@@ -44,6 +45,9 @@ export interface CustomerInput {
 export interface Customer extends CustomerInput {
   id: string;
 }
+
+/** Key of a port in the port status: "8080" on the X-TOOLS host, "10.0.0.5:8080" elsewhere. */
+export const portKey = (host: string, port: number) => (host ? `${host}:${port}` : String(port));
 
 export const useServices = () => useQuery({ queryKey: ["services"], queryFn: () => api<Service[]>("/services") });
 

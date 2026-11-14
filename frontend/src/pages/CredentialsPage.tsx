@@ -21,7 +21,7 @@ export function CredentialsPage() {
     <button key={s.id} type="button" className="list-row" onClick={() => setOpen(s)}>
       <span className="list-main">
         <span className="list-title">{s.name}</span>
-        <span className="list-sub">{[s.customer_name, s.domains[0]].filter(Boolean).join(" · ")}</span>
+        <span className="list-sub">{[s.domains[0]].filter(Boolean).join(" · ")}</span>
       </span>
       <span className="list-side">
         {s.credential_count > 0 && <span className="badge">{t("credentials.count", { count: s.credential_count })}</span>}

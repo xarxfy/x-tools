@@ -58,9 +58,12 @@ def test_port_status(admin, monkeypatch):
     open_port = listener.getsockname()[1]
     h = csrf_headers(admin)
     admin.post("/api/services", json={**SERVICE, "ports": [{"port": open_port}, {"port": 1}]}, headers=h)
+    admin.post("/api/services", json={**SERVICE, "name": "Remote", "host": "127.0.0.1",
+                                      "ports": [{"port": open_port}]}, headers=h)
     status = admin.get("/api/services/ports").json()
     listener.close()
-    assert status == {str(open_port): True, "1": False}
+    assert status == {str(open_port): True, "1": False, f"127.0.0.1:{open_port}": True}
+    assert admin.post("/api/services", json={**SERVICE, "host": "bad host;"}, headers=h).status_code == 422
 
 
 def test_customers(admin):

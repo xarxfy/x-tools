@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Icon, type IconName } from "./Icon";
 import { useAppStatus, useLogout, useMe } from "../api/auth";
+import { useFeatures } from "../api/monitor";
 import "./Layout.css";
 
 const MAIN: { to: string; key: string; icon: IconName }[] = [
@@ -26,6 +27,8 @@ export function Layout() {
   const { data: me } = useMe();
   const { data: status } = useAppStatus();
   const logout = useLogout();
+  const features = useFeatures();
+  const main = MAIN.filter((item) => item.key !== "customers" || features.data?.customers);
 
   useEffect(() => setOpen(false), [location.pathname]); // close the mobile menu after navigating
 
@@ -57,7 +60,7 @@ export function Layout() {
           </button>
         </div>
         <nav className="nav-main" aria-label="Main">
-          {MAIN.map((item) => link(item))}
+          {main.map((item) => link(item))}
         </nav>
         <div className="side-foot">
           <nav className="nav-foot" aria-label="Settings and help">

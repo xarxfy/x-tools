@@ -18,7 +18,7 @@ MAX_CREDENTIALS = 20
 
 
 def to_out(s: Service) -> ServiceOut:
-    return ServiceOut(id=s.id, name=s.name, domains=s.domains or [], ports=s.ports or [], folder=s.folder,
+    return ServiceOut(id=s.id, name=s.name, host=s.host, domains=s.domains or [], ports=s.ports or [], folder=s.folder,
                       type=s.type, notes=s.notes, customer_id=s.customer_id,
                       customer_name=s.customer.name if s.customer else None,
                       credential_count=s.credentials.count if s.credentials else 0)
@@ -34,7 +34,7 @@ def get_service(db: Session, sid: str) -> Service:
 def apply(service: Service, body: ServiceIn, db: Session) -> None:
     if body.customer_id and db.get(Customer, body.customer_id) is None:
         raise HTTPException(422, "Customer not found")
-    service.name, service.domains, service.folder = body.name, body.domains, body.folder
+    service.name, service.domains, service.folder, service.host = body.name, body.domains, body.folder, body.host
     service.ports = [p.model_dump() for p in body.ports]
     service.type, service.notes, service.customer_id = body.type, body.notes, body.customer_id
 
@@ -71,10 +71,10 @@ def delete_service(sid: str, db: Session = Depends(get_db)):
 # --- Port status ---------------------------------------------------------------
 
 
-@router.get("/ports", response_model=dict[int, bool])
+@router.get("/ports", response_model=dict[str, bool])
 def port_status(db: Session = Depends(get_db)):
     """Whether each port used by a service answers on the check host."""
-    return check_ports(p["port"] for s in db.scalars(select(Service)) for p in (s.ports or []))
+    return check_ports((s.host, p["port"]) for s in db.scalars(select(Service)) for p in (s.ports or []))
 
 
 # --- Credentials ----------------------------------------------------------------

@@ -10,12 +10,13 @@ alerts when something breaks.
 
 - **Overview** – everything that needs attention on one page: ports not answering, stopped containers, unreachable
   websites, silent servers, full disks.
-- **Services** – what runs where: ports (checked every minute), domains, folders, customer.
+- **Services** – what runs where: host, ports (checked every minute), domains, folders.
 - **Servers & Docker** – containers grouped by compose project, start/stop/restart, logs, compose files and
   Dockerfiles (secrets masked), git status of the project folder.
 - **Agents** – connect more servers (e.g. a Proxmox host at home). Agents only report outbound over HTTPS; no open
   ports, no VPN, nothing can be triggered on them. Proxmox nodes, storage, LXCs and VMs via a read-only API token.
-- **Customers** – contacts and agreements for the sites you host, with external checks (DNS, HTTPS, certificate).
+- **Customers** (optional, switch on in *Settings → General*) – contacts and agreements for the sites you host for
+  others, with external checks (DNS, HTTPS, certificate).
 - **Credentials** – logins per service, encrypted at rest.
 - **Notifications** – Telegram and ntfy.
 
@@ -121,6 +122,40 @@ ssh -L 8080:127.0.0.1:8080 you@your-server   # then open http://localhost:8080
 Leave `XT_BASE_URL` empty or set it to the address you use. Without `https://` cookies are not marked Secure – only
 do that on a private connection.
 
+### Homelab only (no VPS, nothing public)
+
+X-TOOLS does not need a VPS or a public address. A typical setup at home:
+
+```
+  Your laptop / phone (LAN or VPN)
+          │  http://192.168.1.10:8080
+          ▼
+  LXC or VM "tools" (Docker)          Proxmox host            Other LXCs/VMs
+  ├─ x-tools          ◀── reports ──  x-tools-agent  ◀─ API   x-tools-agent (Docker)
+  └─ x-tools-collector                (nodes, LXCs, VMs)
+```
+
+1. Create a small Debian LXC/VM with Docker and install X-TOOLS as above.
+2. Make it reachable in your LAN – in `deploy/.env`:
+
+   ```sh
+   XT_HOST=0.0.0.0                      # listen on all interfaces, not only 127.0.0.1
+   XT_PORT=8080
+   XT_BASE_URL=http://192.168.1.10:8080 # the address you open; also used in agent install commands
+   XT_TRUST_PROXY=false                 # no reverse proxy in front
+   ```
+
+   `sudo sh setup.sh` again, then open `http://192.168.1.10:8080` and enter the setup code.
+3. Add your servers: *Settings → Agents → Add server*. For the Proxmox host switch on *Proxmox* and enter an API
+   token (role `PVEAuditor`). Run the shown command as root on that machine – the agent reports over your LAN.
+4. Services on other machines: enter their IP under *Host* in the service, so their ports are checked there.
+
+From outside, use a VPN (WireGuard, Tailscale, the VPN of your router) instead of opening a port. Want HTTPS inside
+the LAN? Put Caddy in front with `tls internal` (own certificate authority) and keep `XT_HOST=127.0.0.1`.
+
+Without HTTPS the session cookie is sent unencrypted inside your network – fine for a home LAN you trust, not for
+shared networks.
+
 ### Updating
 
 ```sh
@@ -140,21 +175,22 @@ sudo docker run --rm -v deploy_x-tools-data:/data -v "$PWD":/backup busybox tar 
 
 ## More servers (agents)
 
-Create an agent under *Settings → Agents* – the key is shown once. Then on the other server:
+*Settings → Agents → Add server* – optionally with the Proxmox API token – creates a one-line install command:
 
 ```sh
-git clone <repository> x-tools
-cd x-tools/deploy/agent
-cp .env.example .env      # XT_AGENT_URL, XT_AGENT_KEY, optional Proxmox token
-docker compose up -d --build
+curl -fsSL 'https://tools.example.com/api/agent/install/<one-time token>' | sh     # as root
 ```
 
-The agent reports every minute over HTTPS (outbound only); the server shows up within a minute.
+It installs the systemd service `x-tools-agent` (a single Python file, standard library only – no Docker, no pip),
+read-only and without open ports. The command works once and for one hour; *Install command* on the agent creates a
+new one (with a new key), e.g. to add Proxmox later. The server shows up within a minute.
 
-- **Proxmox:** create an API token with role `PVEAuditor` (read-only) and set `PROXMOX_URL`, `PROXMOX_TOKEN_ID`,
-  `PROXMOX_TOKEN_SECRET`.
-- **Behind Cloudflare Access:** create a service token, add a policy with action *Service Auth* for the path
-  `/api/agent/report`, and set `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` in the agent's `.env`.
+Prefer Docker? `deploy/agent` contains a compose file; put `XT_AGENT_URL` and `XT_AGENT_KEY` into its `.env`.
+
+- **Proxmox:** Datacenter → Permissions → API Tokens → *Add*; then *Add → API Token Permission* with path `/` and
+  role `PVEAuditor` (read-only). The token secret only goes into the install command and stays on the Proxmox host.
+- **Behind Cloudflare Access:** create a service token and add a policy with action *Service Auth* for the path
+  `/api/agent/` (install script, download and reports). Enter client ID and secret when creating the agent.
 - Behind any other proxy or basic auth: make sure `/api/agent/report` is reachable for the agent; it authenticates
   with its own key (`X-Agent-Key`, only a hash is stored).
 
@@ -169,7 +205,7 @@ All settings are environment variables prefixed with `XT_` in `deploy/.env` (see
 | `XT_COMPOSE_ROOTS` | `/opt,/srv,/home` | Folders that may contain compose projects (mounted into the collector) |
 | `XT_HOME_DIR` | – | Home folder shown as `~` in paths |
 | `XT_HOST` / `XT_PORT` | `127.0.0.1` / `8080` | Address of the web UI |
-| `XT_CHECK_HOST` | `127.0.0.1` | Host on which service ports are checked |
+| `XT_CHECK_HOST` | `127.0.0.1` | Host on which service ports are checked when a service has no host |
 | `XT_PROTECTED_CONTAINERS` | `x-tools,x-tools-collector` | Containers that cannot be stopped from the UI |
 | `XT_TRUST_PROXY` | `true` | Trust `X-Forwarded-*` headers (keep X-TOOLS on 127.0.0.1 behind the proxy) |
 | `XT_COLLECT_INTERVAL` | `60` | Seconds between Docker snapshots |

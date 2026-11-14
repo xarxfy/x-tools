@@ -2,11 +2,10 @@
 
 import json
 import re
-import urllib.error
-import urllib.request
 
 from cryptography.fernet import InvalidToken
 
+from app.collector.httpjson import post_json
 from app.core.config import get_settings
 from app.core.security import decrypt_json, encrypt_json
 from app.monitor import state
@@ -103,24 +102,6 @@ def save(body: dict) -> dict:
 
 def active_channels(settings: dict) -> list[str]:
     return [c for c in ("telegram", "ntfy") if settings["enabled"] and settings[c]["enabled"]]
-
-
-def post_json(url: str, payload: dict, headers: dict | None = None) -> dict:
-    req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST",
-                                 headers={"Content-Type": "application/json", "User-Agent": "x-tools",
-                                          **(headers or {})})
-    try:
-        with urllib.request.urlopen(req, timeout=15) as res:
-            return json.loads(res.read() or b"{}")
-    except urllib.error.HTTPError as error:
-        try:
-            data = json.loads(error.read() or b"{}")
-            detail = data.get("description") or data.get("error")
-        except (ValueError, AttributeError):
-            detail = None
-        raise OSError(f"HTTP {error.code}{': ' + str(detail) if detail else ''}") from None
-    except urllib.error.URLError as error:
-        raise OSError(f"not reachable ({error.reason})") from None
 
 
 def send_telegram(cfg: dict, title: str, body: str, link: str) -> None:

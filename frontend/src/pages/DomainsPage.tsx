@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useServices } from "../api/data";
+import { useFeatures } from "../api/monitor";
 import { Icon } from "../components/Icon";
 import { Empty, Loading, PageHead, SearchField, matches, rootDomain } from "../components/ui";
 
@@ -10,6 +11,7 @@ export function DomainsPage() {
   const { t } = useTranslation();
   const services = useServices();
   const [query, setQuery] = useState("");
+  const customersOn = useFeatures().data?.customers ?? false;
 
   if (!services.data) return <Loading error={services.error} retry={() => services.refetch()} />;
   const rows = services.data
@@ -44,7 +46,7 @@ export function DomainsPage() {
                     </a>
                     <span className="list-sub">
                       {service.name}
-                      {service.customer_id && (
+                      {customersOn && service.customer_id && (
                         <> · <Link to={`/customers/${service.customer_id}`}>{service.customer_name}</Link></>
                       )}
                     </span>

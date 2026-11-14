@@ -25,8 +25,12 @@ class Port(BaseModel):
     _strip = field_validator("label", mode="before")(strip)
 
 
+HOST_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.\-]{0,253})$|^\[?[0-9A-Fa-f:]+\]?$")
+
+
 class ServiceIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
+    host: str = Field(default="", max_length=255)
     domains: list[str] = Field(default_factory=list, max_length=10)
     ports: list[Port] = Field(default_factory=list, max_length=10)
     folder: str = Field(default="", max_length=200)
@@ -46,6 +50,14 @@ class ServiceIn(BaseModel):
                 out.append(d)
         return out
 
+    @field_validator("host", mode="before")
+    @classmethod
+    def host_valid(cls, value):
+        value = str(value or "").strip().lower()
+        if value and not HOST_RE.match(value):
+            raise ValueError("host: an IP address or host name")
+        return value.strip("[]")
+
     @field_validator("customer_id", mode="before")
     @classmethod
     def empty_none(cls, value):
@@ -55,6 +67,7 @@ class ServiceIn(BaseModel):
 class ServiceOut(BaseModel):
     id: str
     name: str
+    host: str = ""
     domains: list[str]
     ports: list[Port]
     folder: str

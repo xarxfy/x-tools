@@ -23,7 +23,7 @@ import urllib.request
 
 from app.collector.collector import collect_snapshot, host_path, system_info
 from app.core.config import get_settings
-from app.monitor.notify import post_json
+from app.collector.httpjson import post_json
 
 AGENT_VERSION = "2"
 
