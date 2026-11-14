@@ -22,6 +22,8 @@ WORKDIR /app
 COPY backend/ ./backend/
 RUN pip install --no-cache-dir ./backend && rm -rf ./backend
 COPY --from=frontend /src/dist /app/frontend
+# One-off import from Server-Info (see migrate/import_server_info.py)
+COPY migrate/ /app/migrate/
 RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin xtools \
     && mkdir -p /data /exchange && chown xtools:xtools /data /exchange
 USER xtools
