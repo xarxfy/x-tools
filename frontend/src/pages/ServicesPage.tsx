@@ -96,15 +96,24 @@ export function ServicesPage() {
   );
 }
 
-export function ServiceDialog({ service, onClose }: { service: Service | null; onClose: () => void }) {
+export function ServiceDialog({
+  service,
+  initial,
+  onClose,
+}: {
+  service: Service | null;
+  initial?: Partial<ServiceInput>;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const customers = useCustomers();
   const save = useSaveService();
   const remove = useDeleteService();
-  const [form, setForm] = useState<ServiceInput>(() => (service ? { ...EMPTY, ...service } : EMPTY));
-  const [domains, setDomains] = useState(() => (service?.domains ?? []).join("\n"));
+  const start: ServiceInput = { ...EMPTY, ...initial, ...service };
+  const [form, setForm] = useState<ServiceInput>(start);
+  const [domains, setDomains] = useState(() => start.domains.join("\n"));
   const [ports, setPorts] = useState<{ port: string; label: string }[]>(() =>
-    (service?.ports ?? []).map((p) => ({ port: String(p.port), label: p.label })),
+    start.ports.map((p) => ({ port: String(p.port), label: p.label })),
   );
   const set = (key: keyof ServiceInput) => (e: { target: { value: string } }) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));

@@ -31,6 +31,17 @@ class Settings(BaseSettings):
     # Comma-separated, e.g. XT_COMPOSE_ROOTS=/opt,/srv,/home
     compose_roots: str = "/opt,/srv,/home"
 
+    # Folder shared between the web process and the collector (snapshot,
+    # command files). Empty: <data_dir>/exchange. In the container setup it is a
+    # separate volume, so the collector never sees the database or secret key.
+    exchange_dir: str = ""
+
+    # Seconds between two Docker snapshots.
+    collect_interval: int = 60
+
+    # Home folder shown as "~" in paths (optional, e.g. /home/alice).
+    home_dir: str = ""
+
     # When the collector runs in a container, the host file system is mounted
     # here (read-only). Empty when running directly on the host.
     host_root: str = ""
@@ -73,6 +84,10 @@ class Settings(BaseSettings):
     @property
     def protected_list(self) -> list[str]:
         return [v.strip() for v in self.protected_containers.split(",") if v.strip()]
+
+    @property
+    def exchange_path(self) -> Path:
+        return Path(self.exchange_dir) if self.exchange_dir else self.data_dir / "exchange"
 
     @property
     def database_url(self) -> str:

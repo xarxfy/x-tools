@@ -15,12 +15,13 @@ import { ServicesPage } from "./pages/ServicesPage";
 import { CredentialsPage } from "./pages/CredentialsPage";
 import { CustomerPage, CustomersPage } from "./pages/CustomersPage";
 import { DomainsPage } from "./pages/DomainsPage";
+import { ServerPage, ServersPage } from "./pages/ServersPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: true, retry: 1 } },
 });
 
-const SOON = ["servers", "settings", "help"];
+const SOON = ["settings", "help"];
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -41,6 +42,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerPage />} />
             <Route path="/domains" element={<DomainsPage />} />
+            <Route path="/servers" element={<ServersPage />} />
+            <Route path="/servers/:id" element={<ServerPage />} />
             <Route path="/credentials" element={<CredentialsPage />} />
             {SOON.map((key) => (
               <Route key={key} path={`/${key}`} element={<ComingSoonPage titleKey={`nav.${key}`} />} />

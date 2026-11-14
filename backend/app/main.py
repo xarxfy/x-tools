@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, customers, services
+from app.api import auth, customers, docker, services
 from app.core.config import VERSION, get_settings
 from app.core.db import run_migrations
 from app.core.security import secret_key
@@ -27,6 +27,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(services.router)
     app.include_router(customers.router)
+    app.include_router(docker.router)
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):

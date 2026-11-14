@@ -29,6 +29,10 @@ cp .env.example .env      # adjust XT_BASE_URL, XT_TIMEZONE …
 sudo sh setup.sh          # builds the image, starts the container, waits until it answers
 ```
 
+This starts two containers: `x-tools` (web UI + API, host network, listening on `127.0.0.1:8080`) and
+`x-tools-collector` (reads Docker and compose files; no network, folders read-only). They only share an "exchange"
+volume – the collector never sees the database or the secret key.
+
 Open the UI (port 8080 on localhost; put a reverse proxy or tunnel in front for HTTPS) and create the administrator
 account. X-TOOLS generates a secret key in its data volume on first start – **back up the data volume**, stored
 credentials can only be decrypted with that key.
@@ -42,6 +46,10 @@ All settings are environment variables prefixed with `XT_` (see `deploy/.env.exa
 | `XT_BASE_URL` | – | Public address, used in notification links; `https://` marks cookies Secure |
 | `XT_TIMEZONE` | `UTC` | Time zone for displayed times |
 | `XT_COMPOSE_ROOTS` | `/opt,/srv,/home` | Folders that may contain compose projects |
+| `XT_HOME_DIR` | – | Home folder shown as `~` in paths |
+| `XT_HOST` / `XT_PORT` | `127.0.0.1` / `8080` | Address of the web UI (compose setup) |
+| `XT_CHECK_HOST` | `127.0.0.1` | Host on which service ports are checked |
+| `XT_COLLECT_INTERVAL` | `60` | Seconds between Docker snapshots |
 | `XT_PROTECTED_CONTAINERS` | `x-tools,x-tools-collector` | Containers that cannot be stopped from the UI |
 | `XT_TRUST_PROXY` | `true` | Trust `X-Forwarded-*` headers from a reverse proxy |
 | `XT_SECRET_KEY` | generated | Fernet key for encrypted data |
@@ -70,7 +78,9 @@ Database changes: edit `backend/app/models`, then
 ## Security
 
 - Session login (Argon2 password hashes, session tokens stored hashed, CSRF protection, login throttling).
-- The web process has no Docker access; container actions go through the separate collector (coming in 0.2).
+- The web process has no Docker access; container actions go through the separate collector, which only allows
+  start/stop/restart/logs of known, unprotected containers.
+- Compose files, Dockerfiles and logs are shown with passwords, tokens and keys masked; `.env` files are never read.
 - Credentials and notification tokens are encrypted with the instance's secret key.
 - Run X-TOOLS behind HTTPS.
 

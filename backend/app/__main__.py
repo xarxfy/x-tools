@@ -1,4 +1,4 @@
-"""Command line: ``x-tools serve`` (default), later also ``collect`` and ``agent``."""
+"""Command line: ``x-tools serve`` (default) and ``x-tools collect`` (Docker collector)."""
 
 import argparse
 import os
@@ -12,7 +12,14 @@ def main() -> None:
     serve = sub.add_parser("serve", help="run the web UI and API (default)")
     serve.add_argument("--host", default=os.environ.get("XT_HOST", "0.0.0.0"))
     serve.add_argument("--port", type=int, default=int(os.environ.get("XT_PORT", "8080")))
+    sub.add_parser("collect", help="run the Docker collector (needs the Docker socket)")
     args = parser.parse_args()
+
+    if args.command == "collect":
+        from app.collector.collector import run
+
+        run()
+        return
 
     if args.command in (None, "serve"):
         import uvicorn

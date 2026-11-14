@@ -131,5 +131,63 @@
     "sub_one": "{{count}} domain",
     "sub_other": "{{count}} domains",
     "empty": "No domains yet. Domains come from your services."
+  },
+  "servers": {
+    "sub": "Machines X-TOOLS knows about",
+    "local": "This server",
+    "noMetrics": "No system metrics",
+    "load": "Load",
+    "loadDetail": "{{load}} · {{cpus}} CPUs",
+    "memory": "Memory",
+    "disk": "Disk",
+    "noSnapshot": "Waiting for the collector …",
+    "updated": "updated {{when}}",
+    "containersRunning": "{{running}} of {{total}} containers running",
+    "moreTitle": "More servers",
+    "moreText": "Servers at home (e.g. Proxmox) will report through a small agent – outbound only, no open ports. Coming in the next step.",
+    "notFound": "Server not found",
+    "back": "Back to servers",
+    "tab": {
+      "overview": "Overview",
+      "docker": "Docker"
+    },
+    "noSnapshotLong": "No Docker data yet. The collector container (x-tools-collector) writes it within a minute after starting.",
+    "stale": "The Docker data is outdated (last update {{when}}). Is the x-tools-collector container running?",
+    "system": "System",
+    "uptime": "Up for {{duration}}",
+    "containersUp": "containers running",
+    "projects": "compose projects",
+    "allContainers": "All containers"
+  },
+  "docker": {
+    "none": "No containers found.",
+    "listedHint": "A service with this folder is in the services list",
+    "service": "Service: {{name}}",
+    "adopt": "Add as service",
+    "dirty_one": "{{count}} uncommitted change",
+    "dirty_other": "{{count}} uncommitted changes",
+    "standalone": "Without compose",
+    "maskedNote": "Passwords, tokens and keys in these files are masked (••••••). .env files are never read.",
+    "logs": "Logs",
+    "protected": "protected",
+    "protectedHint": "X-TOOLS itself – cannot be stopped from here",
+    "working": "Working …",
+    "restart": "Restart",
+    "stop": "Stop",
+    "start": "Start",
+    "logsTitle": "Logs – {{name}}",
+    "lines": "Number of lines",
+    "lastLines": "Last {{count}} lines",
+    "reload": "Reload",
+    "noLogs": "No log output.",
+    "state": {
+      "running": "running",
+      "unhealthy": "unhealthy",
+      "starting": "starting",
+      "restarting": "restarting",
+      "paused": "paused",
+      "created": "created",
+      "stopped": "stopped"
+    }
   }
 }

@@ -1,11 +1,20 @@
 # X-TOOLS – example deployment.
 #
 #   cp .env.example .env    # adjust
-#   docker compose up -d --build
+#   sudo sh setup.sh        # builds, starts, waits until it answers
 #
 # Then open the UI and create the administrator account.
-# The port is bound to localhost only: put a reverse proxy or tunnel
-# (Caddy, Traefik, nginx, Cloudflare Tunnel …) in front of it for HTTPS.
+#
+# Two containers from the same image:
+#   x-tools            web UI + API. Uses the host network so it can check
+#                      whether the ports of your services answer; listens on
+#                      127.0.0.1:8080 only (XT_HOST/XT_PORT). Put a reverse proxy
+#                      or tunnel (Caddy, Traefik, nginx, Cloudflare Tunnel …) in
+#                      front of it for HTTPS. No Docker access.
+#   x-tools-collector  reads Docker and the compose files, runs start/stop/
+#                      restart/logs. No network at all, folders read-only.
+#                      Talks to the web container only through the "exchange"
+#                      volume – it never sees the database or the secret key.
 services:
   x-tools:
     build: ..
@@ -13,11 +22,47 @@ services:
     container_name: x-tools
     restart: unless-stopped
     env_file: .env
-    ports:
-      - "127.0.0.1:8080:8080"
+    network_mode: host
+    environment:
+      XT_HOST: ${XT_HOST:-127.0.0.1}
+      XT_PORT: ${XT_PORT:-8080}
+      XT_CHECK_HOST: 127.0.0.1
+      XT_EXCHANGE_DIR: /exchange
     volumes:
-      # Database, generated secret key – back this up.
+      # Database and generated secret key – back this up.
       - x-tools-data:/data
+      - x-tools-exchange:/exchange
+
+  x-tools-collector:
+    image: x-tools:local
+    container_name: x-tools-collector
+    restart: unless-stopped
+    command: ["x-tools", "collect"]
+    env_file: .env
+    network_mode: none
+    depends_on:
+      - x-tools
+    healthcheck:
+      # healthy while the snapshot is fresh
+      test: ["CMD", "python", "-c", "import os, sys, time; sys.exit(time.time() - os.path.getmtime('/exchange/snapshot.json') > 600)"]
+      interval: 60s
+      start_period: 30s
+    group_add:
+      - "${DOCKER_GID:?DOCKER_GID missing in .env (setup.sh sets it)}"
+    environment:
+      XT_HOST_ROOT: /host
+      XT_EXCHANGE_DIR: /exchange
+    volumes:
+      - x-tools-exchange:/exchange
+      # Note: ":ro" on the socket does NOT restrict the Docker API. What the
+      # collector may do is limited by its code: read, start/stop/restart, logs.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/hostname:/host/etc/hostname:ro
+      # Folders with compose projects (must match XT_COMPOSE_ROOTS).
+      - /home:/host/home:ro
+      - /opt:/host/opt:ro
+      - /srv:/host/srv:ro
 
 volumes:
   x-tools-data:
+  x-tools-exchange:
