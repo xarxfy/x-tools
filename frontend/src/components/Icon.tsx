@@ -107,6 +107,12 @@ const PATHS = {
     </>
   ),
   refresh: <path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" />,
+  proxmox: (
+    <>
+      <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+      <path d="m3 13 9 5 9-5" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof PATHS;

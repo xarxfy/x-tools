@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Icon, type IconName } from "./Icon";
 import { useAppStatus, useLogout, useMe } from "../api/auth";
 import { useFeatures } from "../api/monitor";
+import { useDockerHosts, useProxmoxHosts } from "../pages/FleetPages";
 import "./Layout.css";
 
 const MAIN: { to: string; key: string; icon: IconName }[] = [
@@ -11,6 +12,8 @@ const MAIN: { to: string; key: string; icon: IconName }[] = [
   { to: "/customers", key: "customers", icon: "customers" },
   { to: "/services", key: "services", icon: "services" },
   { to: "/servers", key: "servers", icon: "servers" },
+  { to: "/proxmox", key: "proxmox", icon: "proxmox" },
+  { to: "/docker", key: "docker", icon: "docker" },
   { to: "/domains", key: "domains", icon: "domains" },
   { to: "/credentials", key: "credentials", icon: "credentials" },
 ];
@@ -28,7 +31,14 @@ export function Layout() {
   const { data: status } = useAppStatus();
   const logout = useLogout();
   const features = useFeatures();
-  const main = MAIN.filter((item) => item.key !== "customers" || features.data?.customers);
+  const proxmox = useProxmoxHosts().hosts.length > 0;
+  const dockerHosts = useDockerHosts();
+  const docker = dockerHosts.local || dockerHosts.hosts.length > 0;
+  // Optional entries: customers when switched on, Proxmox/Docker only when such a server reports.
+  const main = MAIN.filter((item) =>
+    (item.key !== "customers" || features.data?.customers) &&
+    (item.key !== "proxmox" || proxmox) &&
+    (item.key !== "docker" || docker));
 
   useEffect(() => setOpen(false), [location.pathname]); // close the mobile menu after navigating
 

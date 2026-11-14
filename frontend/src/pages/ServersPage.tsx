@@ -56,7 +56,7 @@ function SystemMeters({ sys, compact }: { sys?: SystemInfo; compact?: boolean })
   );
 }
 
-function counts(snap: Snapshot | null | undefined) {
+export function counts(snap: Snapshot | null | undefined) {
   const all = allContainers(snap);
   return { running: all.filter((c) => containerState(c)[0] === "up").length, total: all.length };
 }
@@ -318,7 +318,7 @@ function Overview({ srv, onTab }: { srv: ServerView; onTab: (tab: string) => voi
   );
 }
 
-function ProxmoxTab({ px }: { px: Proxmox }) {
+export function ProxmoxTab({ px }: { px: Proxmox }) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -400,7 +400,7 @@ function ProxmoxTab({ px }: { px: Proxmox }) {
   );
 }
 
-function DockerTab({ snap, protectedNames, readonly }: { snap: Snapshot; protectedNames: string[]; readonly: boolean }) {
+export function DockerTab({ snap, protectedNames, readonly }: { snap: Snapshot; protectedNames: string[]; readonly: boolean }) {
   const { t } = useTranslation();
   const [file, setFile] = useState<ProjectFile | null>(null);
   const [logs, setLogs] = useState<string | null>(null);

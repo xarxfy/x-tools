@@ -67,6 +67,8 @@ export interface AgentSummary {
   last_report_at: string | null;
   hostname: string;
   version: string;
+  has_docker: boolean;
+  has_proxmox: boolean;
 }
 
 export interface ProxmoxGuest {

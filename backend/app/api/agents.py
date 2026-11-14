@@ -42,7 +42,8 @@ def summary(a: Agent) -> dict:
     report = a.last_report or {}
     return {"id": a.id, "name": a.name, "kind": a.kind, "disabled": a.disabled, "created_at": as_utc(a.created_at),
             "last_report_at": as_utc(a.last_report_at), "hostname": report.get("hostname", ""),
-            "version": report.get("version", "")}
+            "version": report.get("version", ""),
+            "has_docker": bool(report.get("docker")), "has_proxmox": bool(report.get("proxmox"))}
 
 
 def get_agent(db: Session, aid: str) -> Agent:

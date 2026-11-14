@@ -374,3 +374,7 @@ a.list-title svg,
   max-width: 100%;
   overflow-x: auto;
 }
+/* Side-by-side fields: inputs line up even when one hint wraps to two lines */
+.grid-2 > .field > .input {
+  margin-top: auto;
+}

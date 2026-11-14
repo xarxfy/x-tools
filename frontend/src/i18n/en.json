@@ -16,7 +16,9 @@
     "help": "Help",
     "menu": "Menu",
     "logout": "Log out",
-    "signedInAs": "Signed in as {{name}}"
+    "signedInAs": "Signed in as {{name}}",
+    "proxmox": "Proxmox",
+    "docker": "Docker"
   },
   "auth": {
     "username": "Username",
@@ -384,5 +386,14 @@
   "general": {
     "customers": "Customers & website checks",
     "customersHint": "For sites you host for others: contacts, agreements and external checks of their domains. Stored customers are kept when you switch it off."
+  },
+  "fleet": {
+    "proxmoxSub_one": "{{count}} Proxmox host",
+    "proxmoxSub_other": "{{count}} Proxmox hosts",
+    "dockerSub_one": "{{count}} Docker host",
+    "dockerSub_other": "{{count}} Docker hosts",
+    "noProxmox": "No Proxmox host reports yet.",
+    "noDocker": "No Docker host reports yet.",
+    "noData": "No data in the last report."
   }
 }
