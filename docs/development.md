@@ -19,3 +19,6 @@ npm run dev
   `XT_DATA_DIR=./dev-data alembic revision --autogenerate -m "describe change"`. Migrations run on start.
 - UI texts live in `frontend/src/i18n/en.json`.
 - There is no CI: run `pytest` and `npm run build` before pushing.
+- Changes for users go into `CHANGELOG.md` under *Unreleased*.
+- The beta checklist lives in `docs/checklist/checklist.py`; after editing run `python3 docs/checklist/build.py`
+  (writes `docs/beta-testing.md`, `docs/beta-checklist.html` and the GitLab/GitHub issue templates).

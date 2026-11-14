@@ -1,21 +1,27 @@
 # Beta testing checklist
 
-Thank you for testing X-TOOLS! Work through the sections that fit your setup – nobody needs to do everything.
-Tick a box when it works; for anything else, write a short report (template at the end).
+Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody needs to do everything.
 
-**Please test on a non-critical machine or with test containers.** Start/stop works on real containers.
+**Three ways to tick the boxes:**
 
-## 0. Your setup (please note in every report)
+- Open [`beta-checklist.html`](beta-checklist.html) in your browser (download it and open the file): tick items, mark problems with a note, your progress is kept; at the end copy or download the report.
+- Create an issue from the template **Beta test** (GitLab: *New issue → Description → Beta test*) and tick the boxes in the issue.
+- Print this page.
 
-- X-TOOLS version (sidebar bottom, e.g. `v0.1.0`) and date of `git pull`
+**Please test on a non-critical machine or with test containers** – start/stop and Proxmox changes work on real systems.
+
+## Your setup
+
+- X-TOOLS version (sidebar bottom) and date of `git pull`
 - Where it runs: VPS / LXC / VM / bare metal, distribution, Docker version
-- How you reach it: Caddy / nginx / Traefik / Cloudflare Tunnel / LAN only / SSH tunnel
-- Browser and device (desktop, phone), light or dark mode
+- How you reach it: Caddy / nginx / Traefik / Cloudflare Tunnel / LAN / SSH tunnel
+- Agents: Proxmox host? Docker hosts? (how many)
+- Browser and devices (desktop, phone), light or dark mode
 
 ## 1. Installation and first login
 
 - [ ] `sudo sh deploy/setup.sh` finishes with "X-TOOLS is running" and prints a setup code
-- [ ] Both containers run: `sudo docker ps` shows `x-tools` and `x-tools-collector`
+- [ ] `sudo docker ps` shows `x-tools` and `x-tools-collector`
 - [ ] The setup page rejects a wrong setup code
 - [ ] With the right code the admin account is created and you are logged in
 - [ ] Log out and in again works; a wrong password is rejected, many wrong attempts are slowed down
@@ -23,135 +29,135 @@ Tick a box when it works; for anything else, write a short report (template at t
 ## 2. Reachability
 
 - [ ] X-TOOLS is reachable the way you chose ([installation.md](installation.md#making-it-reachable))
-- [ ] With HTTPS: the browser shows a valid certificate, you stay logged in after a reload
-- [ ] Without login, `https://<your-address>/api/services` answers `401`
+- [ ] With HTTPS: valid certificate, you stay logged in after a reload
+- [ ] Without login, `/api/services` answers `401`
 
 ## 3. Overview
 
-- [ ] "Needs attention" lists real problems (or "All good"); every entry links to the right page
-- [ ] Tiles (servers, containers, services) show plausible numbers
-- [ ] "Recent events" fills up over time
+- [ ] *Needs attention* lists real problems (or *All good*); every entry leads to the right place
+- [ ] Tiles (LXCs/VMs, containers, services, customers) show plausible numbers
+- [ ] *Recent events* fills up over time
 
 ## 4. Services
 
 - [ ] Add, edit and delete a service; search finds it
 - [ ] Ports of running services are green, a wrong port turns red within a minute
-- [ ] *Host* set to another machine (e.g. an LXC IP): its ports are checked there
-- [ ] After a day: the uptime badge (e.g. "100 %") appears
+- [ ] *Host* set to another machine: its ports are checked there
+- [ ] After a day the uptime badge (e.g. "100 %") appears
 
 ## 5. Assistant (Services → Assistant)
 
-- [ ] Every template can be chosen; a port already in use shows a warning
-- [ ] A domain that another service uses shows a warning
+- [ ] Every template can be chosen; a port already in use and a domain already in use show warnings
 - [ ] Generated files can be copied and downloaded (file names make sense)
-- [ ] **Deploy one generated service for real** (e.g. static website or WordPress) – does it start? Does the
-      generated Caddy/nginx/tunnel config work?
+- [ ] **Deploy one generated service for real** – it starts, the Caddy/nginx/tunnel config works
 - [ ] The created service has a checklist; ticking steps updates "x/y setup steps"
 - [ ] *Configs* in an existing service generates proxy configs for its domain and port
 
 ## 6. Credentials
 
-- [ ] Add logins to a service; password hidden until the eye is clicked; copy works
-- [ ] Edit and delete logins
-- [ ] The *Credentials* page lists services with and without logins
+- [ ] Add logins to a service; password hidden until revealed; copy works
+- [ ] Edit and delete logins; the *Credentials* page lists services with and without logins
 
 ## 7. Docker (this server)
 
-- [ ] Without agents and before the collector reported, *Proxmox* and *Docker* show a hint to set up an agent
-- [ ] *Docker → This server* shows load, memory, disk; *Chart* fills after some hours
-- [ ] *Docker*: containers grouped by compose project, correct state
+- [ ] Without the collector having reported, *Docker* shows a hint instead of an empty page
+- [ ] *This server* shows load, memory, disk; *Chart* fills after some hours
+- [ ] Containers grouped by compose project with the correct state
 - [ ] Stop and start a **test** container; the state updates within seconds
 - [ ] Logs open, time zone correct, secrets in logs masked
-- [ ] Compose files and Dockerfiles open; passwords/tokens are masked (••••••); `.env` contents never appear
-- [ ] `x-tools` itself is marked "protected" and cannot be stopped
-- [ ] "Add as service" creates a service with folder and ports
+- [ ] Compose files and Dockerfiles open with passwords/tokens masked (••••••); `.env` contents never appear
+- [ ] `x-tools` itself is marked *protected* and cannot be stopped
+- [ ] *Add as service* creates a service with folder and ports
 
-## 8. Agents
+## 8. Agents – Docker hosts
 
 - [ ] *Settings → Agents → Add server → Docker host*: the install command runs on an LXC/VM/server
-- [ ] The server appears within a minute; *Docker* in the sidebar shows its containers (read-only)
-- [ ] *Add server → Proxmox host* with an API token (role PVEAuditor): nodes, storage and all LXCs/VMs appear;
-      *Proxmox* appears in the sidebar
+- [ ] Until the first report the server is listed as *waiting for the first report*
+- [ ] The host appears on *Docker* within a minute with metrics and containers
 - [ ] Running the same install command twice is rejected ("already used")
-- [ ] *Install command* on an existing agent: the old installation stops reporting until the new command runs
-- [ ] Disable an agent → no more data; enable again
+- [ ] *Install command* on an existing agent is prefilled; the old installation stops until the new command runs
+- [ ] Rename, disable and enable an agent
 - [ ] Delete an agent → the uninstall command is shown and removes the agent on the server
 - [ ] Optional: behind Cloudflare Access with a service token ([agents.md](agents.md#behind-cloudflare-access))
-- [ ] With **Allow control**: as operator restart a test container on a Docker host and read its logs
-- [ ] With **Allow control** on a Proxmox host (token with PVEVMUser): start/shut down a **test** LXC; without the
-      privilege a clear error is shown
+
+## 9. Agents – Proxmox host
+
+- [ ] Without a Proxmox agent, *Proxmox* shows a hint to set one up
+- [ ] *Add server → Proxmox host* with an API token (role PVEAuditor): nodes, storage and all LXCs/VMs appear
+- [ ] Node card: Proxmox version, kernel and updates are right; *Host network* lists the bridges
+- [ ] Click a guest: resources, disks, network with current IPs, snapshots, backups and options are right
+- [ ] The `.conf` file on the detail page matches `/etc/pve/lxc/<id>.conf` on the host (password lines masked)
+
+## 10. Control (operator, agent with *Allow control*)
+
+- [ ] Docker host: restart a test container and read its logs
+- [ ] Proxmox (token with the XTools role from [agents.md](agents.md#proxmox-api-token)): start/shut down a **test** LXC
+- [ ] Change memory and cores of a **test** LXC, grow its disk by 1 GB, change tags – new values appear shortly after
+- [ ] Without the privilege a clear error is shown
 - [ ] As viewer: no control buttons; an agent without control shows no buttons for anyone
-- [ ] Proxmox: click a guest – resources, disks, network with current IPs, snapshots, backups and options are right
-- [ ] Node card shows Proxmox version, kernel and updates; *Host network* lists the bridges
-- [ ] With control (token with the XTools role from agents.md): change memory/cores of a **test** LXC, grow its disk
-      by 1 GB, change tags – the detail page shows the new values shortly after
-- [ ] The `.conf` file on the detail page matches `/etc/pve/lxc/<id>.conf` on the host
 
-## 9. Cloudflare (if you use it)
+## 11. Cloudflare (if you use it)
 
-- [ ] *Settings → Cloudflare*: a token with read permissions is accepted, a wrong token is rejected
+- [ ] *Settings → Cloudflare*: a token with read permissions is accepted, a wrong one rejected
 - [ ] *Cloudflare* appears in the sidebar; zones, DNS records, tunnels and Access apps are correct
-- [ ] Hostnames show the right chain (DNS → tunnel → route → Access) and the matching service
-- [ ] Deliberately set a service port different from the tunnel route → a problem is shown (and on the overview)
-- [ ] *Allow changes* (token with DNS Edit + Tunnel Edit): add a tunnel route for a test hostname – route and DNS
-      record appear in Cloudflare; delete it again
-- [ ] *Create route* on a hostname with a problem fixes it
-- [ ] Add, edit, delete a test DNS record; all changes are in the audit log
+- [ ] *Hostnames* show the right chain (DNS → tunnel → route → Access) and the matching service
+- [ ] A service port different from the tunnel route is shown as a problem (also on the overview)
+- [ ] *Allow changes* (token with DNS Edit + Tunnel Edit): add a route for a test hostname, then delete it
+- [ ] *Create route* on a hostname with a problem fixes it; add, edit, delete a test DNS record
 - [ ] Removing the token hides the sidebar entry
 
-## 10. Customers (optional area)
+## 12. Customers (optional area)
 
-- [ ] *Settings → General*: switching on shows *Customers* in the sidebar, switching off hides it again
+- [ ] *Settings → General*: switching on shows *Customers*, switching off hides it again
 - [ ] Add a customer, assign services; the customer page shows contact, sites and agreements
-- [ ] Website checks show DNS/HTTPS/certificate; "Check now" updates them
+- [ ] Website checks show DNS/HTTPS/certificate; *Check now* updates them
 
-## 11. Notifications
+## 13. Notifications
 
-- [ ] Telegram and/or ntfy: "Send test" arrives
+- [ ] Telegram and/or ntfy: *Send test* arrives
+- [ ] With the main switch off, a clear hint is shown and only tests are sent
 - [ ] Stop a test container **outside** of X-TOOLS (`docker stop …`): a message arrives after the delay
-- [ ] Start it again: a "back to normal" message arrives
-- [ ] A container stopped **through X-TOOLS** is not reported
+- [ ] Start it again: a *back to normal* message arrives
+- [ ] A container stopped **through X-TOOLS** is not reported; started and stopped outside again, it is
+- [ ] *Monitoring checked … ago* is shown; open problems list whether they were notified
 
-## 12. Account and security
+## 14. Account and security
 
 - [ ] Change your password; other sessions are logged out
-- [ ] Turn on two-factor login (QR code with your authenticator app); login asks for the code
-- [ ] A recovery code works once; then it is used up
-- [ ] Turn two-factor login off again
+- [ ] Turn on two-factor login (QR code); login asks for the code
+- [ ] A recovery code works once, then it is used up; turn two-factor login off again
 
-## 13. Users, roles, audit log
+## 15. Users, roles, audit log
 
-- [ ] Create a **viewer**: sees services, servers, Docker; no credentials, no start/stop, no logs, only *Account* in
-      the settings
-- [ ] Create an **operator**: can edit services and credentials, start/stop containers; no users, agents, backups
-- [ ] Disable a user → they are logged out and cannot log in; reset their password → new password works
-- [ ] The audit log shows logins (also failed ones), viewed credentials, container actions and changes – with user
-      and IP; filters work
+- [ ] **Viewer**: sees everything, no credentials, no container/Proxmox actions, no logs, only *Account* in settings
+- [ ] **Operator**: edits services and credentials, controls containers and guests; no users, agents, backups
+- [ ] Disable a user → logged out, cannot log in; reset the password → new password works
+- [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes
 
-## 14. Backup and update
+## 16. Backup and update
 
 - [ ] *Settings → Backup*: download a backup with a passphrase
-- [ ] Restore it (ideally on a second test installation): data and credentials are back, everyone is logged out
-- [ ] `git pull && sudo sh deploy/setup.sh`: data, users and settings are kept
+- [ ] Restore it (ideally on a test installation): data and credentials are back, everyone is logged out
+- [ ] `git pull && sudo sh deploy/setup.sh` keeps data, users and settings
 
-## 15. Look and feel
+## 17. Look and feel
 
 - [ ] Phone: menu works, no horizontal scrolling, dialogs fit on the screen
 - [ ] Dark mode looks right
-- [ ] Anything confusing, missing or in the way? Every opinion helps.
+- [ ] Anything confusing, missing or in the way? (note it here)
 
 ---
 
 ## Reporting a problem
 
-Please send (issue in the repository or message to the maintainer):
+Open an issue (or message the maintainer) with:
 
 ```
 What I did:        (steps)
 What I expected:
 What happened:     (error message, screenshot)
-Section:           (e.g. 8. Agents)
-Setup:             (see section 0)
+Section:           (e.g. Agents – Proxmox host)
+Setup:             (see "Your setup")
 Logs (if useful):  sudo docker logs --tail 50 x-tools
                    sudo docker logs --tail 50 x-tools-collector
                    journalctl -u x-tools-agent -n 50

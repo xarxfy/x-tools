@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X-TOOLS beta checklist</title>
+<style>
+:root {
+  --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --muted: #6e6e73; --sep: rgba(60,60,67,.1); --fill: rgba(118,118,128,.1);
+  --accent: #0071e3; --up: #34c759; --down: #ff3b30; --down-text: #d70015; --warn-bg: rgba(255,59,48,.08);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #000; --card: #1c1c1e; --text: #f5f5f7; --muted: #98989d; --sep: rgba(84,84,88,.5);
+    --fill: rgba(118,118,128,.24); --accent: #0a84ff; --up: #30d158; --down: #ff453a; --down-text: #ff6961;
+    --warn-bg: rgba(255,69,58,.14); color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+main { max-width: 820px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 32px; letter-spacing: -.03em; margin: 0; }
+.sub { color: var(--muted); margin: 4px 0 20px; }
+.card { background: var(--card); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px;
+  box-shadow: 0 0 0 .5px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03); }
+.sticky { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px); padding: 10px 0; margin-bottom: 8px; }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bar { flex: 1; min-width: 160px; height: 8px; border-radius: 4px; background: var(--fill); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--up); transition: width .2s; }
+.stats { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.stats b { color: var(--text); }
+.stats .bad { color: var(--down-text); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; font-size: 14px; font-weight: 500; border: 0; border-radius: 980px; padding: 7px 15px;
+  background: var(--fill); color: var(--text); cursor: pointer; }
+button.primary { background: var(--accent); color: #fff; font-weight: 600; }
+button.ghost { background: transparent; }
+button:hover { filter: brightness(.96); }
+h2 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 10px; }
+h2 .count { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: auto; }
+.section.done h2::after { content: "✓"; color: var(--up); }
+.section-head { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.section-head .chev { transition: transform .15s; color: var(--muted); }
+.section.collapsed .chev { transform: rotate(-90deg); }
+.section.collapsed ul { display: none; }
+ul { list-style: none; margin: 12px 0 0; padding: 0; }
+li { border-top: 1px solid var(--sep); padding: 9px 0; }
+li.problem { background: var(--warn-bg); margin: 0 -10px; padding: 9px 10px; border-radius: 10px; border-top-color: transparent; }
+.row { display: flex; gap: 10px; align-items: flex-start; }
+.row label { flex: 1; display: flex; gap: 10px; cursor: pointer; }
+input[type=checkbox] { width: 19px; height: 19px; margin: 2px 0 0; accent-color: var(--up); flex: none; }
+li.checked label span { color: var(--muted); }
+.flag { font-size: 12.5px; padding: 3px 10px; color: var(--muted); background: transparent; border: 1px solid var(--sep); }
+li.problem .flag { color: #fff; background: var(--down); border-color: var(--down); }
+textarea, input[type=text] { width: 100%; font: inherit; font-size: 14px; color: var(--text); background: var(--bg);
+  border: 1px solid var(--sep); border-radius: 10px; padding: 8px 10px; }
+textarea { margin-top: 8px; min-height: 60px; resize: vertical; }
+li:not(.problem) textarea { display: none; }
+.setup label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+.setup label:first-of-type { margin-top: 0; }
+code { font-family: var(--mono); font-size: .88em; background: var(--fill); padding: 1px 5px; border-radius: 5px; }
+a { color: var(--accent); }
+.note { font-size: 13px; color: var(--muted); }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg);
+  padding: 8px 16px; border-radius: 980px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media print {
+  .sticky, .actions, .flag { display: none; } body { background: #fff; } .card { box-shadow: none; border: 1px solid #ddd; }
+  .section.collapsed ul { display: block; } li:not(.problem) textarea { display: none; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>X-TOOLS beta checklist</h1>
+  <p class="sub">Version __VERSION__ · tick what works, mark problems with a note. Your progress is kept in this browser.</p>
+  <div class="sticky">
+    <div class="progress">
+      <div class="bar"><span id="bar"></span></div>
+      <span class="stats" id="stats"></span>
+    </div>
+  </div>
+  <div class="card note">
+    Please test on a non-critical machine or with test containers – start/stop and Proxmox changes work on real systems.
+    Never put passwords, tokens, agent keys or setup codes into notes.
+  </div>
+  <div class="card setup" id="setup"><h2>Your setup</h2></div>
+  <div id="sections"></div>
+  <div class="card">
+    <h2>Send the result</h2>
+    <p class="note">Copy the report into an issue (or a message to the maintainer), or download it as a Markdown file.</p>
+    <div class="actions">
+      <button class="primary" id="copy">Copy report</button>
+      <button id="download">Download .md</button>
+      <button class="ghost" id="reset">Start over</button>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const DATA = __DATA__;
+const KEY = "x-tools-beta-" + DATA.version;
+let state = { setup: {}, items: {}, collapsed: {} };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) { /* private mode */ }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } };
+const itemId = (s, i) => s.id + ":" + i;
+const item = (id) => (state.items[id] = state.items[id] || { done: false, problem: false, note: "" });
+
+function render() {
+  const setup = document.getElementById("setup");
+  DATA.setup.forEach((f) => {
+    const label = document.createElement("label");
+    label.innerHTML = f.label;
+    label.htmlFor = "setup-" + f.id;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = "setup-" + f.id;
+    input.value = state.setup[f.id] || "";
+    input.oninput = () => { state.setup[f.id] = input.value; save(); };
+    setup.append(label, input);
+  });
+  const root = document.getElementById("sections");
+  DATA.sections.forEach((s, n) => {
+    const card = document.createElement("section");
+    card.className = "card section" + (state.collapsed[s.id] ? " collapsed" : "");
+    card.innerHTML = `<div class="section-head"><span class="chev">▾</span><h2>${n + 1}. ${s.title}<span class="count"></span></h2></div>`;
+    card.querySelector(".section-head").onclick = () => {
+      state.collapsed[s.id] = !state.collapsed[s.id];
+      card.classList.toggle("collapsed", state.collapsed[s.id]);
+      save();
+    };
+    const ul = document.createElement("ul");
+    s.items.forEach((it, i) => {
+      const id = itemId(s, i);
+      const st = item(id);
+      const li = document.createElement("li");
+      li.innerHTML = `<div class="row"><label><input type="checkbox"><span>${it.html}</span></label>` +
+        `<button class="flag" type="button">Problem</button></div><textarea placeholder="What happened? (no passwords or tokens)"></textarea>`;
+      const box = li.querySelector("input"), flag = li.querySelector(".flag"), note = li.querySelector("textarea");
+      box.checked = st.done; note.value = st.note;
+      const paint = () => { li.classList.toggle("checked", st.done); li.classList.toggle("problem", st.problem); update(); };
+      box.onchange = () => { st.done = box.checked; if (st.done) st.problem = false; save(); paint(); };
+      flag.onclick = () => { st.problem = !st.problem; if (st.problem) { st.done = false; box.checked = false; note.focus(); } save(); paint(); };
+      note.oninput = () => { st.note = note.value; save(); };
+      paint();
+      ul.append(li);
+    });
+    card.append(ul);
+    root.append(card);
+  });
+  update();
+}
+
+function update() {
+  let total = 0, done = 0, problems = 0;
+  document.querySelectorAll(".section").forEach((card, n) => {
+    const s = DATA.sections[n];
+    let d = 0;
+    s.items.forEach((_, i) => { const st = item(itemId(s, i)); total++; if (st.done) { done++; d++; } if (st.problem) problems++; });
+    card.querySelector(".count").textContent = `${d}/${s.items.length}`;
+    card.classList.toggle("done", d === s.items.length);
+  });
+  document.getElementById("bar").style.width = (total ? (done / total) * 100 : 0) + "%";
+  document.getElementById("stats").innerHTML = `<b>${done}</b> of ${total} checked` +
+    (problems ? ` · <span class="bad">${problems} problem${problems > 1 ? "s" : ""}</span>` : "");
+}
+
+function report() {
+  const lines = [`# X-TOOLS beta test – ${DATA.version}`, "", "## Setup", ""];
+  DATA.setup.forEach((f) => lines.push(`- ${f.plain}: ${state.setup[f.id] || "–"}`));
+  DATA.sections.forEach((s, n) => {
+    lines.push("", `## ${n + 1}. ${s.title}`, "");
+    s.items.forEach((it, i) => {
+      const st = item(itemId(s, i));
+      lines.push(`- [${st.done ? "x" : " "}] ${it.plain}${st.problem ? " — **PROBLEM**" : ""}`);
+      if (st.problem && st.note.trim()) st.note.trim().split("\n").forEach((l) => lines.push(`  > ${l}`));
+    });
+  });
+  return lines.join("\n") + "\n";
+}
+
+function toast(text) {
+  const t = document.getElementById("toast");
+  t.textContent = text; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+document.getElementById("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(report()); toast("Report copied"); }
+  catch (e) { toast("Copy not allowed here – use Download"); }
+};
+document.getElementById("download").onclick = () => {
+  const url = URL.createObjectURL(new Blob([report()], { type: "text/markdown" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = `x-tools-beta-${DATA.version}.md`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+document.getElementById("reset").onclick = () => {
+  if (!confirm("Clear all ticks and notes?")) return;
+  state = { setup: {}, items: {}, collapsed: {} }; save(); location.reload();
+};
+render();
+</script>
+</body>
+</html>

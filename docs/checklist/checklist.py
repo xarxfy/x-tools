@@ -1,0 +1,132 @@
+"""Beta test checklist – the single source.
+
+Run `python3 docs/checklist/build.py` after changing it; it writes
+docs/beta-testing.md, docs/beta-checklist.html and the issue templates for
+GitLab (.gitlab/issue_templates) and GitHub (.github/ISSUE_TEMPLATE).
+
+Items may use `code`, *emphasis* and [links](url).
+"""
+
+VERSION = "0.1.0"
+
+SETUP_FIELDS = [
+    ("version", "X-TOOLS version (sidebar bottom) and date of `git pull`"),
+    ("host", "Where it runs: VPS / LXC / VM / bare metal, distribution, Docker version"),
+    ("reach", "How you reach it: Caddy / nginx / Traefik / Cloudflare Tunnel / LAN / SSH tunnel"),
+    ("agents", "Agents: Proxmox host? Docker hosts? (how many)"),
+    ("browser", "Browser and devices (desktop, phone), light or dark mode"),
+]
+
+SECTIONS = [
+    ("install", "Installation and first login", [
+        "`sudo sh deploy/setup.sh` finishes with \"X-TOOLS is running\" and prints a setup code",
+        "`sudo docker ps` shows `x-tools` and `x-tools-collector`",
+        "The setup page rejects a wrong setup code",
+        "With the right code the admin account is created and you are logged in",
+        "Log out and in again works; a wrong password is rejected, many wrong attempts are slowed down",
+    ]),
+    ("reach", "Reachability", [
+        "X-TOOLS is reachable the way you chose ([installation.md](installation.md#making-it-reachable))",
+        "With HTTPS: valid certificate, you stay logged in after a reload",
+        "Without login, `/api/services` answers `401`",
+    ]),
+    ("overview", "Overview", [
+        "*Needs attention* lists real problems (or *All good*); every entry leads to the right place",
+        "Tiles (LXCs/VMs, containers, services, customers) show plausible numbers",
+        "*Recent events* fills up over time",
+    ]),
+    ("services", "Services", [
+        "Add, edit and delete a service; search finds it",
+        "Ports of running services are green, a wrong port turns red within a minute",
+        "*Host* set to another machine: its ports are checked there",
+        "After a day the uptime badge (e.g. \"100 %\") appears",
+    ]),
+    ("assistant", "Assistant (Services → Assistant)", [
+        "Every template can be chosen; a port already in use and a domain already in use show warnings",
+        "Generated files can be copied and downloaded (file names make sense)",
+        "**Deploy one generated service for real** – it starts, the Caddy/nginx/tunnel config works",
+        "The created service has a checklist; ticking steps updates \"x/y setup steps\"",
+        "*Configs* in an existing service generates proxy configs for its domain and port",
+    ]),
+    ("credentials", "Credentials", [
+        "Add logins to a service; password hidden until revealed; copy works",
+        "Edit and delete logins; the *Credentials* page lists services with and without logins",
+    ]),
+    ("docker", "Docker (this server)", [
+        "Without the collector having reported, *Docker* shows a hint instead of an empty page",
+        "*This server* shows load, memory, disk; *Chart* fills after some hours",
+        "Containers grouped by compose project with the correct state",
+        "Stop and start a **test** container; the state updates within seconds",
+        "Logs open, time zone correct, secrets in logs masked",
+        "Compose files and Dockerfiles open with passwords/tokens masked (••••••); `.env` contents never appear",
+        "`x-tools` itself is marked *protected* and cannot be stopped",
+        "*Add as service* creates a service with folder and ports",
+    ]),
+    ("agent-docker", "Agents – Docker hosts", [
+        "*Settings → Agents → Add server → Docker host*: the install command runs on an LXC/VM/server",
+        "Until the first report the server is listed as *waiting for the first report*",
+        "The host appears on *Docker* within a minute with metrics and containers",
+        "Running the same install command twice is rejected (\"already used\")",
+        "*Install command* on an existing agent is prefilled; the old installation stops until the new command runs",
+        "Rename, disable and enable an agent",
+        "Delete an agent → the uninstall command is shown and removes the agent on the server",
+        "Optional: behind Cloudflare Access with a service token ([agents.md](agents.md#behind-cloudflare-access))",
+    ]),
+    ("agent-proxmox", "Agents – Proxmox host", [
+        "Without a Proxmox agent, *Proxmox* shows a hint to set one up",
+        "*Add server → Proxmox host* with an API token (role PVEAuditor): nodes, storage and all LXCs/VMs appear",
+        "Node card: Proxmox version, kernel and updates are right; *Host network* lists the bridges",
+        "Click a guest: resources, disks, network with current IPs, snapshots, backups and options are right",
+        "The `.conf` file on the detail page matches `/etc/pve/lxc/<id>.conf` on the host (password lines masked)",
+    ]),
+    ("control", "Control (operator, agent with *Allow control*)", [
+        "Docker host: restart a test container and read its logs",
+        "Proxmox (token with the XTools role from [agents.md](agents.md#proxmox-api-token)): start/shut down a **test** LXC",
+        "Change memory and cores of a **test** LXC, grow its disk by 1 GB, change tags – new values appear shortly after",
+        "Without the privilege a clear error is shown",
+        "As viewer: no control buttons; an agent without control shows no buttons for anyone",
+    ]),
+    ("cloudflare", "Cloudflare (if you use it)", [
+        "*Settings → Cloudflare*: a token with read permissions is accepted, a wrong one rejected",
+        "*Cloudflare* appears in the sidebar; zones, DNS records, tunnels and Access apps are correct",
+        "*Hostnames* show the right chain (DNS → tunnel → route → Access) and the matching service",
+        "A service port different from the tunnel route is shown as a problem (also on the overview)",
+        "*Allow changes* (token with DNS Edit + Tunnel Edit): add a route for a test hostname, then delete it",
+        "*Create route* on a hostname with a problem fixes it; add, edit, delete a test DNS record",
+        "Removing the token hides the sidebar entry",
+    ]),
+    ("customers", "Customers (optional area)", [
+        "*Settings → General*: switching on shows *Customers*, switching off hides it again",
+        "Add a customer, assign services; the customer page shows contact, sites and agreements",
+        "Website checks show DNS/HTTPS/certificate; *Check now* updates them",
+    ]),
+    ("notifications", "Notifications", [
+        "Telegram and/or ntfy: *Send test* arrives",
+        "With the main switch off, a clear hint is shown and only tests are sent",
+        "Stop a test container **outside** of X-TOOLS (`docker stop …`): a message arrives after the delay",
+        "Start it again: a *back to normal* message arrives",
+        "A container stopped **through X-TOOLS** is not reported; started and stopped outside again, it is",
+        "*Monitoring checked … ago* is shown; open problems list whether they were notified",
+    ]),
+    ("account", "Account and security", [
+        "Change your password; other sessions are logged out",
+        "Turn on two-factor login (QR code); login asks for the code",
+        "A recovery code works once, then it is used up; turn two-factor login off again",
+    ]),
+    ("users", "Users, roles, audit log", [
+        "**Viewer**: sees everything, no credentials, no container/Proxmox actions, no logs, only *Account* in settings",
+        "**Operator**: edits services and credentials, controls containers and guests; no users, agents, backups",
+        "Disable a user → logged out, cannot log in; reset the password → new password works",
+        "The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes",
+    ]),
+    ("backup", "Backup and update", [
+        "*Settings → Backup*: download a backup with a passphrase",
+        "Restore it (ideally on a test installation): data and credentials are back, everyone is logged out",
+        "`git pull && sudo sh deploy/setup.sh` keeps data, users and settings",
+    ]),
+    ("ui", "Look and feel", [
+        "Phone: menu works, no horizontal scrolling, dialogs fit on the screen",
+        "Dark mode looks right",
+        "Anything confusing, missing or in the way? (note it here)",
+    ]),
+]

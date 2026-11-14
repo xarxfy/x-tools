@@ -4,7 +4,8 @@ Self-hosted overview of your servers, services and Docker containers – at home
 something breaks.
 
 > **Status: beta (0.1).** All areas are in place; expect rough edges until 1.0.
-> Beta testers: see the [checklist](docs/beta-testing.md).
+> Beta testers: [checklist](docs/beta-testing.md) – tick it in the browser ([beta-checklist.html](docs/beta-checklist.html))
+> or in an issue from the template *Beta test*. What changed: [CHANGELOG](CHANGELOG.md).
 
 ## Features
 
@@ -52,7 +53,8 @@ Update: `git pull && sudo sh deploy/setup.sh` · Backup: *Settings → Backup*
 - [Configuration](docs/configuration.md) – all `XT_*` variables
 - [Architecture & security](docs/architecture.md) – how the pieces fit and how data is protected
 - [Development](docs/development.md)
-- [Beta testing checklist](docs/beta-testing.md)
+- [Beta testing checklist](docs/beta-testing.md) · [interactive version](docs/beta-checklist.html)
+- [Changelog](CHANGELOG.md)
 
 The *Help* page inside X-TOOLS explains every area as well.
 
