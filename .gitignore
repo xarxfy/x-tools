@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Node / frontend build
+node_modules/
+frontend/dist/
+
+# Local data and secrets – never commit
+.env
+data/
+dev-data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+secret.key
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
