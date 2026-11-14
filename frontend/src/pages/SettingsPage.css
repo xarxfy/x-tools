@@ -284,3 +284,16 @@
     width: 100%;
   }
 }
+.perm-list {
+  margin: 6px 0 2px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cf-settings-errors {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--warn-text);
+  font-size: 13.5px;
+}

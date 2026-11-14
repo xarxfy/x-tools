@@ -18,7 +18,8 @@
     "logout": "Log out",
     "signedInAs": "Signed in as {{name}}",
     "proxmox": "Proxmox",
-    "docker": "Docker"
+    "docker": "Docker",
+    "cloudflare": "Cloudflare"
   },
   "auth": {
     "username": "Username",
@@ -275,7 +276,8 @@
       "account": "Account",
       "backup": "Backup",
       "users": "Users",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "cloudflare": "Cloudflare"
     }
   },
   "notify": {
@@ -292,7 +294,8 @@
       "docker": "Docker data missing or outdated",
       "system": "Disk from 80 % / memory from 90 %",
       "site": "Customer websites not reachable",
-      "agent": "Agents not reporting"
+      "agent": "Agents not reporting",
+      "cloudflare": "Cloudflare tunnels down / wrong routes"
     },
     "useTelegram": "Send via Telegram",
     "botToken": "Bot token",
@@ -532,7 +535,8 @@
       "settings.notifications": "Notification settings changed",
       "settings.features": "Features changed",
       "backup.downloaded": "Backup downloaded",
-      "backup.restored": "Backup restored"
+      "backup.restored": "Backup restored",
+      "settings.cloudflare": "Cloudflare settings changed"
     },
     "areas": {
       "login": "Logins",
@@ -619,5 +623,51 @@
     "configsTitle": "Configuration – {{name}}",
     "configs": "Configs",
     "lanOnly": "Reachable in the LAN as http://{{host}}:{{port}} – no proxy configuration needed."
+  },
+  "cloudflare": {
+    "sub": "{{zones}} zones · {{tunnels}} tunnels · updated {{when}}",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing …",
+    "notSetUp": "Cloudflare is not connected.",
+    "setUp": "Connect it →",
+    "partial": "Some data could not be read:",
+    "permissionsHint": "Check the permissions of the API token (Settings → Cloudflare).",
+    "tabs": {
+      "hosts": "Hostnames",
+      "dns": "DNS",
+      "tunnels": "Tunnels",
+      "access": "Access"
+    },
+    "proxied": "proxied",
+    "dnsOnly": "DNS only",
+    "noTunnels": "No tunnels.",
+    "noAccess": "No Access applications.",
+    "localConfig": "This tunnel is configured locally (config.yml) – its routes cannot be read through the API.",
+    "connections_one": "{{count}} connection",
+    "connections_other": "{{count}} connections",
+    "status": {
+      "healthy": "healthy",
+      "degraded": "degraded",
+      "down": "down",
+      "inactive": "inactive"
+    },
+    "otherZone": "Other",
+    "dns": "DNS record",
+    "toTunnel": "→ tunnel “{{name}}”",
+    "noDns": "no DNS record",
+    "settingsIntro": "Read-only: X-TOOLS shows your zones, DNS records, tunnels with their routes and Access applications, and checks them against your services. It never changes anything at Cloudflare.",
+    "connected": "Connected – {{zones}} zones, {{tunnels}} tunnels, {{apps}} Access apps",
+    "updated": "updated {{when}}",
+    "open": "Open Cloudflare page",
+    "howTo": "Create an API token",
+    "step1": "Cloudflare dashboard → My Profile → API Tokens → Create Token → Custom token.",
+    "step2": "Permissions (read only):",
+    "step3": "Account and zone resources: the accounts/zones X-TOOLS may see. Create, copy, paste below.",
+    "token": "API token",
+    "tokenHint": "Stored encrypted; only used for reading.",
+    "tokenReplace": "A token is stored – enter a new one to replace it.",
+    "saveToken": "Check and save",
+    "checking": "Checking …",
+    "saved": "Saved – data is being fetched."
   }
 }

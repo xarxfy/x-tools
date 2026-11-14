@@ -179,11 +179,11 @@ def test_agent_install(admin, tmp_path):
 
 def test_features(admin):
     h = csrf_headers(admin)
-    assert admin.get("/api/features").json() == {"customers": False}
+    assert admin.get("/api/features").json() == {"customers": False, "cloudflare": False}
     admin.post("/api/customers", json={"name": "ACME"}, headers=h)
-    assert admin.get("/api/features").json() == {"customers": True}  # undecided: on when customers exist
+    assert admin.get("/api/features").json()["customers"] is True  # undecided: on when customers exist
     admin.put("/api/features", json={"customers": False}, headers=h)
-    assert admin.get("/api/features").json() == {"customers": False}
+    assert admin.get("/api/features").json() == {"customers": False, "cloudflare": False}
 
 
 def test_agent_install_secret_formats(admin):

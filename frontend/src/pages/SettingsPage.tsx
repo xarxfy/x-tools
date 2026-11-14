@@ -11,11 +11,12 @@ import { ConfirmDelete, CopyButton, Dialog, Dot, Empty, Loading, PageHead } from
 import { ago } from "../components/format";
 import { AccountSettings, BackupSettings } from "./SettingsAccount";
 import { AuditSettings, UsersSettings } from "./SettingsUsers";
+import { CloudflareSettings } from "./SettingsCloudflare";
 import { useCan } from "../api/users";
 import "./SettingsPage.css";
 
-const TABS = ["general", "account", "notifications", "agents", "users", "audit", "backup", "about"] as const;
-const EVENTS = ["port", "container", "docker", "system", "site", "agent"];
+const TABS = ["general", "account", "notifications", "agents", "cloudflare", "users", "audit", "backup", "about"] as const;
+const EVENTS = ["port", "container", "docker", "system", "site", "agent", "cloudflare"];
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -36,6 +37,7 @@ export function SettingsPage() {
       </div>
       {tab === "general" ? <General /> : tab === "account" ? <AccountSettings />
         : tab === "notifications" ? <Notifications /> : tab === "agents" ? <Agents />
+          : tab === "cloudflare" ? <CloudflareSettings />
           : tab === "users" ? <UsersSettings /> : tab === "audit" ? <AuditSettings />
             : tab === "backup" ? <BackupSettings /> : <About />}
     </>

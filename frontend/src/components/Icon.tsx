@@ -108,6 +108,7 @@ const PATHS = {
   ),
   refresh: <path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" />,
   download: <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />,
+  cloud: <path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.3 4.5 4.5 0 0 0 7 18Z" />,
   wand: <path d="m15 4 1.5 3L20 8.5 16.5 10 15 13l-1.5-3L10 8.5 13.5 7ZM4 20l9-9" />,
   proxmox: (
     <>

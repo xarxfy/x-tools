@@ -1,0 +1,54 @@
+.cf-errors ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+.cf-errors {
+  margin-bottom: 14px;
+}
+.cf-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.cf-cloud {
+  color: #f38020;
+  margin-left: 2px;
+}
+.cf-problem {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: var(--warn-text);
+}
+.cf-type {
+  min-width: 52px;
+  text-align: center;
+  font-family: var(--mono);
+}
+.cf-name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.badge-proxied {
+  background: color-mix(in srgb, #f38020 16%, transparent);
+  color: #c25e00;
+}
+.cf-tunnel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cf-small {
+  font-size: 13px;
+  font-weight: 400;
+}
+a.badge:hover {
+  text-decoration: none;
+  filter: brightness(0.95);
+}
+@media (prefers-color-scheme: dark) {
+  .badge-proxied {
+    color: #ff9f4a;
+  }
+}

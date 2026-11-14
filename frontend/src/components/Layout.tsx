@@ -16,6 +16,7 @@ const MAIN: { to: string; key: string; icon: IconName }[] = [
   { to: "/proxmox", key: "proxmox", icon: "proxmox" },
   { to: "/docker", key: "docker", icon: "docker" },
   { to: "/domains", key: "domains", icon: "domains" },
+  { to: "/cloudflare", key: "cloudflare", icon: "cloud" },
   { to: "/credentials", key: "credentials", icon: "credentials" },
 ];
 const FOOTER: { to: string; key: string; icon: IconName }[] = [
@@ -40,6 +41,7 @@ export function Layout() {
   const main = MAIN.filter((item) =>
     (item.key !== "customers" || features.data?.customers) &&
     (item.key !== "credentials" || can("operator")) &&
+    (item.key !== "cloudflare" || features.data?.cloudflare) &&
     (item.key !== "proxmox" || proxmox) &&
     (item.key !== "docker" || docker));
 

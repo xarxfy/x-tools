@@ -74,3 +74,6 @@ def start_background() -> None:
                      args=("Monitoring", START_DELAY, lambda: get_settings().alert_interval, check_alerts)).start()
     threading.Thread(target=_loop, name="sites", daemon=True,
                      args=("Website checks", 20, lambda: get_settings().site_interval, sites.run_checks)).start()
+    from app.integrations import cloudflare
+    threading.Thread(target=_loop, name="cloudflare", daemon=True,
+                     args=("Cloudflare", 25, lambda: 60, cloudflare.refresh_if_due)).start()

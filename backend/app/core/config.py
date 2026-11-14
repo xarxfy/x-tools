@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     alert_interval: int = 60
     site_interval: int = 300
 
+    # Cloudflare API base URL (only changed for tests).
+    cloudflare_api: str = "https://api.cloudflare.com/client/v4"
+
     # Telegram Bot API base URL (only changed for tests or a local bot API server).
     telegram_api: str = "https://api.telegram.org"
 

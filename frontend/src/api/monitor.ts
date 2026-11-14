@@ -202,6 +202,7 @@ export function useNewInstall() {
 
 export interface Features {
   customers: boolean;
+  cloudflare?: boolean;
 }
 
 export const useFeatures = () =>

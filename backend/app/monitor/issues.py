@@ -154,5 +154,12 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
         seen.add(domain)
         add(f"site:{domain}", "site", ch["level"], f"{domain} ({cname}): {ch.get('label', '')}", f"/customers/{cid}")
 
+    # Cloudflare (if configured): unhealthy tunnels, wrong routes for service domains
+    from app.integrations import cloudflare
+    with session_scope() as db:
+        svc_rows = [{"id": s.id, "name": s.name, "host": s.host, "domains": list(s.domains or []),
+                     "ports": list(s.ports or [])} for s in db.scalars(select(Service))]
+    issues.extend(cloudflare.issues(svc_rows))
+
     issues.sort(key=lambda i: (i.get("manual", False), i["level"] != "down"))
     return issues
