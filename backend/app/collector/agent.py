@@ -8,8 +8,10 @@ anything leaves the machine.
 Environment:
   XT_AGENT_URL, XT_AGENT_KEY            where to report, key from Settings → Agents
   XT_AGENT_INTERVAL                     seconds (default 60, min 30)
-  XT_AGENT_CONTROL                      1 = accept commands from X-TOOLS (start/stop containers and
-                                        Proxmox guests, read logs). Off by default.
+  XT_AGENT_CONTROL                      1 = accept commands from X-TOOLS (start/stop containers, Proxmox
+                                        guests and systemd services, read logs, reboot). Off by default.
+  XT_AGENT_LINUX                        1 = report systemd services, ports, disks and updates of this server
+  XT_AGENT_DOCKER                       0 = ignore Docker even if the socket exists
   CF_ACCESS_CLIENT_ID/_SECRET           optional Cloudflare Access service token
   PROXMOX_URL, PROXMOX_TOKEN_ID, PROXMOX_TOKEN_SECRET, PROXMOX_VERIFY_TLS (0/1)
 """
@@ -17,18 +19,19 @@ Environment:
 import json
 import os
 import socket
+import subprocess
 import sys
 import threading
 import time
 import urllib.error
 import urllib.request
 
-from app.collector import proxmox
+from app.collector import linux, proxmox
 from app.collector.collector import collect_snapshot, host_path, system_info
 from app.core.config import get_settings
 from app.collector.httpjson import post_json
 
-AGENT_VERSION = "5"
+AGENT_VERSION = "6"
 
 
 DETAILS_INTERVAL = max(120, int(os.environ.get("XT_PROXMOX_DETAILS_INTERVAL", "600")))
@@ -49,6 +52,30 @@ def proxmox_info() -> dict | None:
     return {**overview, "details": _details["data"]}
 
 
+LINUX_DETAILS_INTERVAL = max(120, int(os.environ.get("XT_LINUX_DETAILS_INTERVAL", "600")))
+_linux: dict = {"data": None, "at": 0.0}
+
+
+def linux_info() -> dict | None:
+    """Services, ports and disks every report; OS and update information every few minutes."""
+    if os.environ.get("XT_AGENT_LINUX", "0") != "1":
+        return None
+    if _linux["data"] is None or time.time() - _linux["at"] > LINUX_DETAILS_INTERVAL:
+        try:
+            _linux["data"] = linux.details()
+        except Exception as error:  # noqa: BLE001 – must never stop the report
+            _linux["data"] = {"error": str(error)[:300], "fetched_at": time.time()}
+        _linux["at"] = time.time()
+    out = {**_linux["data"], "collected_at": time.time()}
+    for key, fn in (("services", linux.services), ("ports", linux.ports), ("disks", linux.disks)):
+        try:
+            out[key] = fn()
+        except Exception as error:  # noqa: BLE001
+            out[key] = None
+            out["error"] = str(error)[:300]
+    return out
+
+
 DOCKER_ACTIONS = ("start", "stop", "restart", "logs")
 
 
@@ -67,6 +94,15 @@ def execute(command: dict) -> dict:
         elif area == "proxmox" and verb in proxmox.POWER:
             proxmox.power(verb, {**params, "vmid": target})
             _details["due"] = True
+        elif area == "systemd" and verb in linux.VERBS:
+            if os.environ.get("XT_AGENT_LINUX", "0") != "1":
+                raise ValueError("Linux server mode is not enabled on this agent")
+            result = linux.service_action(verb, target, params.get("lines"))
+            return result
+        elif action == "system.reboot":
+            if os.environ.get("XT_AGENT_LINUX", "0") != "1":
+                raise ValueError("Linux server mode is not enabled on this agent")
+            return linux.reboot()
         elif action == "proxmox.config":
             proxmox.change_config({**params, "vmid": target})
             _details["due"] = True
@@ -76,7 +112,7 @@ def execute(command: dict) -> dict:
         else:
             raise ValueError("Unknown command")
         return {"ok": True}
-    except (ValueError, OSError) as error:
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
         return {"ok": False, "error": str(error)[:300]}
 
 
@@ -120,7 +156,8 @@ def build_report() -> dict:
     docker = collect_snapshot() if has_docker else None
     return {"version": AGENT_VERSION, "hostname": hostname(), "sent_at": time.time(),
             "control": os.environ.get("XT_AGENT_CONTROL", "0") == "1",
-            "system": (docker or {}).get("system") or system_info(), "docker": docker, "proxmox": proxmox_info()}
+            "system": (docker or {}).get("system") or system_info(), "docker": docker, "proxmox": proxmox_info(),
+            "linux": linux_info()}
 
 
 def run() -> None:
@@ -137,6 +174,7 @@ def run() -> None:
     print(f"X-TOOLS agent: reporting every {interval}s to {url} "
           f"(Docker: {'yes' if os.environ.get('XT_AGENT_DOCKER', '1') != '0' and os.path.exists(get_settings().docker_socket) else 'no'}, "
           f"Proxmox: {'yes' if os.environ.get('PROXMOX_URL') else 'no'}, "
+          f"Linux: {'yes' if os.environ.get('XT_AGENT_LINUX') == '1' else 'no'}, "
           f"control: {'on' if control else 'off'})", flush=True)
     report_now = threading.Event()
     if control:

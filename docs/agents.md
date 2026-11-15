@@ -6,6 +6,7 @@ only reports; with **control** switched on, operators can also start/stop contai
 
 | Kind | Install it on | Reports |
 |---|---|---|
+| **Linux server** | any Linux server, VM or LXC (systemd) | host metrics, systemd services, listening ports, disks, pending updates, reboot flag – optionally Docker as well |
 | **Proxmox host** | the Proxmox host | host metrics, nodes, storage, all LXCs and VMs (Proxmox API, read-only token) |
 | **Docker host** | every server, LXC or VM that runs Docker | containers, compose files, Dockerfiles, git status, host metrics |
 
@@ -34,9 +35,14 @@ agent creates a new command with a new key – e.g. to reinstall, switch the kin
 Switch on **Allow control from X-TOOLS** when adding the server (or with a new *Install command*). Then users with the
 role **operator** or **admin** can:
 
-| Docker host | Proxmox host |
-|---|---|
-| start, stop, restart containers, read their logs | start, shut down, stop, reboot LXCs and VMs; change CPU cores, memory, swap, start at boot and tags; grow disks |
+| Linux server | Docker host | Proxmox host |
+|---|---|---|
+| start, stop, restart systemd services, read their journal, reboot the server | start, stop, restart containers, read their logs | start, shut down, stop, reboot LXCs and VMs; change CPU cores, memory, swap, start at boot and tags; grow disks |
+
+On Linux servers the agent runs as root (it has to talk to systemd), so control is limited to this fixed list:
+only services the agent reported itself, never `x-tools-agent` itself, no arbitrary commands. Stopping `ssh` or the
+network service can lock you out – there is a confirmation, but think before you click. Pending updates are read from
+the local package cache (apt, dnf); X-TOOLS does not install them.
 
 How it stays safe:
 

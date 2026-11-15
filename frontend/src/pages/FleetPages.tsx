@@ -9,6 +9,7 @@ import { Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago, fmtDuration } from "../components/format";
 import { MetricsChart } from "../components/history";
 import { counts, DockerTab, ProxmoxTab, SystemMeters } from "./HostParts";
+import { LinuxTab } from "./LinuxTab";
 import "./HostParts.css";
 
 /** Scroll to #agent-… / #local once the page has rendered its hosts. */
@@ -55,12 +56,12 @@ function HostHead({ anchor, name, state, sub, sys, source }: {
   );
 }
 
-function SetupHint({ kind }: { kind: "proxmox" | "docker" }) {
+function SetupHint({ kind }: { kind: "proxmox" | "docker" | "linux" }) {
   const { t } = useTranslation();
   const isAdmin = useCan()("admin");
   return (
     <div className="card card-pad setup-hint">
-      <span className="setup-icon"><Icon name={kind === "proxmox" ? "proxmox" : "docker"} size={26} /></span>
+      <span className="setup-icon"><Icon name={kind === "proxmox" ? "proxmox" : kind === "linux" ? "servers" : "docker"} size={26} /></span>
       <div>
         <h2>{t(`fleet.${kind}EmptyTitle`)}</h2>
         <p className="muted">{t(`fleet.${kind}EmptyText`)}</p>
@@ -85,6 +86,41 @@ function Pending({ agents }: { agents: AgentSummary[] }) {
       </ul>
       <Link to="/settings?tab=agents" className="small-note">{t("fleet.pendingLink")}</Link>
     </div>
+  );
+}
+
+export function ServersPage() {
+  const { t } = useTranslation();
+  const agents = useAgents();
+  useScrollToHash(!!agents.data);
+  if (!agents.data) return <Loading error={agents.error} />;
+  const all = agents.data.filter((a) => !a.disabled && (a.kind === "linux" || a.has_linux));
+  const live = all.filter((a) => a.has_linux);
+  const pending = all.filter((a) => !a.has_linux);
+  return (
+    <>
+      <PageHead title={t("nav.servers")} sub={live.length ? t("fleet.linuxSub", { count: live.length }) : undefined} />
+      {!live.length && <SetupHint kind="linux" />}
+      <Pending agents={pending} />
+      {live.map((a) => <LinuxHost key={a.id} agent={a} />)}
+    </>
+  );
+}
+
+function LinuxHost({ agent }: { agent: AgentSummary }) {
+  const { t } = useTranslation();
+  const detail = useAgent(agent.id);
+  const report = detail.data?.report;
+  const info = report?.linux;
+  return (
+    <section className="host-section">
+      <HostHead anchor={`agent-${agent.id}`} name={agent.name} state={agentState(agent)} source={agent.id}
+                sys={report?.system}
+                sub={[agent.hostname, reported(agent), report?.system?.uptime && t("servers.uptime", { duration: fmtDuration(report.system.uptime) })]
+                  .filter(Boolean).join(" · ")} />
+      {!detail.data ? <Loading error={detail.error} /> : info ? <LinuxTab agent={agent} info={info} />
+        : <Empty>{t("fleet.noData")}</Empty>}
+    </section>
   );
 }
 
@@ -182,6 +218,6 @@ export function ServerRedirect() {
   if (node && vmid) return <Navigate to={`/proxmox/${id}/${node}/${vmid}`} replace />;
   if (!agents.data) return <Loading error={agents.error} />;
   const agent = agents.data.find((a) => a.id === id);
-  const to = agent?.kind === "proxmox" || agent?.has_proxmox ? "/proxmox" : "/docker";
+  const to = agent?.kind === "linux" ? "/servers" : agent?.kind === "proxmox" || agent?.has_proxmox ? "/proxmox" : "/docker";
   return <Navigate to={`${to}#agent-${id}`} replace />;
 }

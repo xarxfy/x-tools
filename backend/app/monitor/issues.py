@@ -127,7 +127,8 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
 
     # Agents
     for aid, name, report, received, kind in agents:
-        link = f"{'/proxmox' if kind == 'proxmox' else '/docker'}#agent-{aid}"
+        page = {"proxmox": "/proxmox", "linux": "/servers"}.get(kind, "/docker")
+        link = f"{page}#agent-{aid}"
         if report is None or received is None:
             link = "/settings?tab=agents"
             add(f"agent:{aid}", "agent", "warn", f"Server '{name}' has never reported", link)
@@ -145,6 +146,9 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
                     add(f"container:{aid}:{c['name']}", "container", level, f"{name}: container {c['name']}: {label}",
                         link)
             system_issues(add, report.get("system") or {}, f"{aid}:", f"{name}: ", link)
+            for s in (report.get("linux") or {}).get("services") or []:
+                if s.get("active") == "failed":
+                    add(f"service:{aid}:{s['name']}", "system", "warn", f"{name}: service {s['name']} failed", link)
         except (KeyError, TypeError, AttributeError) as error:
             add(f"agent:{aid}:broken", "agent", "warn", f"{name}: report cannot be read ({error})", link)
 

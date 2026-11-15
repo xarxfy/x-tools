@@ -235,7 +235,7 @@ const UNINSTALL =
   "systemctl daemon-reload 2>/dev/null; docker rm -f x-tools-agent 2>/dev/null; echo 'X-TOOLS agent removed'";
 
 const NO_INSTALL: InstallOptions = {
-  kind: "docker", control: false, proxmox_url: "https://127.0.0.1:8006", proxmox_token_id: "", proxmox_token_secret: "",
+  kind: "linux", control: false, docker: false, proxmox_url: "https://127.0.0.1:8006", proxmox_token_id: "", proxmox_token_secret: "",
   proxmox_verify_tls: false, cf_client_id: "", cf_client_secret: "", compose_roots: "/opt,/srv,/home,/root",
 };
 
@@ -244,10 +244,10 @@ function KindPicker({ value, onChange }: { value: AgentKind; onChange: (k: Agent
   const { t } = useTranslation();
   return (
     <div className="kind-picker" role="radiogroup" aria-label={t("agents.kind")}>
-      {(["proxmox", "docker"] as const).map((k) => (
+      {(["linux", "proxmox", "docker"] as const).map((k) => (
         <button key={k} type="button" role="radio" aria-checked={value === k}
                 className={`kind-option${value === k ? " selected" : ""}`} onClick={() => onChange(k)}>
-          <Icon name={k === "proxmox" ? "servers" : "docker"} size={22} />
+          <Icon name={k === "proxmox" ? "proxmox" : k === "linux" ? "servers" : "docker"} size={22} />
           <strong>{t(`agents.kinds.${k}`)}</strong>
           <span>{t(`agents.kinds.${k}Hint`)}</span>
         </button>
@@ -298,8 +298,12 @@ function InstallFields({ value, onChange, stored }: {
           <p className="muted small-note" style={{ margin: 0 }}>{t("agents.proxmoxHowto")}</p>
         </div>
       )}
+      {value.kind === "linux" && (
+        <Toggle checked={value.docker} label={t("agents.alsoDocker")} hint={t("agents.alsoDockerHint")}
+                onChange={(docker) => set({ docker })} />
+      )}
       <Toggle checked={value.control} label={t("agents.control")}
-              hint={value.kind === "proxmox" ? t("agents.controlHintProxmox") : t("agents.controlHintDocker")}
+              hint={t(`agents.controlHint${value.kind === "proxmox" ? "Proxmox" : value.kind === "linux" ? "Linux" : "Docker"}`)}
               onChange={(control) => set({ control })} />
       <Toggle checked={cf} label={t("agents.cf")} hint={t("agents.cfHint")}
               onChange={(v) => { setCf(v); if (!v) set({ cf_client_id: "", cf_client_secret: "" }); }} />
@@ -318,7 +322,7 @@ function InstallFields({ value, onChange, stored }: {
           </label>
         </div>
       )}
-      {value.kind === "docker" && (
+      {(value.kind === "docker" || (value.kind === "linux" && value.docker)) && (
         <>
           <button type="button" className="btn btn-ghost add-link" onClick={() => setMore((m) => !m)}>
             {more ? t("agents.lessOptions") : t("agents.moreOptions")}
@@ -356,7 +360,7 @@ function Agents() {
         <Dot state={st} />
         <div className="list-main">
           <div className="list-title">
-            <Link to={`${a.kind === "proxmox" ? "/proxmox" : "/docker"}#agent-${a.id}`}>{a.name}</Link>
+            <Link to={`${a.kind === "proxmox" ? "/proxmox" : a.kind === "linux" ? "/servers" : "/docker"}#agent-${a.id}`}>{a.name}</Link>
             {a.disabled && <span className="badge">{t("agents.disabled")}</span>}
             {a.control && <span className="badge">{t("agents.controlBadge")}</span>}
             {a.outdated && (
@@ -396,7 +400,7 @@ function Agents() {
       {agents.data.length === 0 ? (
         <Empty>{t("agents.none")}</Empty>
       ) : (
-        (["proxmox", "docker"] as const).map((kind) => {
+        (["linux", "proxmox", "docker"] as const).map((kind) => {
           const list = agents.data.filter((a) => a.kind === kind);
           return list.length > 0 && (
             <section key={kind}>

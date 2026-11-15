@@ -11,6 +11,7 @@ const MAIN: { to: string; key: string; icon: IconName }[] = [
   { to: "/", key: "overview", icon: "overview" },
   { to: "/customers", key: "customers", icon: "customers" },
   { to: "/services", key: "services", icon: "services" },
+  { to: "/servers", key: "servers", icon: "servers" },
   { to: "/proxmox", key: "proxmox", icon: "proxmox" },
   { to: "/docker", key: "docker", icon: "docker" },
   { to: "/domains", key: "domains", icon: "domains" },

@@ -100,6 +100,15 @@ SECTIONS = [
         "Add a customer, assign services; the customer page shows contact, sites and agreements",
         "Website checks show DNS/HTTPS/certificate; *Check now* updates them",
     ]),
+    ("linux", "Linux servers (agent kind *Linux server*)", [
+        "*Add server → Linux server*: the install command works on a Debian/Ubuntu server; it appears under *Servers*",
+        "Load, memory and disk meters, OS, kernel, pending updates and *Reboot required* are shown",
+        "Services are listed; a deliberately failed service (`systemctl start` on a broken unit) raises a problem and a notification",
+        "Listening ports show the process; disks show their fill level",
+        "With *Allow control*: restart a harmless service and read its logs; `x-tools-agent` itself cannot be stopped",
+        "Reboot (with confirmation) restarts the server and it reports again afterwards",
+        "With *Also report Docker*, its containers appear on the Docker page",
+    ]),
     ("deploy", "Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)", [
         "Without the deployer container, *Websites* shows a hint and *Deploy* says the deployer is not running",
         "With it: add a website with a public repository that has a compose file; *Deploy* runs, the log shows the steps",

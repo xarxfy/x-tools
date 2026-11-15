@@ -6,6 +6,10 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **Linux servers** as a third agent kind (*Settings → Agents → Linux server*, new sidebar entry *Servers*): load,
+  memory, disks, systemd services (failed ones raise an alert), listening ports with process, OS/kernel, pending
+  updates (apt/dnf cache), reboot flag. With control: start/stop/restart services, journal, reboot. Optionally
+  reports Docker too. Agent protocol version: **6** (existing agents show an update hint).
 - **Deploy customer websites from git** (Customers → Websites): repository, branch, optional access token and
   `.env` variables (encrypted); compose projects or static sites (nginx). Per website: deploy, redeploy, stop, log.
   A service linked to the customer is created automatically.

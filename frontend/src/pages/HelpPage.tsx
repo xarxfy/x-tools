@@ -115,7 +115,8 @@ const DOCS: Doc[] = [
     doc("agents-setup", "Set up an agent", <>
       <ol>
         <li><Link to="/settings?tab=agents">Settings → Agents</Link> → <em>Add server</em>. Choose
-          <em>Proxmox host</em> (enter the API token) or <em>Docker host</em> (a server, LXC or VM with Docker).
+          <em>Linux server</em> (any server, VM or LXC: services, ports, disks, updates), <em>Proxmox host</em>
+          (enter the API token) or <em>Docker host</em> (a server, LXC or VM with Docker).
           Docker containers are only visible to an agent on the same machine, so install one on the Proxmox host and
           one on every LXC/VM with Docker.</li>
         <li>Copy the install command and run it as root on the other server. It installs a small service
@@ -135,7 +136,8 @@ const DOCS: Doc[] = [
     </>, "remove uninstall delete agent"),
     doc("agents-control", "Control (start/stop)", <>
       <p>With <em>Allow control from X-TOOLS</em> (when adding the server or with a new install command), operators and
-        admins can start, stop and restart containers and read logs on Docker hosts, and start, shut down, stop and
+        admins can start, stop and restart containers and read logs on Docker hosts, start, stop and restart systemd
+        services, read their journal and reboot Linux servers, and start, shut down, stop and
         reboot LXCs/VMs on Proxmox hosts, change their CPU cores, memory, swap, start at boot and tags, and
         grow disks (detail page of a guest). The agent still opens no port – it asks X-TOOLS for commands and only runs
         this fixed list. Control must be switched on on the agent itself (<code>XT_AGENT_CONTROL=1</code>). Proxmox needs

@@ -62,7 +62,7 @@ export interface NotificationSettings {
   manual?: string[];
 }
 
-export type AgentKind = "proxmox" | "docker";
+export type AgentKind = "proxmox" | "docker" | "linux";
 
 export interface AgentSummary {
   id: string;
@@ -75,6 +75,7 @@ export interface AgentSummary {
   version: string;
   has_docker: boolean;
   has_proxmox: boolean;
+  has_linux: boolean;
   outdated: boolean;
   latest_version: string;
   control: boolean;
@@ -194,7 +195,28 @@ export interface Proxmox {
   storage?: { storage: string; node: string; disk: number; maxdisk: number }[];
 }
 
+export interface LinuxService {
+  name: string;
+  active: string;
+  sub: string;
+  enabled: string;
+  description: string;
+}
+
+export interface LinuxInfo {
+  os?: string;
+  kernel?: string;
+  arch?: string;
+  updates?: string[] | null;
+  reboot_required?: boolean;
+  services?: LinuxService[] | null;
+  ports?: { port: number; proto: string; address: string; process: string }[];
+  disks?: { mount: string; fstype: string; used: number; total: number }[];
+  error?: string;
+}
+
 export interface AgentReport {
+  linux?: LinuxInfo | null;
   hostname?: string;
   system?: SystemInfo;
   docker?: Snapshot | null;
@@ -269,6 +291,7 @@ function useAgentsInvalidate() {
 export interface InstallOptions {
   kind: AgentKind;
   control: boolean;
+  docker: boolean;
   proxmox_url: string;
   proxmox_token_id: string;
   proxmox_token_secret: string;

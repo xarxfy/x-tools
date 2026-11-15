@@ -35,7 +35,7 @@ class AgentIn(InstallOptions):
 class AgentUpdate(BaseModel):
     disabled: bool | None = None
     name: str | None = Field(default=None, min_length=1, max_length=60)
-    kind: str | None = Field(default=None, pattern="^(proxmox|docker)$")
+    kind: str | None = Field(default=None, pattern="^(proxmox|docker|linux)$")
 
 
 def as_utc(value: datetime | None) -> datetime | None:
@@ -48,6 +48,7 @@ def summary(a: Agent) -> dict:
             "last_report_at": as_utc(a.last_report_at), "hostname": report.get("hostname", ""),
             "version": report.get("version", ""),
             "has_docker": bool(report.get("docker")), "has_proxmox": bool(report.get("proxmox")),
+            "has_linux": bool(report.get("linux")),
             "outdated": bool(report) and str(report.get("version", "")) != AGENT_VERSION,
             "control": bool(report.get("control")),
             "latest_version": AGENT_VERSION}

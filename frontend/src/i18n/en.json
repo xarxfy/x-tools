@@ -400,11 +400,14 @@
       "proxmox": "Proxmox host",
       "proxmoxHint": "Host metrics, nodes, storage and all LXCs/VMs via the Proxmox API (read-only token).",
       "docker": "Docker host",
-      "dockerHint": "A server, LXC or VM with Docker: containers, compose files, git status."
+      "dockerHint": "A server, LXC or VM with Docker: containers, compose files, git status.",
+      "linux": "Linux server",
+      "linuxHint": "Any Linux server, VM or LXC: load, memory, disks, systemd services, open ports, updates. Optionally Docker as well."
     },
     "groups": {
       "proxmox": "Proxmox hosts",
-      "docker": "Docker hosts"
+      "docker": "Docker hosts",
+      "linux": "Linux servers"
     },
     "removedTitle": "“{{name}}” deleted",
     "removedText": "X-TOOLS no longer accepts reports from this agent. To remove it from {{host}} as well, run this there:",
@@ -418,7 +421,10 @@
     "controlHintProxmox": "Operators can start, shut down, stop and reboot LXCs/VMs, change CPU, memory, swap, start at boot and tags, and grow disks. The API token needs the matching privileges (see the hint above).",
     "controlBadge": "control on",
     "secretStored": "Stored – leave empty to keep it",
-    "prefilled": "Filled in from the last install command. Stored secrets are kept unless you enter new ones."
+    "prefilled": "Filled in from the last install command. Stored secrets are kept unless you enter new ones.",
+    "controlHintLinux": "Operators can start, stop and restart systemd services, read their logs and reboot the server. The agent runs as root. Off: the agent only reports.",
+    "alsoDocker": "Also report Docker",
+    "alsoDockerHint": "This server runs Docker: its containers appear on the Docker page."
   },
   "about": {
     "version": "Version",
@@ -458,7 +464,11 @@
     "dockerEmptyText": "Containers of this server come from the collector container x-tools-collector (started by setup.sh). For other servers, LXCs or VMs with Docker install an agent (Settings → Agents → Add server → Docker host).",
     "pendingTitle": "Waiting for the first report",
     "pending": "created, but has not reported yet",
-    "pendingLink": "Show the install command again →"
+    "pendingLink": "Show the install command again →",
+    "linuxSub_one": "{{count}} Linux server",
+    "linuxSub_other": "{{count}} Linux servers",
+    "linuxEmptyTitle": "No Linux server connected",
+    "linuxEmptyText": "Install the X-TOOLS agent on any Linux server, VM or LXC (Settings → Agents → Add server → Linux server). It shows load, memory, disks, systemd services, open ports and pending updates – outbound only, no open ports."
   },
   "history": {
     "load": "Load",
@@ -848,5 +858,30 @@
     "envAdd": "Add variable",
     "value": "value",
     "purge": "also remove containers and files"
+  },
+  "linux": {
+    "services": "Services",
+    "failed_one": "{{count}} failed",
+    "failed_other": "{{count}} failed",
+    "onlyFailed": "only failed",
+    "noSystemd": "systemd is not available on this server.",
+    "ports": "Listening ports",
+    "noPorts": "No listening ports found.",
+    "more": "Show {{count}} more",
+    "less": "Show less",
+    "disks": "Disks",
+    "updates_one": "{{count}} update",
+    "updates_other": "{{count}} updates",
+    "upToDate": "Up to date",
+    "updatesUnknown": "Updates unknown",
+    "updatesTitle": "Pending updates",
+    "rebootRequired": "Reboot required",
+    "reboot": "Reboot",
+    "rebooting": "Reboot sent",
+    "confirm": {
+      "stop": "Stop {{name}}?",
+      "restart": "Restart {{name}}?",
+      "reboot": "Reboot {{name}} now?"
+    }
   }
 }

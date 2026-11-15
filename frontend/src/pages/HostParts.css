@@ -383,3 +383,41 @@
 .pending-agents .plain-list {
   margin: 8px 0;
 }
+
+/* Linux server */
+.linux-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 4px;
+}
+.linux-facts .spacer {
+  flex: 1;
+}
+.badge-down {
+  background: color-mix(in srgb, var(--down) 14%, transparent);
+  color: var(--down-text);
+  margin-left: 8px;
+}
+.badge-button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.section-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.list-more {
+  width: 100%;
+  justify-content: center;
+  border-top: 1px solid var(--separator);
+  border-radius: 0 0 14px 14px;
+}
+@media (max-width: 640px) {
+  .section-row:has(.section-tools) {
+    flex-wrap: wrap;
+  }
+}

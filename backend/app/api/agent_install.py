@@ -41,11 +41,12 @@ PATTERNS = {
 
 
 class InstallOptions(BaseModel):
-    kind: str = Field(default="docker", pattern="^(proxmox|docker)$")
+    kind: str = Field(default="docker", pattern="^(proxmox|docker|linux)$")
     proxmox_url: str = ""
     proxmox_token_id: str = ""
     proxmox_token_secret: str = ""
     proxmox_verify_tls: bool = False
+    docker: bool = False  # linux servers: also report Docker if the host has it
     control: bool = False  # agent accepts commands from X-TOOLS (operators)
     cf_client_id: str = ""
     cf_client_secret: str = ""
@@ -68,7 +69,7 @@ class InstallOptions(BaseModel):
         proxmox = [self.proxmox_url, self.proxmox_token_id, self.proxmox_token_secret]
         if self.kind == "proxmox" and not all(proxmox):
             raise ValueError("A Proxmox host needs URL, API token ID and token secret")
-        if self.kind == "docker":  # Docker hosts never get Proxmox credentials
+        if self.kind != "proxmox":  # only Proxmox hosts get Proxmox credentials
             self.proxmox_url = self.proxmox_token_id = self.proxmox_token_secret = ""
         if bool(self.cf_client_id) != bool(self.cf_client_secret):
             raise ValueError("Cloudflare Access needs client ID and client secret")
@@ -205,7 +206,8 @@ echo "Remove: systemctl disable --now x-tools-agent; rm -rf /opt/x-tools-agent /
 def render_script(base: str, data: dict) -> str:
     env = [f"XT_AGENT_URL={base}", f"XT_AGENT_KEY={data['key']}", f"XT_TIMEZONE={get_settings().timezone}",
            f"XT_COMPOSE_ROOTS={data.get('compose_roots') or '/opt,/srv,/home,/root'}",
-           f"XT_AGENT_DOCKER={'0' if data.get('kind') == 'proxmox' else '1'}",
+           f"XT_AGENT_DOCKER={'1' if data.get('kind') == 'docker' or (data.get('kind') == 'linux' and data.get('docker')) else '0'}",
+           f"XT_AGENT_LINUX={'1' if data.get('kind') == 'linux' else '0'}",
            f"XT_AGENT_CONTROL={'1' if data.get('control') else '0'}"]
     curl_headers = ""
     if data.get("cf_client_id"):

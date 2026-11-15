@@ -18,7 +18,7 @@ import { ServicesPage } from "./pages/ServicesPage";
 import { CredentialsPage } from "./pages/CredentialsPage";
 import { CustomerPage, CustomersPage } from "./pages/CustomersPage";
 import { DomainsPage } from "./pages/DomainsPage";
-import { DockerPage, ProxmoxPage, ServerRedirect } from "./pages/FleetPages";
+import { DockerPage, ProxmoxPage, ServerRedirect, ServersPage } from "./pages/FleetPages";
 import { AssistantPage } from "./pages/AssistantPage";
 import { CloudflarePage } from "./pages/CloudflarePage";
 import { GuestPage } from "./pages/GuestPage";
@@ -47,7 +47,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerPage />} />
             <Route path="/domains" element={<DomainsPage />} />
-            <Route path="/servers" element={<ServerRedirect />} />
+            <Route path="/servers" element={<ServersPage />} />
             <Route path="/servers/:id" element={<ServerRedirect />} />
             <Route path="/servers/:id/guest/:node/:vmid" element={<ServerRedirect />} />
             <Route path="/proxmox/:id/:node/:vmid" element={<GuestPage />} />

@@ -1,4 +1,4 @@
-"""Commands for agents (start/stop containers and Proxmox guests, logs).
+"""Commands for agents (start/stop containers, Proxmox guests and systemd services, logs, reboot).
 
 Agents stay outbound-only: an agent with control switched on (XT_AGENT_CONTROL=1,
 set by the install command) long-polls GET /api/agent/commands and posts the
@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import require
+from app.collector.linux import PROTECTED as PROTECTED_UNITS
 from app.collector.proxmox import DISK_KEY, validate_changes
 from app.core.audit import audit
 from app.core.db import get_db
@@ -23,7 +24,8 @@ from app.models import Agent
 COMMAND_TTL = 60
 WAIT_RESULT = 75
 ACTIONS = {"docker.start", "docker.stop", "docker.restart", "docker.logs",
-           "proxmox.start", "proxmox.shutdown", "proxmox.stop", "proxmox.reboot", "proxmox.config", "proxmox.resize"}
+           "proxmox.start", "proxmox.shutdown", "proxmox.stop", "proxmox.reboot", "proxmox.config", "proxmox.resize",
+           "systemd.start", "systemd.stop", "systemd.restart", "systemd.logs", "system.reboot"}
 
 
 class Queue:
@@ -74,7 +76,7 @@ router = APIRouter(prefix="/api/agents", tags=["agents"])
 
 class ActionIn(BaseModel):
     action: str = Field(max_length=30)
-    target: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+    target: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.@:-]*$")
     node: str = Field(default="", max_length=64, pattern=r"^[A-Za-z0-9.-]*$")
     type: str = Field(default="", pattern="^(|lxc|qemu)$")
     lines: int = Field(default=300, ge=10, le=1000)
@@ -115,6 +117,23 @@ def agent_action(aid: str, body: ActionIn, db: Session = Depends(get_db)):
                 raise HTTPException(422, "Disk and size needed")
             params.update(disk=body.disk, add_gb=body.add_gb)
             detail = f"{body.disk} +{body.add_gb} GB"
+    elif body.action.startswith("systemd.") or body.action == "system.reboot":
+        linux = report.get("linux")
+        if not linux:
+            raise HTTPException(422, "This agent does not report a Linux server (create the install command for "
+                                     "the kind “Linux server”)")
+        params = {"lines": body.lines}
+        if body.action == "system.reboot":
+            if body.target != "host":
+                raise HTTPException(422, "Unknown target")
+            what = f"{agent.name}: reboot"
+        else:
+            if body.target not in {s.get("name") for s in linux.get("services") or []}:
+                raise HTTPException(422, "Unknown service")
+            if body.target in PROTECTED_UNITS and not body.action.endswith(".logs"):
+                raise HTTPException(422, f"{body.target} cannot be controlled from X-TOOLS")
+            what = f"{agent.name}: {body.target}"
+        detail = ""
     else:
         names = {c.get("name") for p in (report.get("docker") or {}).get("projects", []) for c in p.get("containers", [])}
         names |= {c.get("name") for c in (report.get("docker") or {}).get("containers", [])}
