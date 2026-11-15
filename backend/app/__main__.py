@@ -13,6 +13,7 @@ def main() -> None:
     serve.add_argument("--host", default=os.environ.get("XT_HOST", "0.0.0.0"))
     serve.add_argument("--port", type=int, default=int(os.environ.get("XT_PORT", "8080")))
     sub.add_parser("collect", help="run the Docker collector (needs the Docker socket)")
+    sub.add_parser("deploy", help="run the deployer for customer websites (needs network and the Docker socket)")
     sub.add_parser("agent", help="report this server to an X-TOOLS instance (see deploy/agent)")
     args = parser.parse_args()
 
@@ -20,6 +21,11 @@ def main() -> None:
         from app.collector.agent import run as run_agent
 
         run_agent()
+        return
+    if args.command == "deploy":
+        from app.collector.deployer import run as run_deployer
+
+        run_deployer()
         return
     if args.command == "collect":
         from app.collector.collector import run

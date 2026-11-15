@@ -121,6 +121,39 @@ ssh -L 8080:127.0.0.1:8080 you@your-server   # then open http://localhost:8080
 From outside, use a VPN instead of opening a port. HTTPS inside the LAN: Caddy with `tls internal`. Without HTTPS the
 session cookie travels unencrypted inside your network – fine for a home LAN you trust, not for shared networks.
 
+## Deploying customer websites (optional)
+
+With *Customers* switched on you can roll out a customer's website from a git repository: *Customers → customer →
+Websites → Add website*. This needs a third container, the **deployer**. It has network access and the Docker
+socket – the one place where X-TOOLS may start containers – so it is off by default.
+
+```sh
+# deploy/.env
+COMPOSE_PROFILES=deploy
+XT_SITES_DIR=/srv/x-tools-sites     # optional, this is the default
+```
+
+Then run `sudo sh setup.sh` again. It creates the folder and starts `x-tools-deployer`.
+
+What happens on *Deploy*: the repository is cloned (later: updated) into `XT_SITES_DIR/<name>`, the variables you
+entered are written to `.env`, and `docker compose up -d --build` starts it. Which compose file is used:
+
+1. the one you entered, else `compose.yaml`/`compose.yml`/`docker-compose.yaml`/`docker-compose.yml` in the repository,
+2. else, if you entered a **port**: a static website – a folder `public`, `dist`, `build`, `html` or `_site` with an
+   `index.html` (or the repository root) is served by nginx on `127.0.0.1:<port>`.
+
+Put your reverse proxy or Cloudflare Tunnel in front of that port (or of the port your compose file publishes) and add
+the domain to the website's service – it was created automatically and is linked to the customer, so port and
+website checks work as usual.
+
+- **Private repositories:** enter an access token (a read-only deploy token is enough). It is stored encrypted and
+  passed to git per job, never written into `.git/config`.
+- **Variables** (`.env`) are stored encrypted and are never shown again.
+- Only `https://`/`http://` repository addresses without user name are accepted.
+- Deleting a website forgets it; tick *also remove containers and files* to remove those too. The service
+  (with its credentials) stays.
+- Operators can deploy; everything is written to the audit log. The deploy log is visible to operators only.
+
 ## Updating
 
 ```sh

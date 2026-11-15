@@ -9,7 +9,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # --- 2. Python runtime -------------------------------------------------------------
-FROM python:3.13-slim
+FROM python:3.13-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     XT_DATA_DIR=/data \
@@ -26,6 +26,17 @@ COPY --from=frontend /src/dist /app/frontend
 COPY migrate/ /app/migrate/
 RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin xtools \
     && mkdir -p /data /exchange && chown xtools:xtools /data /exchange
+
+# --- 3. Deployer (optional, compose profile "deploy"): git + docker compose for customer websites ----
+FROM base AS deployer
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends docker-cli docker-compose \
+    && rm -rf /var/lib/apt/lists/*
+USER xtools
+CMD ["x-tools", "deploy"]
+
+# --- 4. Application image (default target) ----------------------------------------------------------
+FROM base AS app
 USER xtools
 VOLUME /data
 EXPOSE 8080

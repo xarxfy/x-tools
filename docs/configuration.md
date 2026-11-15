@@ -11,9 +11,10 @@ set in the UI under *Settings*.
 | `XT_HOST` / `XT_PORT` | `127.0.0.1` / `8080` | Address of the web UI. `0.0.0.0` only without a reverse proxy (homelab) |
 | `XT_TRUST_PROXY` | `true` | Trust `X-Forwarded-*` headers. Set `false` when X-TOOLS is reached directly |
 | `XT_COMPOSE_ROOTS` | `/opt,/srv,/home` | Folders that may contain compose projects |
+| `XT_SITES_DIR` | `/srv/x-tools-sites` | Where the deployer checks out customer websites ([installation.md](installation.md#deploying-customer-websites-optional)) |
 | `XT_HOME_DIR` | – | Home folder shown as `~` in paths |
 | `XT_CHECK_HOST` | `127.0.0.1` | Host on which service ports are checked when a service has no host |
-| `XT_PROTECTED_CONTAINERS` | `x-tools,x-tools-collector` | Containers that cannot be stopped from the UI |
+| `XT_PROTECTED_CONTAINERS` | `x-tools,x-tools-collector,x-tools-deployer` | Containers that cannot be stopped from the UI |
 | `XT_COLLECT_INTERVAL` | `60` | Seconds between Docker snapshots |
 | `XT_SITE_INTERVAL` | `300` | Seconds between website checks of customer domains |
 | `XT_SECRET_KEY` | generated | Fernet key for encrypted data (default: `secret.key` in the data volume) |

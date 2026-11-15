@@ -71,6 +71,25 @@ class Customer(Base):
     services: Mapped[list["Service"]] = relationship(back_populates="customer")
 
 
+class Site(Base):
+    """A customer website that X-TOOLS deploys from a git repository (by the optional deployer container)."""
+
+    __tablename__ = "sites"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(80))
+    slug: Mapped[str] = mapped_column(String(40), unique=True)  # folder and compose project name
+    customer_id: Mapped[str | None] = mapped_column(ForeignKey("customers.id", ondelete="SET NULL"), nullable=True)
+    service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id", ondelete="SET NULL"), nullable=True)
+    repo_url: Mapped[str] = mapped_column(String(300))
+    branch: Mapped[str] = mapped_column(String(100), default="main")
+    compose_file: Mapped[str] = mapped_column(String(100), default="")  # empty: detect, or static site
+    port: Mapped[int | None] = mapped_column(Integer, nullable=True)  # static sites: port on 127.0.0.1
+    token: Mapped[str] = mapped_column(Text, default="")  # access token for private repos (encrypted)
+    env: Mapped[str] = mapped_column(Text, default="")  # variables for the .env file (encrypted JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Service(Base):
     __tablename__ = "services"
 

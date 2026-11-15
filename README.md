@@ -18,7 +18,7 @@ something breaks.
 | **Proxmox** | Nodes, storage, host network, updates; every LXC/VM with resources, network, IPs, snapshots, backups and its `.conf` file |
 | **Agents** | More servers: Proxmox hosts (nodes, LXCs, VMs) and Docker hosts – one install command, outbound only, optional control (start/stop) |
 | **Cloudflare** | DNS, tunnels, routes and Access apps, checked against your services; optionally edit DNS records and tunnel routes |
-| **Customers** | Optional: contacts, agreements and external website checks for sites you host for others |
+| **Customers** | Optional: contacts, agreements, external website checks – and deploying their websites from git |
 | **Notifications** | Telegram and ntfy, with delay and "back to normal" |
 | **Users** | Roles (viewer, operator, admin), two-factor login, audit log, encrypted backups |
 

@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     # separate volume, so the collector never sees the database or secret key.
     exchange_dir: str = ""
 
+    # Where deployed customer websites live (git checkouts, one folder per site). It is mounted into the
+    # deployer container under the same path, so relative bind mounts in compose files resolve on the host.
+    sites_dir: str = "/srv/x-tools-sites"
+
     # Seconds between two Docker snapshots.
     collect_interval: int = 60
 
@@ -67,7 +71,7 @@ class Settings(BaseSettings):
 
     # Containers that cannot be stopped from the UI (so you cannot lock yourself out).
     # Comma-separated.
-    protected_containers: str = "x-tools,x-tools-collector"
+    protected_containers: str = "x-tools,x-tools-collector,x-tools-deployer"
 
     # Optional fixed secret key (Fernet, url-safe base64). If empty, a key is
     # generated on first start and stored in data_dir/secret.key.

@@ -15,9 +15,14 @@
 #                      restart/logs. No network at all, folders read-only.
 #                      Talks to the web container only through the "exchange"
 #                      volume – it never sees the database or the secret key.
+#   x-tools-deployer   optional (COMPOSE_PROFILES=deploy in .env): deploys customer
+#                      websites from git. Has network and the Docker socket, but sees
+#                      neither the database nor the secret key.
 services:
   x-tools:
-    build: ..
+    build:
+      context: ..
+      target: app
     image: x-tools:local
     container_name: x-tools
     restart: unless-stopped
@@ -62,6 +67,28 @@ services:
       - /home:/host/home:ro
       - /opt:/host/opt:ro
       - /srv:/host/srv:ro
+
+  x-tools-deployer:
+    profiles: ["deploy"]
+    build:
+      context: ..
+      target: deployer
+    image: x-tools-deployer:local
+    container_name: x-tools-deployer
+    restart: unless-stopped
+    depends_on:
+      - x-tools
+    group_add:
+      - "${DOCKER_GID:?DOCKER_GID missing in .env (setup.sh sets it)}"
+    # No env_file: the deployer must not see XT_SECRET_KEY.
+    environment:
+      XT_EXCHANGE_DIR: /exchange
+      XT_SITES_DIR: ${XT_SITES_DIR:-/srv/x-tools-sites}
+    volumes:
+      - x-tools-exchange:/exchange
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Same path inside and outside, so relative bind mounts of the websites resolve on the host.
+      - ${XT_SITES_DIR:-/srv/x-tools-sites}:${XT_SITES_DIR:-/srv/x-tools-sites}
 
 volumes:
   x-tools-data:

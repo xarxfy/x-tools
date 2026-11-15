@@ -69,6 +69,13 @@ const DOCS: Doc[] = [
     <p>The area is optional: switch it on or off under <Link to="/settings">Settings → General</Link>. When it is
       off, the menu entry and the website checks disappear; stored customers are kept.</p>
   </>, "customers contact agreements", [
+    doc("customers-deploy", "Deploying websites", <>
+      <p>On a customer page, <em>Websites → Add website</em> rolls out a website from a git repository: X-TOOLS
+        clones it, writes the variables you entered to <code>.env</code> and starts it with docker compose (or serves
+        a static folder with nginx when you enter a port). <em>Redeploy</em> pulls the latest commit.</p>
+      <p>This needs the optional deployer container: <code>COMPOSE_PROFILES=deploy</code> in
+        <code>deploy/.env</code>, then <code>sudo sh setup.sh</code>. Tokens and variables are stored encrypted.</p>
+    </>, "deploy website git repository compose static nginx deployer"),
     doc("customers-checks", "Website checks", <>
       <p>All domains of customer services are checked from outside every five minutes, the way visitors see them:
         DNS, HTTPS answer (redirects are not followed), response time and certificate. A certificate that expires

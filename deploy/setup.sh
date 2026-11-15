@@ -14,6 +14,14 @@ if ! grep -q '^DOCKER_GID=' .env; then
   echo "DOCKER_GID=$(stat -c %g /var/run/docker.sock)" >> .env
 fi
 
+# Optional deployer for customer websites: the folder must exist and belong to the container user (uid 1000).
+if grep -Eq '^COMPOSE_PROFILES=.*deploy' .env; then
+  SITES=$(sed -n 's/^XT_SITES_DIR=//p' .env | tail -n1)
+  SITES=${SITES:-/srv/x-tools-sites}
+  mkdir -p "$SITES" && chown 1000:1000 "$SITES"
+  echo "Deployer enabled; websites are checked out in $SITES"
+fi
+
 docker compose up -d --build --remove-orphans
 
 PORT=$(sed -n 's/^XT_PORT=//p' .env | tail -n1)

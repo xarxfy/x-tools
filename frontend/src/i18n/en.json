@@ -62,6 +62,7 @@
     "noMatch": "Nothing matches your search.",
     "save": "Save",
     "cancel": "Cancel",
+    "close": "Close",
     "delete": "Delete",
     "reallyDelete": "Really delete?",
     "edit": "Edit",
@@ -806,5 +807,46 @@
     "growNote": "Disks can only grow, never shrink. Inside VMs you may still have to extend the partition/file system.",
     "confFile": "Read from the file on the Proxmox host. Password and SSH key lines are masked.",
     "confApi": "Rebuilt from the Proxmox API (the agent cannot read the file – it does not run on the host). Snapshot sections are missing."
+  },
+  "deploy": {
+    "title": "Websites",
+    "add": "Add website",
+    "edit": "Edit website",
+    "empty": "No websites deployed from git yet. Add one to roll out a customer's website with a single click.",
+    "noDeployer": "The deployer is not running, so nothing can be rolled out. Enable it with COMPOSE_PROFILES=deploy in deploy/.env and run setup.sh again (see Installation → Deploying customer websites).",
+    "deploy": "Deploy",
+    "redeploy": "Redeploy",
+    "stop": "Stop",
+    "log": "Log",
+    "noLog": "No output yet.",
+    "state": {
+      "none": "not deployed",
+      "queued": "waiting …",
+      "running": "{{action}} …",
+      "ok": "{{action}} done",
+      "failed": "{{action}} failed"
+    },
+    "action": {
+      "deploy": "Deploy",
+      "stop": "Stop",
+      "remove": "Remove"
+    },
+    "name": "Name",
+    "repo": "Repository",
+    "repoHint": "https:// address of the git repository. A private repository needs an access token below.",
+    "branch": "Branch",
+    "compose": "Compose file",
+    "composePlaceholder": "detected automatically",
+    "port": "Port (static websites)",
+    "portHint": "Without a compose file in the repository, a folder with index.html is served by nginx on this port of 127.0.0.1 – put your proxy or tunnel in front of it.",
+    "token": "Access token",
+    "tokenHint": "Only for private repositories (e.g. a read-only deploy token). Stored encrypted, never shown again.",
+    "tokenSaved": "saved – leave empty to keep",
+    "tokenRemove": "Remove token",
+    "env": "Variables (.env)",
+    "envHint": "Written to the .env file of the website on every deploy, e.g. database passwords. Stored encrypted.",
+    "envAdd": "Add variable",
+    "value": "value",
+    "purge": "also remove containers and files"
   }
 }

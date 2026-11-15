@@ -5,6 +5,13 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- **Deploy customer websites from git** (Customers → Websites): repository, branch, optional access token and
+  `.env` variables (encrypted); compose projects or static sites (nginx). Per website: deploy, redeploy, stop, log.
+  A service linked to the customer is created automatically.
+- Optional third container `x-tools-deployer` (`COMPOSE_PROFILES=deploy` in `deploy/.env`), separate Docker image
+  target, `XT_SITES_DIR`. The web container still has no Docker access.
+
 ## [0.1.0] – 2026-11-15 – first beta
 
 X-TOOLS is the successor of the private tool *Server-Info*, rebuilt with a FastAPI backend and a React frontend.

@@ -100,6 +100,15 @@ SECTIONS = [
         "Add a customer, assign services; the customer page shows contact, sites and agreements",
         "Website checks show DNS/HTTPS/certificate; *Check now* updates them",
     ]),
+    ("deploy", "Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)", [
+        "Without the deployer container, *Websites* shows a hint and *Deploy* says the deployer is not running",
+        "With it: add a website with a public repository that has a compose file; *Deploy* runs, the log shows the steps",
+        "The containers appear on the Docker page, the linked service shows the customer",
+        "Push a change to the repository, *Redeploy*: the new commit is shown",
+        "A repository without compose file but with `index.html` and a port is served on `127.0.0.1:<port>`",
+        "Private repository with an access token works; the token and variables are never shown again",
+        "*Stop* stops the containers; deleting with *also remove containers and files* removes them",
+    ]),
     ("notifications", "Notifications", [
         "Telegram and/or ntfy: *Send test* arrives",
         "With the main switch off, a clear hint is shown and only tests are sent",

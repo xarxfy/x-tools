@@ -1,0 +1,57 @@
+.deploy-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.deploy-hint {
+  margin: 0 0 8px;
+}
+.deploy-log {
+  max-height: 55vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.deploy-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.deploy-token {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.deploy-token .input {
+  flex: 1;
+}
+.deploy-env {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.deploy-envadd {
+  align-self: flex-start;
+}
+.check-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary, inherit);
+}
+@media (max-width: 640px) {
+  .list-row .deploy-actions {
+    flex-wrap: wrap;
+  }
+  .deploy-env {
+    grid-template-columns: 1fr auto;
+  }
+  .deploy-env .input:first-child {
+    grid-column: 1 / -1;
+  }
+}

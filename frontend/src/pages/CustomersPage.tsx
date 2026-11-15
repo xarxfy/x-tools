@@ -13,6 +13,7 @@ import type { Service } from "../api/data";
 import { useRunSiteChecks, useSiteChecks, type SiteCheck } from "../api/monitor";
 import { ago } from "../components/format";
 import { useCan } from "../api/users";
+import { SitesSection } from "./SitesSection";
 
 function worst(checks: (SiteCheck | undefined)[]): "up" | "warn" | "down" | "off" {
   const levels = checks.map((c) => c?.level).filter(Boolean);
@@ -184,6 +185,8 @@ export function CustomerPage() {
           ))}
         </div>
       )}
+
+      <SitesSection customerId={customer.id} />
 
       {own.some((s) => s.domains.length) && (
         <>

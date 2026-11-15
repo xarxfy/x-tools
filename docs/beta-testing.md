@@ -112,7 +112,17 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] Add a customer, assign services; the customer page shows contact, sites and agreements
 - [ ] Website checks show DNS/HTTPS/certificate; *Check now* updates them
 
-## 13. Notifications
+## 13. Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)
+
+- [ ] Without the deployer container, *Websites* shows a hint and *Deploy* says the deployer is not running
+- [ ] With it: add a website with a public repository that has a compose file; *Deploy* runs, the log shows the steps
+- [ ] The containers appear on the Docker page, the linked service shows the customer
+- [ ] Push a change to the repository, *Redeploy*: the new commit is shown
+- [ ] A repository without compose file but with `index.html` and a port is served on `127.0.0.1:<port>`
+- [ ] Private repository with an access token works; the token and variables are never shown again
+- [ ] *Stop* stops the containers; deleting with *also remove containers and files* removes them
+
+## 14. Notifications
 
 - [ ] Telegram and/or ntfy: *Send test* arrives
 - [ ] With the main switch off, a clear hint is shown and only tests are sent
@@ -121,26 +131,26 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] A container stopped **through X-TOOLS** is not reported; started and stopped outside again, it is
 - [ ] *Monitoring checked … ago* is shown; open problems list whether they were notified
 
-## 14. Account and security
+## 15. Account and security
 
 - [ ] Change your password; other sessions are logged out
 - [ ] Turn on two-factor login (QR code); login asks for the code
 - [ ] A recovery code works once, then it is used up; turn two-factor login off again
 
-## 15. Users, roles, audit log
+## 16. Users, roles, audit log
 
 - [ ] **Viewer**: sees everything, no credentials, no container/Proxmox actions, no logs, only *Account* in settings
 - [ ] **Operator**: edits services and credentials, controls containers and guests; no users, agents, backups
 - [ ] Disable a user → logged out, cannot log in; reset the password → new password works
 - [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes
 
-## 16. Backup and update
+## 17. Backup and update
 
 - [ ] *Settings → Backup*: download a backup with a passphrase
 - [ ] Restore it (ideally on a test installation): data and credentials are back, everyone is logged out
 - [ ] `git pull && sudo sh deploy/setup.sh` keeps data, users and settings
 
-## 17. Look and feel
+## 18. Look and feel
 
 - [ ] Phone: menu works, no horizontal scrolling, dialogs fit on the screen
 - [ ] Dark mode looks right

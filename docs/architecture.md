@@ -36,6 +36,11 @@
 - Agents authenticate with their own key (only a hash is stored) and open no ports. Control (start/stop) is opt-in on
   the agent itself; the agent fetches commands by long polling and only runs a fixed list of actions. Agent install
   commands work once and for one hour.
+- The optional deployer container (customer websites) is the only part with network access *and* the Docker socket.
+  It sees neither the database nor the secret key (no `.env`, only the exchange volume), takes jobs from a queue,
+  validates every field again, works only below `XT_SITES_DIR` and runs git/compose with a minimal environment.
+  Tokens reach git through environment variables, not the command line or `.git/config`. Whoever may deploy a
+  website (operator) can run arbitrary code from that repository on the server – only give that role to people you trust.
 - Cloudflare is read-only unless an admin allows changes; changes are limited to DNS records and tunnel routes.
 - Run X-TOOLS behind HTTPS or on a private connection. An additional login in front (Cloudflare Access, VPN) is
   recommended for anything with credentials in it.
