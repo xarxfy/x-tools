@@ -5,6 +5,10 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+## [1.0.0-beta.1] – 2026-11-15 – first public beta
+
+The first version meant for testers outside the project. Everything of 0.1.0 plus:
+
 ### Added
 - **German interface** (Deutsch): chosen automatically from the browser language, switchable on the login page and
   under *Settings → Account*. The common problem texts are translated, too. Still English: the Help page,
@@ -16,6 +20,12 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 - Guide [docs/guide.md](docs/guide.md): how the parts work, first steps, and everything to do behind Cloudflare
   (Tunnel, Access for agents and heartbeats, WAF/bot rules, troubleshooting).
 - Notice that the project is entirely AI-written (“vibe coded”) and unaudited: README, installer, Settings → About, Help.
+- The installer refuses to run on a Proxmox host (X-TOOLS belongs in a separate VM or LXC; only the *agent* goes on
+  the host). Override: `XT_ALLOW_PROXMOX_HOST=1`.
+
+### Notes
+- Beta: expect rough edges, keep backups. X-TOOLS is entirely AI-written and has had no independent security audit.
+- Install a fixed version with `XT_REF=v1.0.0-beta.1`. Agent protocol version: **6** (unchanged).
 
 ## [0.1.0] – 2026-11-15 – first beta
 
@@ -113,5 +123,6 @@ Agent protocol version: **6**.
 - Memory field of the Proxmox edit dialog blocked values that were not multiples of 256 MB.
 - Cloudflare changes failed right after an update because of an outdated cached snapshot.
 
-[Unreleased]: https://github.com/xarxfy/x-tools/compare/v0.1.0...main
+[Unreleased]: https://github.com/xarxfy/x-tools/compare/v1.0.0-beta.1...main
+[1.0.0-beta.1]: https://github.com/xarxfy/x-tools/compare/v0.1.0...v1.0.0-beta.1
 [0.1.0]: https://github.com/xarxfy/x-tools/releases/tag/v0.1.0

@@ -9,7 +9,7 @@ something breaks.
 > review or security audit**. Read the code before you trust it, make backups, and think twice before exposing it to
 > the internet or giving it control (Docker socket, Proxmox, root agents) over systems you care about. Use at your own risk.
 >
-> **Status: beta (0.1).** All areas are in place; expect rough edges until 1.0.
+> **Status: beta (1.0.0-beta.1).** All areas are in place; expect rough edges until the final 1.0.0.
 > Beta testers: [checklist](docs/beta-testing.md) – tick it in the browser ([beta-checklist.html](docs/beta-checklist.html))
 > or in an issue from the template *Beta test*. What changed: [CHANGELOG](CHANGELOG.md).
 
@@ -51,7 +51,8 @@ something breaks.
 
 ## Quick start
 
-Requirements: Linux with Docker and the compose plugin.
+Requirements: a Linux VM, LXC or VPS (Debian/Ubuntu) with internet access – **not the Proxmox host itself** (there only
+the agent goes). Docker is installed by the installer if missing.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/install.sh | sudo bash

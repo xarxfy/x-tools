@@ -1,4 +1,4 @@
-<!-- Beta test of X-TOOLS 0.1.0. Tick what works; for problems add a comment below the item or a separate issue. The full instructions: docs/beta-testing.md -->
+<!-- Beta test of X-TOOLS 1.0.0-beta.1. Tick what works; for problems add a comment below the item or a separate issue. The full instructions: docs/beta-testing.md -->
 
 ## Your setup
 
@@ -99,6 +99,7 @@
 ## 12. One-command installer (on a fresh Debian/Ubuntu VM)
 
 - [ ] `curl … | sudo bash` installs Docker if you agree, asks the questions and prints a setup code
+- [ ] On a Proxmox host the installer refuses and says to use a separate VM/LXC
 - [ ] Mode *lan*: `http://<server-ip>:8080` opens; mode *domain*: HTTPS works after DNS points to the server
 - [ ] `sudo x-tools-ctl status`, `logs` and `setup-code` work
 - [ ] `sudo x-tools-ctl update` keeps settings, account and data

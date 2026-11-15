@@ -7,7 +7,7 @@ GitLab (.gitlab/issue_templates) and GitHub (.github/ISSUE_TEMPLATE).
 Items may use `code`, *emphasis* and [links](url).
 """
 
-VERSION = "0.1.0"
+VERSION = "1.0.0-beta.1"
 
 SETUP_FIELDS = [
     ("version", "X-TOOLS version (sidebar bottom) and date of `git pull`"),
@@ -97,6 +97,7 @@ SECTIONS = [
     ]),
     ("installer", "One-command installer (on a fresh Debian/Ubuntu VM)", [
         "`curl … | sudo bash` installs Docker if you agree, asks the questions and prints a setup code",
+        "On a Proxmox host the installer refuses and says to use a separate VM/LXC",
         "Mode *lan*: `http://<server-ip>:8080` opens; mode *domain*: HTTPS works after DNS points to the server",
         "`sudo x-tools-ctl status`, `logs` and `setup-code` work",
         "`sudo x-tools-ctl update` keeps settings, account and data",

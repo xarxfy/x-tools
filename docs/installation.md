@@ -9,7 +9,8 @@
 
 ## Requirements
 
-A Linux server (VPS, LXC or VM) with Docker and the compose plugin. About 200 MB RAM.
+A Linux server (VPS, LXC or VM) with Docker and the compose plugin. **Not the Proxmox host itself:** create a separate
+Debian/Ubuntu VM or LXC for X-TOOLS (on the host you only install the *agent*; the installer refuses to run there). About 200 MB RAM.
 Docker Desktop (macOS/Windows) is not supported: X-TOOLS uses the host network for port checks.
 
 ## Install

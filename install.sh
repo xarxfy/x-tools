@@ -240,7 +240,18 @@ summary() {
 
 # --- commands --------------------------------------------------------------------------------------------
 
+# X-TOOLS belongs on a normal Debian/Ubuntu VM or LXC – not on the hypervisor. Only the *agent* goes on Proxmox.
+guard_proxmox() {
+  [ -z "${XT_ALLOW_PROXMOX_HOST:-}" ] || return 0
+  if command -v pveversion >/dev/null 2>&1 || [ -d /etc/pve ]; then
+    die "This is a Proxmox host. Do not install X-TOOLS here: create a separate VM or LXC (Debian/Ubuntu) and run the installer there.
+  On the Proxmox host itself only the agent is installed (X-TOOLS → Settings → Agents → Add server → Proxmox host).
+  (Override at your own risk: XT_ALLOW_PROXMOX_HOST=1)"
+  fi
+}
+
 cmd_install() {
+  guard_proxmox
   step "X-TOOLS installer"
   say "Note: X-TOOLS is entirely AI-written (\"vibe coded\") and has had no independent security audit."
   say "Make backups and read the README before you expose it to the internet."
