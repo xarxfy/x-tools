@@ -28,11 +28,13 @@ something breaks.
 Requirements: Linux with Docker and the compose plugin.
 
 ```sh
-git clone <repository> x-tools
-cd x-tools/deploy
-cp .env.example .env      # set XT_BASE_URL and XT_TIMEZONE
-sudo sh setup.sh          # builds and starts X-TOOLS, prints the setup code
+curl -fsSL <address of install.sh> | sudo bash
 ```
+
+The installer checks Docker (and offers to install it), asks how you reach X-TOOLS (own domain with automatic HTTPS,
+behind your own proxy/tunnel, or only in the LAN), builds and starts everything and prints the setup code.
+Afterwards: `sudo x-tools-ctl update | status | logs | uninstall`. Prefer to do it by hand?
+[installation.md](docs/installation.md#manual-install).
 
 X-TOOLS listens on `127.0.0.1:8080`. Make it reachable, open it and enter the setup code from the log
 (`sudo docker logs x-tools`).

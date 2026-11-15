@@ -95,6 +95,13 @@ SECTIONS = [
         "*Create route* on a hostname with a problem fixes it; add, edit, delete a test DNS record",
         "Removing the token hides the sidebar entry",
     ]),
+    ("installer", "One-command installer (on a fresh Debian/Ubuntu VM)", [
+        "`curl … | sudo bash` installs Docker if you agree, asks the questions and prints a setup code",
+        "Mode *lan*: `http://<server-ip>:8080` opens; mode *domain*: HTTPS works after DNS points to the server",
+        "`sudo x-tools-ctl status`, `logs` and `setup-code` work",
+        "`sudo x-tools-ctl update` keeps settings, account and data",
+        "`sudo x-tools-ctl uninstall` asks before removing data; a reinstall afterwards still finds the data if you kept it",
+    ]),
     ("customers", "Customers (optional area)", [
         "*Settings → General*: switching on shows *Customers*, switching off hides it again",
         "Add a customer, assign services; the customer page shows contact, sites and agreements",

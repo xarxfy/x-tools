@@ -6,6 +6,11 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **One-command installer** `install.sh` and helper `x-tools-ctl` (update, status, logs, setup-code, uninstall):
+  checks/installs Docker, asks how X-TOOLS is reached (domain with Caddy and automatic HTTPS, own proxy, LAN),
+  optional website deployer, unattended mode with `--yes`.
+
+### Added
 - **Linux servers** as a third agent kind (*Settings → Agents → Linux server*, new sidebar entry *Servers*): load,
   memory, disks, systemd services (failed ones raise an alert), listening ports with process, OS/kernel, pending
   updates (apt/dnf cache), reboot flag. With control: start/stop/restart services, journal, reboot. Optionally

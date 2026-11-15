@@ -14,6 +14,43 @@ Docker Desktop (macOS/Windows) is not supported: X-TOOLS uses the host network f
 
 ## Install
 
+### One command (recommended)
+
+```sh
+curl -fsSL <address of install.sh> | sudo bash
+```
+
+For a private repository add a token for this run: `curl … | sudo XT_GIT_TOKEN=<token> bash` (it is never stored).
+
+The installer:
+
+1. installs `git`/`curl` if missing and checks **Docker** – if it is missing it offers to install it (get.docker.com),
+2. clones X-TOOLS to `/opt/x-tools`,
+3. asks **how you reach X-TOOLS**: *domain* (Caddy in a container fetches the HTTPS certificate; ports 80/443 must be
+   free), *proxy* (your own reverse proxy or Cloudflare Tunnel; X-TOOLS listens on 127.0.0.1) or *lan* (open
+   `http://<server-ip>:8080`, no proxy), plus port, time zone and whether to enable the
+   [website deployer](#deploying-customer-websites-optional),
+4. writes `deploy/.env`, builds and starts the containers and prints the **setup code**.
+
+Press Enter to take the suggested answer. For unattended installs use `--yes` and variables, e.g.
+`XT_MODE=lan XT_TIMEZONE=Europe/Berlin XT_DEPLOYER=no bash install.sh --yes` (all variables are listed at the top of
+`install.sh`).
+
+It also installs the helper **`x-tools-ctl`**:
+
+| Command | What it does |
+|---|---|
+| `sudo x-tools-ctl update` | fetches the newest version, rebuilds and restarts (settings and data stay) |
+| `sudo x-tools-ctl status` | containers, health, version |
+| `sudo x-tools-ctl logs` | follows the log of the web container |
+| `sudo x-tools-ctl setup-code` | shows the one-time code for the first login again |
+| `sudo x-tools-ctl uninstall` | removes X-TOOLS; asks separately whether to delete the data (make a backup first) |
+
+Running the installer again on a server that has X-TOOLS is the same as `update`. Updating a private repository needs
+`XT_GIT_TOKEN` again (`sudo XT_GIT_TOKEN=… x-tools-ctl update`).
+
+### Manual install
+
 ```sh
 git clone <repository> x-tools
 cd x-tools/deploy

@@ -96,13 +96,21 @@
 - [ ] *Create route* on a hostname with a problem fixes it; add, edit, delete a test DNS record
 - [ ] Removing the token hides the sidebar entry
 
-## 12. Customers (optional area)
+## 12. One-command installer (on a fresh Debian/Ubuntu VM)
+
+- [ ] `curl … | sudo bash` installs Docker if you agree, asks the questions and prints a setup code
+- [ ] Mode *lan*: `http://<server-ip>:8080` opens; mode *domain*: HTTPS works after DNS points to the server
+- [ ] `sudo x-tools-ctl status`, `logs` and `setup-code` work
+- [ ] `sudo x-tools-ctl update` keeps settings, account and data
+- [ ] `sudo x-tools-ctl uninstall` asks before removing data; a reinstall afterwards still finds the data if you kept it
+
+## 13. Customers (optional area)
 
 - [ ] *Settings → General*: switching on shows *Customers*, switching off hides it again
 - [ ] Add a customer, assign services; the customer page shows contact, sites and agreements
 - [ ] Website checks show DNS/HTTPS/certificate; *Check now* updates them
 
-## 13. Linux servers (agent kind *Linux server*)
+## 14. Linux servers (agent kind *Linux server*)
 
 - [ ] *Add server → Linux server*: the install command works on a Debian/Ubuntu server; it appears under *Servers*
 - [ ] Load, memory and disk meters, OS, kernel, pending updates and *Reboot required* are shown
@@ -112,7 +120,7 @@
 - [ ] Reboot (with confirmation) restarts the server and it reports again afterwards
 - [ ] With *Also report Docker*, its containers appear on the Docker page
 
-## 14. Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)
+## 15. Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)
 
 - [ ] Without the deployer container, *Websites* shows a hint and *Deploy* says the deployer is not running
 - [ ] With it: add a website with a public repository that has a compose file; *Deploy* runs, the log shows the steps
@@ -122,7 +130,7 @@
 - [ ] Private repository with an access token works; the token and variables are never shown again
 - [ ] *Stop* stops the containers; deleting with *also remove containers and files* removes them
 
-## 15. Notifications
+## 16. Notifications
 
 - [ ] Telegram and/or ntfy: *Send test* arrives
 - [ ] With the main switch off, a clear hint is shown and only tests are sent
@@ -131,26 +139,26 @@
 - [ ] A container stopped **through X-TOOLS** is not reported; started and stopped outside again, it is
 - [ ] *Monitoring checked … ago* is shown; open problems list whether they were notified
 
-## 16. Account and security
+## 17. Account and security
 
 - [ ] Change your password; other sessions are logged out
 - [ ] Turn on two-factor login (QR code); login asks for the code
 - [ ] A recovery code works once, then it is used up; turn two-factor login off again
 
-## 17. Users, roles, audit log
+## 18. Users, roles, audit log
 
 - [ ] **Viewer**: sees everything, no credentials, no container/Proxmox actions, no logs, only *Account* in settings
 - [ ] **Operator**: edits services and credentials, controls containers and guests; no users, agents, backups
 - [ ] Disable a user → logged out, cannot log in; reset the password → new password works
 - [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes
 
-## 18. Backup and update
+## 19. Backup and update
 
 - [ ] *Settings → Backup*: download a backup with a passphrase
 - [ ] Restore it (ideally on a test installation): data and credentials are back, everyone is logged out
 - [ ] `git pull && sudo sh deploy/setup.sh` keeps data, users and settings
 
-## 19. Look and feel
+## 20. Look and feel
 
 - [ ] Phone: menu works, no horizontal scrolling, dialogs fit on the screen
 - [ ] Dark mode looks right
