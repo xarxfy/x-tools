@@ -90,5 +90,5 @@ Agent protocol version: **5**.
 - Memory field of the Proxmox edit dialog blocked values that were not multiples of 256 MB.
 - Cloudflare changes failed right after an update because of an outdated cached snapshot.
 
-[Unreleased]: https://git.xcloudy.dev/mguettler/x-tools/-/compare/v0.1.0...main
-[0.1.0]: https://git.xcloudy.dev/mguettler/x-tools/-/tags/v0.1.0
+[Unreleased]: https://github.com/xarxfy/x-tools/compare/v0.1.0...main
+[0.1.0]: https://github.com/xarxfy/x-tools/releases/tag/v0.1.0

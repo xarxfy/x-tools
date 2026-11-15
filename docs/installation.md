@@ -52,7 +52,7 @@ Running the installer again on a server that has X-TOOLS is the same as `update`
 ### Manual install
 
 ```sh
-git clone <repository> x-tools
+git clone https://github.com/xarxfy/x-tools.git
 cd x-tools/deploy
 cp .env.example .env      # at least XT_BASE_URL and XT_TIMEZONE – see configuration.md
 sudo sh setup.sh          # builds the image, starts both containers, waits until X-TOOLS answers
