@@ -442,7 +442,9 @@
     "keyEnv": "The secret key comes from XT_SECRET_KEY – keep a copy of it.",
     "keyFile": "The secret key is stored in {{dir}}/secret.key.",
     "backupHint": "Back up the whole data volume including the key. Without it stored credentials and tokens cannot be decrypted.",
-    "config": "These values are set through environment variables (deploy/.env)."
+    "config": "These values are set through environment variables (deploy/.env).",
+    "vibeTitle": "Vibe coded",
+    "vibeText": "X-TOOLS was written entirely with an AI assistant (Claude), directed by one person. It has tests and a security design, but no independent code review or security audit. Keep backups, and be careful with exposing it to the internet or giving it control over systems you care about."
   },
   "general": {
     "customers": "Customers & website checks",

@@ -614,6 +614,10 @@ function About() {
           {rows.map(([k, v]) => (<div key={k} style={{ display: "contents" }}><dt>{k}</dt><dd>{v}</dd></div>))}
         </dl>
       </section>
+      <section className="card card-pad vibe-note" style={{ marginTop: 16 }}>
+        <strong>{t("about.vibeTitle")}</strong>
+        <p style={{ margin: "6px 0 0" }}>{t("about.vibeText")}</p>
+      </section>
       <h2 className="section-title">{t("about.backupTitle")}</h2>
       <section className="card card-pad">
         <p style={{ marginTop: 0 }}>{a.secret_key_from_env ? t("about.keyEnv") : t("about.keyFile", { dir: a.data_dir })}</p>

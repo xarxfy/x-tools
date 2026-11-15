@@ -5,6 +5,13 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- `uninstall.sh`: one-command uninstaller like the installer (asks before removing, data separately; `--yes --force`
+  for unattended runs).
+- Guide [docs/guide.md](docs/guide.md): how the parts work, first steps, and everything to do behind Cloudflare
+  (Tunnel, Access for agents and heartbeats, WAF/bot rules, troubleshooting).
+- Notice that the project is entirely AI-written (“vibe coded”) and unaudited: README, installer, Settings → About, Help.
+
 ## [0.1.0] – 2026-11-15 – first beta
 
 X-TOOLS is the successor of the private tool *Server-Info*, rebuilt with a FastAPI backend and a React frontend.

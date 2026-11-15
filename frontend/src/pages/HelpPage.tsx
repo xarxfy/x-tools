@@ -63,6 +63,14 @@ const DOCS: Doc[] = [
         belong to.</p>
     </>, "domains"),
   ]),
+  doc("how", "How X-TOOLS works", <>
+    <p>A <strong>web part</strong> (this page) shows and watches everything; a <strong>collector</strong> reads Docker
+      on this server; <strong>agents</strong> on other servers report in (outbound only, no open ports); an optional
+      <strong> deployer</strong> rolls out customer websites. Full guide, including what to do behind Cloudflare
+      Access or a Tunnel: <code>docs/guide.md</code> in the repository.</p>
+    <p>Note: X-TOOLS is entirely “vibe coded” (written with an AI assistant) and has had no independent security
+      audit – keep backups and be careful what you give it control over.</p>
+  </>, "how works parts guide cloudflare access tunnel vibe coded ai audit"),
   doc("jobs", "Jobs and maintenance", <>
     <p>The <Link to="/jobs">Jobs</Link> page monitors things that should happen regularly (backups, cron jobs).
       Each job has a secret address; the job calls it when it has run

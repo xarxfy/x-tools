@@ -110,6 +110,7 @@ labels: beta
 - [ ] `sudo x-tools-ctl status`, `logs` and `setup-code` work
 - [ ] `sudo x-tools-ctl update` keeps settings, account and data
 - [ ] `sudo x-tools-ctl uninstall` asks before removing data; a reinstall afterwards still finds the data if you kept it
+- [ ] `curl -fsSL …/uninstall.sh | sudo bash` does the same from outside; the second question is about the data
 
 ## 13. Customers (optional area)
 

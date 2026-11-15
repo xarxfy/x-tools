@@ -535,3 +535,6 @@
 .backup-last .plain-list {
   margin: 6px 0 0;
 }
+.vibe-note {
+  border-left: 3px solid var(--warn);
+}

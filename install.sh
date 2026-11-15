@@ -242,6 +242,8 @@ summary() {
 
 cmd_install() {
   step "X-TOOLS installer"
+  say "Note: X-TOOLS is entirely AI-written (\"vibe coded\") and has had no independent security audit."
+  say "Make backups and read the README before you expose it to the internet."
   ensure_tools
   ensure_docker
   fetch

@@ -3,6 +3,12 @@
 Self-hosted overview of your servers, services and Docker containers – at home or on a VPS – with alerts when
 something breaks.
 
+> **Please note: X-TOOLS is entirely “vibe coded”.** The whole project – backend, frontend, installer, documentation –
+> was written with an AI assistant (Claude) under the direction of one person, not by a team of engineers.
+> It has tests and a security design ([architecture.md](docs/architecture.md#security)), but **no independent code
+> review or security audit**. Read the code before you trust it, make backups, and think twice before exposing it to
+> the internet or giving it control (Docker socket, Proxmox, root agents) over systems you care about. Use at your own risk.
+>
 > **Status: beta (0.1).** All areas are in place; expect rough edges until 1.0.
 > Beta testers: [checklist](docs/beta-testing.md) – tick it in the browser ([beta-checklist.html](docs/beta-checklist.html))
 > or in an issue from the template *Beta test*. What changed: [CHANGELOG](CHANGELOG.md).
@@ -47,10 +53,11 @@ X-TOOLS listens on `127.0.0.1:8080`. Make it reachable, open it and enter the se
 | Only at home, nothing public | LAN mode, agents on Proxmox and LXCs → [installation.md](docs/installation.md#homelab-only-no-vps-nothing-public) |
 | Just for me, no proxy | SSH tunnel or VPN → [installation.md](docs/installation.md#d-private-only-vpn-or-ssh) |
 
-Update: `git pull && sudo sh deploy/setup.sh` · Backup: *Settings → Backup*
+Update: `sudo x-tools-ctl update` · Backup: *Settings → Backup* · Remove: `curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/uninstall.sh | sudo bash`
 
 ## Documentation
 
+- [How it works & Cloudflare](docs/guide.md) – the parts, first steps, what to do behind Cloudflare Access/Tunnel
 - [Installation](docs/installation.md) – install, reachability options, homelab, update, backup, uninstall
 - [Agents](docs/agents.md) – Linux, Proxmox and Docker hosts, Proxmox token, Cloudflare Access, troubleshooting
 - [Cloudflare](docs/cloudflare.md) – token permissions and what is checked

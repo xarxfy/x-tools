@@ -78,7 +78,7 @@ The setup page asks for this code, so nobody who stumbles upon a fresh installat
 
 ## Making it reachable
 
-Pick one. X-TOOLS itself always stays on `127.0.0.1:8080`.
+Behind Cloudflare? The step-by-step guide, including Access for agents and cron jobs, is in [guide.md](guide.md#behind-cloudflare). Pick one. X-TOOLS itself always stays on `127.0.0.1:8080`.
 
 | Option | Needs | HTTPS | Open ports |
 |---|---|---|---|
@@ -221,10 +221,19 @@ Without the secret key stored credentials and tokens cannot be decrypted.
 
 ## Uninstall
 
+One command, like the installation:
+
 ```sh
-cd x-tools/deploy
-sudo docker compose down          # add -v to delete the data volumes as well
+curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/uninstall.sh | sudo bash
 ```
+
+(or `sudo x-tools-ctl uninstall` – the same). It asks before it removes the containers, then **separately** whether to
+delete all data (database, secret key, stored credentials – make a backup first), and whether to delete the program
+folder. Answering *no* to the data question keeps the volumes: installing X-TOOLS again finds the same accounts.
+Unattended: `… | sudo bash -s -- --yes --force` with `XT_REMOVE_DATA=yes|no` (default: keep the data).
+
+Not removed: websites you deployed with X-TOOLS (they keep running), agents on other servers, Docker itself.
+By hand: `cd /opt/x-tools/deploy && sudo docker compose down` (add `-v` to delete the data volumes as well).
 
 Agents: see [agents.md](agents.md#remove-an-agent).
 
