@@ -6,6 +6,9 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **German interface** (Deutsch): chosen automatically from the browser language, switchable on the login page and
+  under *Settings → Account*. The common problem texts are translated, too. Still English: the Help page,
+  notification messages and error texts from the server.
 - `x-tools-ctl reset-admin`: new password and 2FA off for an admin who is locked out (runs on the server).
 - Screenshots in the README, `SECURITY.md`, `CONTRIBUTING.md`, release notes for GitHub in `docs/releases/`.
 - `uninstall.sh`: one-command uninstaller like the installer (asks before removing, data separately; `--yes --force`

@@ -6,6 +6,7 @@ import { Dot, Loading, PageHead } from "../components/ui";
 import { level, pct } from "../components/format";
 import { EventList } from "../components/history";
 import { useCan } from "../api/users";
+import { issueText } from "../components/issueText";
 import { useState } from "react";
 import { useUpdateInfo } from "../api/ops";
 import { MaintenanceBanner, PauseDialog } from "../components/Maintenance";
@@ -87,7 +88,7 @@ export function OverviewPage() {
               <li key={i.key}>
                 <Link to={i.link}>
                   <Dot state={i.level} />
-                  <span>{i.text}</span>
+                  <span>{issueText(i.text)}</span>
                   {i.paused && <span className="badge">{t("maintenance.badge")}</span>}
                   <Icon name="chevron" size={14} />
                 </Link>

@@ -46,3 +46,16 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+.auth-lang {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+.lang-select {
+  width: auto;
+  min-width: 120px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: 13px;
+}

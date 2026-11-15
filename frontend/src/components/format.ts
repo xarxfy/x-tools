@@ -1,4 +1,5 @@
 /** Formatting helpers for sizes, durations and relative times. */
+import i18n from "../i18n";
 
 export function fmtBytes(n?: number): string {
   if (n === undefined || n === null) return "–";
@@ -23,13 +24,13 @@ export function fmtDuration(seconds?: number): string {
 }
 
 export function ago(ts?: number): string {
-  if (!ts) return "never";
+  const t = i18n.t.bind(i18n);
+  if (!ts) return t("format.never");
   const s = Math.max(0, Date.now() / 1000 - ts);
-  if (s < 90) return "just now";
-  if (s < 3600) return `${Math.round(s / 60)} min ago`;
-  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
-  const days = Math.round(s / 86400);
-  return days === 1 ? "1 day ago" : `${days} days ago`;
+  if (s < 90) return t("format.justNow");
+  if (s < 3600) return t("format.minAgo", { count: Math.round(s / 60) });
+  if (s < 86400) return t("format.hAgo", { count: Math.round(s / 3600) });
+  return t("format.daysAgo", { count: Math.round(s / 86400) });
 }
 
 export function pct(used?: number, total?: number): number {

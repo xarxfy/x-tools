@@ -1,3 +1,4 @@
+import { issueText } from "./issueText";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -93,7 +94,7 @@ export function EventList({ limit = 10, days = 7 }: { limit?: number; days?: num
         <Link key={e.id} to={e.link || "/"} className="list-row">
           <Dot state={e.ended_at ? "off" : e.level} />
           <span className="list-main">
-            <span className="event-text">{e.text}</span>
+            <span className="event-text">{issueText(e.text)}</span>
             <span className="list-sub">
               {e.ended_at
                 ? t("history.solved", { when: ago(Date.parse(e.started_at) / 1000), duration: duration(e) })

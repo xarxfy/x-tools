@@ -1,3 +1,4 @@
+import i18n from "../i18n";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./Icon";
@@ -41,7 +42,7 @@ export function Dialog({
       <form onSubmit={submit}>
         <header className="dialog-head">
           <h2>{title}</h2>
-          <button type="button" className="btn btn-ghost btn-icon" aria-label="Close" onClick={onClose}>
+          <button type="button" className="btn btn-ghost btn-icon" aria-label={i18n.t("common.close")} onClick={onClose}>
             <Icon name="close" size={18} />
           </button>
         </header>

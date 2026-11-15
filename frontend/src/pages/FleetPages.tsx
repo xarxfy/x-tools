@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 import { agentControl, localControl, useDocker, type SystemInfo } from "../api/docker";
 import { AGENT_STALE, agentAge, useAgent, useAgents, type AgentSummary } from "../api/monitor";
 import { useCan } from "../api/users";
@@ -29,7 +30,8 @@ function agentState(a: AgentSummary): "up" | "down" | "warn" {
 
 function reported(a: AgentSummary): string {
   const age = agentAge(a);
-  return age === null ? "" : age < AGENT_STALE ? `reported ${ago(Date.now() / 1000 - age)}` : `no report since ${ago(Date.now() / 1000 - age)}`;
+  const when = ago(Date.now() / 1000 - (age ?? 0));
+  return age === null ? "" : age < AGENT_STALE ? i18n.t("servers.reported", { when }) : i18n.t("servers.silent", { when });
 }
 
 /** Header of one host: name, state, metrics and an optional chart. */

@@ -512,7 +512,9 @@
     "newCodes": "New recovery codes",
     "recoveryTitle": "Recovery codes",
     "recoveryText": "Store these codes somewhere safe (e.g. your password manager). Each one logs you in once if you lose your phone. They are shown only now.",
-    "saved": "I have saved them"
+    "saved": "I have saved them",
+    "language": "Language",
+    "languageText": "Language of the interface. Problem texts and notifications from the server stay in English for now."
   },
   "backup": {
     "create": "Create a backup",
@@ -997,5 +999,45 @@
     "checked": "checked {{when}}",
     "check": "Check now",
     "how": "Update on the server:"
+  },
+  "format": {
+    "never": "never",
+    "justNow": "just now",
+    "minAgo_one": "{{count}} min ago",
+    "minAgo_other": "{{count}} min ago",
+    "hAgo_one": "{{count}} h ago",
+    "hAgo_other": "{{count}} h ago",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago"
+  },
+  "issue": {
+    "thisServer": "This server",
+    "on": "on",
+    "port": "{{name}}: port {{port}}{{label}}{{where}} does not answer",
+    "disk": "{{prefix}}disk {{pct}} % full",
+    "mem": "{{prefix}}memory {{pct}} % used",
+    "dockerNone": "No Docker data yet – is x-tools-collector running?",
+    "dockerStale": "Docker data is outdated (last update {{when}})",
+    "containerManual": "Container {{name}}: stopped by you",
+    "container": "Container {{name}}: {{state}}",
+    "hostContainer": "{{host}}: container {{name}}: {{state}}",
+    "neverReported": "Server “{{name}}” has never reported",
+    "silent": "Server “{{name}}” does not report (last {{when}})",
+    "serviceFailed": "{{host}}: service {{name}} failed",
+    "jobFailed": "Job “{{name}}” reported a failure",
+    "jobLate": "Job “{{name}}” did not report (last success {{when}}, expected every {{every}})",
+    "jobNever": "Job “{{name}}” did not report (never reported, expected every {{every}})",
+    "backupFailed": "Automatic backup failed ({{why}})",
+    "backupOld": "No automatic backup has run for a long time",
+    "tunnel": "Cloudflare Tunnel “{{name}}” is {{status}}",
+    "certDays_one": "certificate expires in {{count}} day",
+    "certDays_other": "certificate expires in {{count}} days",
+    "dnsNotFound": "DNS: domain not found",
+    "notReachable": "not reachable",
+    "protected": "reachable · protected by Cloudflare Access",
+    "reachable": "reachable",
+    "accessDenied": "access denied",
+    "serverError": "server error",
+    "invalidCert": "Invalid certificate"
   }
 }

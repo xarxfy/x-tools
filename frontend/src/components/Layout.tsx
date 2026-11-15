@@ -71,11 +71,11 @@ export function Layout() {
             <Icon name="menu" size={22} />
           </button>
         </div>
-        <nav className="nav-main" aria-label="Main">
+        <nav className="nav-main" aria-label={t("nav.menu")}>
           {main.map((item) => link(item))}
         </nav>
         <div className="side-foot">
-          <nav className="nav-foot" aria-label="Settings and help">
+          <nav className="nav-foot" aria-label={`${t("nav.settings")}, ${t("nav.help")}`}>
             {FOOTER.map((item) => link(item, 16))}
             <button
               type="button"

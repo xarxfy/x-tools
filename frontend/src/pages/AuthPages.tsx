@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppStatus, useLogin, useLoginSecondFactor, useMe, useSetup } from "../api/auth";
 import { Icon } from "../components/Icon";
+import { LanguageSelect } from "../components/LanguageSelect";
 import "./AuthPages.css";
 
 function AuthCard({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
@@ -15,6 +16,7 @@ function AuthCard({ title, subtitle, children }: { title: string; subtitle: stri
         <h1>{title}</h1>
         <p className="muted">{subtitle}</p>
         {children}
+        <div className="auth-lang"><LanguageSelect compact /></div>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   useNewRecoveryCodes, useSetup2fa,
 } from "../api/account";
 import { CopyButton, Dialog, Loading } from "../components/ui";
+import { LanguageSelect } from "../components/LanguageSelect";
 import { AutoBackupSettings } from "./SettingsAutoBackup";
 
 export function AccountSettings() {
@@ -16,6 +17,11 @@ export function AccountSettings() {
   if (!account.data) return <Loading error={account.error} />;
   return (
     <>
+      <h2 className="section-title">{t("account.language")}</h2>
+      <section className="card card-pad stack-lg">
+        <p className="muted" style={{ margin: 0 }}>{t("account.languageText")}</p>
+        <div style={{ maxWidth: 240 }}><LanguageSelect /></div>
+      </section>
       <h2 className="section-title">{t("account.password")}</h2>
       <PasswordForm />
       <h2 className="section-title">{t("account.twoFactor")}</h2>
