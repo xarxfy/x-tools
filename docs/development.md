@@ -14,6 +14,8 @@ npm install
 npm run dev
 ```
 
+- The GitHub wiki is generated from `docs/` (`python3 docs/wiki/build.py`, `sh docs/wiki/publish.sh`) – edit the
+  files in `docs/`, never the wiki itself. The wiki must exist once: GitHub → Wiki → *Create the first page*.
 - `XT_MONITOR=false` switches off the background checks (and notifications) – use it with copies of real data.
 - Database changes: edit `backend/app/models`, then
   `XT_DATA_DIR=./dev-data alembic revision --autogenerate -m "describe change"`. Migrations run on start.

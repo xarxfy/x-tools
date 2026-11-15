@@ -65,6 +65,7 @@ Update: `sudo x-tools-ctl update` · Backup: *Settings → Backup* · Remove: `c
 - [Architecture & security](docs/architecture.md) – how the pieces fit and how data is protected
 - [Development](docs/development.md)
 - [Beta testing checklist](docs/beta-testing.md) · [interactive version](docs/beta-checklist.html)
+- [Wiki](https://github.com/xarxfy/x-tools/wiki) – the same documents as web pages (generated from `docs/`)
 - [Changelog](CHANGELOG.md)
 
 The *Help* page inside X-TOOLS explains every area as well.
