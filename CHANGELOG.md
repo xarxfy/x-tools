@@ -5,7 +5,14 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+## [0.1.0] – 2026-11-15 – first beta
+
+X-TOOLS is the successor of the private tool *Server-Info*, rebuilt with a FastAPI backend and a React frontend.
+Agent protocol version: **6**.
+
 ### Added
+
+**Operations and servers**
 - **Pause alerts** (maintenance windows): on the overview, pause everything, this server, one server, service, job or
   all of a customer for 30 min – 24 h. Problems stay visible (marked *paused*), nothing is sent and no “back to
   normal” follows.
@@ -31,13 +38,6 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
   A service linked to the customer is created automatically.
 - Optional third container `x-tools-deployer` (`COMPOSE_PROFILES=deploy` in `deploy/.env`), separate Docker image
   target, `XT_SITES_DIR`. The web container still has no Docker access.
-
-## [0.1.0] – 2026-11-15 – first beta
-
-X-TOOLS is the successor of the private tool *Server-Info*, rebuilt with a FastAPI backend and a React frontend.
-Agent protocol version: **5**.
-
-### Added
 
 **Basics**
 - Web UI (React, light and dark mode, phone layout) and JSON API (FastAPI, SQLite, automatic migrations).
