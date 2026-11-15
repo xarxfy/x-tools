@@ -125,6 +125,15 @@ SECTIONS = [
         "Private repository with an access token works; the token and variables are never shown again",
         "*Stop* stops the containers; deleting with *also remove containers and files* removes them",
     ]),
+    ("ops", "Pause alerts, jobs, automatic backup, updates", [
+        "*Pause alerts* on the overview: pick a service for 30 min; its problem is marked *paused* and no message arrives",
+        "*End now* removes the banner; a problem that is still there is reported after the delay",
+        "*Jobs → Add job*: call the shown address with `curl`; the job is *on time*; stop calling and it turns *overdue* with a message",
+        "`…/fail` marks the job failed and sends a message; the next successful call says *back to normal*",
+        "*Settings → Backup → Automatic backup*: add a folder, set a passphrase, *Back up now* writes a file; an unwritable folder shows a problem",
+        "A backup file from the folder can be restored with the passphrase (on a test instance)",
+        "*Settings → About → Updates* shows the check result; *Check now* works",
+    ]),
     ("notifications", "Notifications", [
         "Telegram and/or ntfy: *Send test* arrives",
         "With the main switch off, a clear hint is shown and only tests are sent",

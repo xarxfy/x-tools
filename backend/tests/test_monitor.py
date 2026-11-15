@@ -151,7 +151,8 @@ def test_agent_install(admin, tmp_path):
     script = admin.get(url)
     assert script.status_code == 200
     text = script.text
-    assert r.json()["key"] in text and "PROXMOX_TOKEN_SECRET=1111-2222-3333" in text and "__" not in text
+    assert r.json()["key"] in text and "PROXMOX_TOKEN_SECRET=1111-2222-3333" in text \
+        and not any(p in text for p in ("__URL__", "__KEY__", "__ENV__", "__CURL_HEADERS__"))  # random keys may contain "__"
     assert "XT_AGENT_DOCKER=0" in text and r.json()["kind"] == "proxmox"
     (tmp_path / "install.sh").write_text(text)
     assert subprocess.run(["sh", "-n", str(tmp_path / "install.sh")]).returncode == 0

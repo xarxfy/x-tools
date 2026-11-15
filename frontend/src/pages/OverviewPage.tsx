@@ -6,6 +6,9 @@ import { Dot, Loading, PageHead } from "../components/ui";
 import { level, pct } from "../components/format";
 import { EventList } from "../components/history";
 import { useCan } from "../api/users";
+import { useState } from "react";
+import { useUpdateInfo } from "../api/ops";
+import { MaintenanceBanner, PauseDialog } from "../components/Maintenance";
 import "./OverviewPage.css";
 
 export function OverviewPage() {
@@ -13,9 +16,13 @@ export function OverviewPage() {
   const overview = useOverview();
   const customersOn = useFeatures().data?.customers ?? false;
   const isAdmin = useCan()("admin");
+  const canPause = useCan()("operator");
+  const [pausing, setPausing] = useState(false);
+  const update = useUpdateInfo(isAdmin);
   if (!overview.data) return <Loading error={overview.error} retry={() => overview.refetch()} />;
   const { issues, counts, system, notifications } = overview.data;
   const open = issues.filter((i) => !i.manual);
+  const live = open.filter((i) => !i.paused); // paused ones (maintenance window) do not count
   const manual = issues.filter((i) => i.manual);
   const empty = counts.services === 0;
 
@@ -44,13 +51,27 @@ export function OverviewPage() {
 
   return (
     <>
-      <PageHead title={t("nav.overview")} sub={open.length ? t("overview.attention", { count: open.length }) : t("overview.allGood")} />
+      <PageHead title={t("nav.overview")} sub={live.length ? t("overview.attention", { count: live.length }) : t("overview.allGood")}>
+        {canPause && (
+          <button type="button" className="btn" onClick={() => setPausing(true)}>
+            <Icon name="jobs" size={16} />{t("maintenance.pause")}
+          </button>
+        )}
+      </PageHead>
+      {update.data?.available && (
+        <Link to="/settings?tab=about" className="card card-pad update-banner">
+          <Icon name="download" size={16} />
+          <span>{t("update.available", { version: update.data.latest })}</span>
+          <Icon name="chevron" size={14} />
+        </Link>
+      )}
+      <MaintenanceBanner />
 
-      <section className={`card status-card ${open.length ? (open.some((i) => i.level === "down") ? "is-down" : "is-warn") : "is-up"}`}>
+      <section className={`card status-card ${live.length ? (live.some((i) => i.level === "down") ? "is-down" : "is-warn") : "is-up"}`}>
         <div className="status-head">
-          <span className="status-icon"><Icon name={open.length ? "alert" : "check"} size={22} /></span>
+          <span className="status-icon"><Icon name={live.length ? "alert" : "check"} size={22} /></span>
           <div>
-            <h2>{open.length ? t("overview.needsAttention") : t("overview.nothingToDo")}</h2>
+            <h2>{live.length ? t("overview.needsAttention") : t("overview.nothingToDo")}</h2>
             <p className="muted">
               {notifications ? t("overview.notifyOn") : !isAdmin ? t("overview.notifyOff") : (
                 <>
@@ -67,6 +88,7 @@ export function OverviewPage() {
                 <Link to={i.link}>
                   <Dot state={i.level} />
                   <span>{i.text}</span>
+                  {i.paused && <span className="badge">{t("maintenance.badge")}</span>}
                   <Icon name="chevron" size={14} />
                 </Link>
               </li>
@@ -106,6 +128,8 @@ export function OverviewPage() {
 
       <h2 className="section-title">{t("history.title")}</h2>
       <EventList limit={8} />
+
+      {pausing && <PauseDialog onClose={() => setPausing(false)} />}
 
       {empty && (
         <div className="card card-pad start-card">

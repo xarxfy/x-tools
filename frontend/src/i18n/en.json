@@ -19,7 +19,8 @@
     "signedInAs": "Signed in as {{name}}",
     "proxmox": "Proxmox",
     "docker": "Docker",
-    "cloudflare": "Cloudflare"
+    "cloudflare": "Cloudflare",
+    "jobs": "Jobs"
   },
   "auth": {
     "username": "Username",
@@ -318,7 +319,8 @@
       "system": "Disk from 80 % / memory from 90 %",
       "site": "Customer websites not reachable",
       "agent": "Agents not reporting",
-      "cloudflare": "Cloudflare tunnels down / wrong routes"
+      "cloudflare": "Cloudflare tunnels down / wrong routes",
+      "job": "Jobs not reporting"
     },
     "useTelegram": "Send via Telegram",
     "botToken": "Bot token",
@@ -883,5 +885,115 @@
       "restart": "Restart {{name}}?",
       "reboot": "Reboot {{name}} now?"
     }
+  },
+  "maintenance": {
+    "pause": "Pause alerts",
+    "title": "Pause alerts",
+    "text": "During maintenance nothing is sent. Problems stay visible, marked as paused, and no “back to normal” message follows. If a problem is still there when the time is up, you are told after the usual delay.",
+    "scope": "What",
+    "target": "Which",
+    "duration": "For how long",
+    "reason": "Reason (optional)",
+    "reasonHint": "e.g. kernel update",
+    "start": "Pause",
+    "end": "End now",
+    "paused": "Alerts paused: {{what}}",
+    "remaining": "{{time}} left",
+    "badge": "paused",
+    "scopes": {
+      "all": "Everything",
+      "local": "This server (local Docker)",
+      "agent": "A server (agent)",
+      "service": "A service",
+      "job": "A job",
+      "customer": "All of a customer"
+    }
+  },
+  "jobs": {
+    "sub_one": "{{count}} job",
+    "sub_other": "{{count}} jobs",
+    "add": "Add job",
+    "edit": "Edit job",
+    "empty": "No jobs yet. Add a cron job or backup script: it calls a secret address when it has run, and X-TOOLS alerts you when the call stays away.",
+    "state": {
+      "paused": "paused",
+      "waiting": "waiting for first call",
+      "ok": "on time",
+      "late": "overdue",
+      "fail": "failed"
+    },
+    "every": "expected every {{interval}}",
+    "lastOk": "last success {{when}}",
+    "neverReported": "no success yet",
+    "address": "Address",
+    "name": "Name",
+    "nameHint": "e.g. Nightly backup",
+    "expected": "Expected every",
+    "expectedHint": "How often the job should report.",
+    "units": {
+      "minutes": "minutes",
+      "hours": "hours",
+      "days": "days"
+    },
+    "grace": "Tolerance (minutes)",
+    "graceHint": "How long after the expected time X-TOOLS waits before it raises the alarm.",
+    "pause": "Pause this monitor (no alerts)",
+    "howto": "Call this address at the end of the job. Anyone with the address can report for the job, so keep it secret.",
+    "pingUrl": "Address",
+    "howtoSimple": "At the end of a script",
+    "howtoCron": "Cron: success and failure",
+    "newToken": "New address",
+    "newTokenConfirm": "The old address stops working. Continue?",
+    "accessHint": "Behind Cloudflare Access? The path /api/heartbeat/ needs a bypass rule, otherwise the job gets a login page."
+  },
+  "autobackup": {
+    "title": "Automatic backup",
+    "enable": "Back up automatically",
+    "enableHint": "Creates the encrypted backup on a schedule and writes it to the locations below.",
+    "frequency": "Every",
+    "daily": "day",
+    "weekly": "week",
+    "time": "At (server time)",
+    "weekday": "On",
+    "keep": "Keep (per folder)",
+    "keepHint": "The newest N files stay in a folder, older ones are deleted. WebDAV: upload only.",
+    "days": {
+      "0": "Monday",
+      "1": "Tuesday",
+      "2": "Wednesday",
+      "3": "Thursday",
+      "4": "Friday",
+      "5": "Saturday",
+      "6": "Sunday"
+    },
+    "passphraseHint": "Needed to encrypt the files. It is stored encrypted in X-TOOLS so the job can run without you.",
+    "passphraseSaved": "Saved. Enter a new one only to change it. Keep it safe – without it a backup cannot be restored.",
+    "locations": "Locations",
+    "locationsHint": "Folder: must be writable inside the container (mount a volume). The default folder lies in the data volume – a copy on another machine is safer. WebDAV: Nextcloud and others.",
+    "name": "Name",
+    "folder": "Folder",
+    "path": "Folder path",
+    "url": "WebDAV address (existing folder)",
+    "user": "User",
+    "password": "Password / app password",
+    "remove": "Remove location",
+    "addFolder": "Add folder",
+    "addWebdav": "Add WebDAV",
+    "runNow": "Back up now",
+    "running": "Backing up …",
+    "saved": "Saved",
+    "lastOk": "Last backup {{when}}",
+    "lastFailed": "Last backup {{when}} failed",
+    "written": "written"
+  },
+  "update": {
+    "title": "Updates",
+    "available": "X-TOOLS {{version}} is available",
+    "current": "You are up to date",
+    "unknown": "Not checked yet",
+    "off": "Check switched off (XT_UPDATE_CHECK=false)",
+    "checked": "checked {{when}}",
+    "check": "Check now",
+    "how": "Update on the server:"
   }
 }

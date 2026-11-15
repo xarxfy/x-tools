@@ -11,7 +11,7 @@ from app.core.security import decrypt_json, encrypt_json
 from app.monitor import state
 
 KEY = "notifications"
-EVENT_KINDS = ("port", "container", "docker", "system", "site", "agent", "cloudflare")
+EVENT_KINDS = ("port", "container", "docker", "system", "site", "agent", "cloudflare", "job")
 TELEGRAM_TOKEN = re.compile(r"^\d{5,15}:[A-Za-z0-9_-]{30,60}$")
 TELEGRAM_CHAT = re.compile(r"^(-?\d{1,20}|@[A-Za-z0-9_]{5,32})$")
 NTFY_TOPIC = re.compile(r"^[A-Za-z0-9_-]{1,64}$")

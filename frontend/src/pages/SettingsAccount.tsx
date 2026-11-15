@@ -8,6 +8,7 @@ import {
   useNewRecoveryCodes, useSetup2fa,
 } from "../api/account";
 import { CopyButton, Dialog, Loading } from "../components/ui";
+import { AutoBackupSettings } from "./SettingsAutoBackup";
 
 export function AccountSettings() {
   const { t } = useTranslation();
@@ -184,6 +185,15 @@ function TwoFactor({ enabled, left }: { enabled: boolean; left: number }) {
 }
 
 export function BackupSettings() {
+  return (
+    <>
+      <AutoBackupSettings />
+      <ManualBackup />
+    </>
+  );
+}
+
+function ManualBackup() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const navigate = useNavigate();

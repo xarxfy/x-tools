@@ -421,3 +421,117 @@
     flex-wrap: wrap;
   }
 }
+
+/* Maintenance, updates, jobs */
+.maintenance-banner {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.maintenance-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.maintenance-row .spacer {
+  flex: 1;
+}
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--accent, #0071e3);
+  text-decoration: none;
+}
+.update-banner span {
+  flex: 1;
+}
+.update-dot {
+  color: var(--accent, #0071e3);
+  text-decoration: none;
+}
+.update-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.chip-button {
+  border: 1px solid var(--separator);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+.chip-button.selected {
+  background: var(--accent, #0071e3);
+  border-color: transparent;
+  color: #fff;
+}
+.backup-loc {
+  border: 1px solid var(--separator);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  display: grid;
+  gap: 8px;
+}
+.backup-last .plain-list {
+  margin: 6px 0 0;
+}
+
+/* Maintenance, updates, jobs */
+.maintenance-banner {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.maintenance-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.maintenance-row .spacer {
+  flex: 1;
+}
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--accent, #0071e3);
+  text-decoration: none;
+}
+.update-banner span {
+  flex: 1;
+}
+.update-dot {
+  color: var(--accent, #0071e3);
+  text-decoration: none;
+}
+.update-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.chip-button {
+  border: 1px solid var(--separator);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+.chip-button.selected {
+  background: var(--accent, #0071e3);
+  border-color: transparent;
+  color: #fff;
+}
+.backup-loc {
+  border: 1px solid var(--separator);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  display: grid;
+  gap: 8px;
+}
+.backup-last .plain-list {
+  margin: 6px 0 0;
+}

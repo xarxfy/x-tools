@@ -7,6 +7,7 @@ import {
   type AgentKind, type AgentSummary, type InstallInfo, type InstallOptions, type NotificationSettings,
   type StoredInstallOptions, useInstallOptions,
 } from "../api/monitor";
+import { useCheckUpdate, useUpdateInfo } from "../api/ops";
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, CopyButton, Dialog, Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago } from "../components/format";
@@ -17,7 +18,7 @@ import { useCan } from "../api/users";
 import "./SettingsPage.css";
 
 const TABS = ["general", "account", "notifications", "agents", "cloudflare", "users", "audit", "backup", "about"] as const;
-const EVENTS = ["port", "container", "docker", "system", "site", "agent", "cloudflare"];
+const EVENTS = ["port", "container", "docker", "system", "site", "agent", "cloudflare", "job"];
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -581,10 +582,24 @@ function General() {
 function About() {
   const { t } = useTranslation();
   const about = useAbout();
+  const update = useUpdateInfo();
+  const check = useCheckUpdate();
   if (!about.data) return <Loading error={about.error} />;
   const a = about.data;
+  const u = update.data;
   const rows: [string, React.ReactNode][] = [
     [t("about.version"), a.version],
+    [t("update.title"), !u ? "…" : !u.enabled ? <span className="muted">{t("update.off")}</span> : (
+      <span className="update-row">
+        {u.available ? <span className="state-warn">{t("update.available", { version: u.latest })}</span>
+          : u.latest ? <span className="state-up">{t("update.current")}</span> : <span className="muted">{t("update.unknown")}</span>}
+        {u.checked_at && <span className="muted small-note"> · {t("update.checked", { when: ago(u.checked_at) })}</span>}
+        <button type="button" className="btn btn-ghost btn-small" disabled={check.isPending} onClick={() => check.mutate()}>{t("update.check")}</button>
+        {u.error && <span className="error-text small-note">{u.error}</span>}
+        {check.error && <span className="error-text small-note">{check.error.message}</span>}
+        {u.available && <span className="small-note">{t("update.how")} <code>sudo x-tools-ctl update</code></span>}
+      </span>
+    )],
     [t("about.baseUrl"), a.base_url || <span className="muted">{t("about.notSet")}</span>],
     [t("about.timezone"), a.timezone],
     [t("about.dataDir"), <code>{a.data_dir}</code>],

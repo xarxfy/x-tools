@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Icon, type IconName } from "./Icon";
 import { useAppStatus, useLogout, useMe } from "../api/auth";
 import { useFeatures } from "../api/monitor";
+import { useUpdateInfo } from "../api/ops";
 import { useCan } from "../api/users";
 import "./Layout.css";
 
@@ -15,6 +16,7 @@ const MAIN: { to: string; key: string; icon: IconName }[] = [
   { to: "/proxmox", key: "proxmox", icon: "proxmox" },
   { to: "/docker", key: "docker", icon: "docker" },
   { to: "/domains", key: "domains", icon: "domains" },
+  { to: "/jobs", key: "jobs", icon: "jobs" },
   { to: "/cloudflare", key: "cloudflare", icon: "cloud" },
   { to: "/credentials", key: "credentials", icon: "credentials" },
 ];
@@ -34,6 +36,7 @@ export function Layout() {
   const features = useFeatures();
   // Optional entries: customers when switched on, Proxmox/Docker only when such a server reports.
   const can = useCan();
+  const update = useUpdateInfo(can("admin"));
   const main = MAIN.filter((item) =>
     (item.key !== "customers" || features.data?.customers) &&
     (item.key !== "credentials" || can("operator")) &&
@@ -85,7 +88,15 @@ export function Layout() {
           </nav>
           <div className="side-meta">
             {me && <span>{t("nav.signedInAs", { name: me.username })}</span>}
-            {status && <span>v{status.version}</span>}
+            {status && (
+              <span>
+                {update.data?.available ? (
+                  <NavLink to="/settings?tab=about" className="update-dot" title={t("update.available", { version: update.data.latest })}>
+                    v{status.version} ●
+                  </NavLink>
+                ) : <>v{status.version}</>}
+              </span>
+            )}
           </div>
         </div>
       </aside>

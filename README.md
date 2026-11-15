@@ -20,8 +20,9 @@ something breaks.
 | **Agents** | More servers: Linux servers, Proxmox hosts (nodes, LXCs, VMs) and Docker hosts – one install command, outbound only, optional control (start/stop) |
 | **Cloudflare** | DNS, tunnels, routes and Access apps, checked against your services; optionally edit DNS records and tunnel routes |
 | **Customers** | Optional: contacts, agreements, external website checks – and deploying their websites from git |
-| **Notifications** | Telegram and ntfy, with delay and "back to normal" |
-| **Users** | Roles (viewer, operator, admin), two-factor login, audit log, encrypted backups |
+| **Notifications** | Telegram and ntfy, with delay and "back to normal"; pause alerts during maintenance |
+| **Jobs** | Heartbeat monitors: cron jobs and backups report in, silence raises an alert |
+| **Users** | Roles (viewer, operator, admin), two-factor login, audit log, encrypted backups (also automatic) |
 
 ## Quick start
 

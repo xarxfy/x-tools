@@ -90,6 +90,23 @@ class Site(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class Heartbeat(Base):
+    """A job (cron, backup …) that pings X-TOOLS when it has run; silence means a problem."""
+
+    __tablename__ = "heartbeats"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(80))
+    token: Mapped[str] = mapped_column(String(48), unique=True)  # part of the secret ping address
+    interval_minutes: Mapped[int] = mapped_column(Integer, default=1440)
+    grace_minutes: Mapped[int] = mapped_column(Integer, default=30)
+    paused: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_ping_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_ok_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_status: Mapped[str] = mapped_column(String(10), default="")  # ok | fail | start
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Service(Base):
     __tablename__ = "services"
 

@@ -6,6 +6,17 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **Pause alerts** (maintenance windows): on the overview, pause everything, this server, one server, service, job or
+  all of a customer for 30 min – 24 h. Problems stay visible (marked *paused*), nothing is sent and no “back to
+  normal” follows.
+- **Jobs** (new page): heartbeat monitors for cron jobs and backups. Each job has a secret address
+  (`/api/heartbeat/<token>`, plus `/start` and `/fail`); an alert comes when the call stays away or reports failure.
+- **Automatic backup of X-TOOLS**: schedule (daily/weekly), passphrase stored encrypted, locations: folders (keeps the
+  newest N) and WebDAV; failures show up as a problem. *Settings → Backup*.
+- **Update notice**: X-TOOLS checks GitHub tags every few hours and shows a hint in the overview, the sidebar and
+  *Settings → About* (switch off with `XT_UPDATE_CHECK=false`).
+
+### Added
 - **One-command installer** `install.sh` and helper `x-tools-ctl` (update, status, logs, setup-code, uninstall):
   checks/installs Docker, asks how X-TOOLS is reached (domain with Caddy and automatic HTTPS, own proxy, LAN),
   optional website deployer, unattended mode with `--yes`.

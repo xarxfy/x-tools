@@ -13,7 +13,7 @@ from app.collector.exchange import load_snapshot
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
 from app.models import Agent, Customer, Service
-from app.monitor import notify, sites, state
+from app.monitor import maintenance, notify, sites, state, updates
 from app.monitor.issues import ALERT_STATE, all_containers, container_state, find_issues
 
 router = APIRouter(prefix="/api", tags=["monitor"], dependencies=[Depends(current_user)])
@@ -22,6 +22,10 @@ router = APIRouter(prefix="/api", tags=["monitor"], dependencies=[Depends(curren
 @router.get("/overview")
 def overview(db: Session = Depends(get_db)):
     issues = find_issues()
+    paused = maintenance.silenced_keys(issues)
+    for i in issues:
+        if i["key"] in paused:
+            i["paused"] = True
     snap = load_snapshot()
     containers = all_containers(snap)
     agents = list(db.scalars(select(Agent).where(Agent.disabled.is_(False))))
@@ -118,6 +122,19 @@ def run_sitechecks(body: SiteCheckIn, db: Session = Depends(get_db)):
     db.close()  # checks can take a while; do not hold the session
     sites.run_checks(domains)
     return sites.load_results()
+
+
+@router.get("/update", dependencies=[Depends(require("admin"))])
+def update_info():
+    return updates.info()
+
+
+@router.post("/update/check", dependencies=[Depends(require("admin"))])
+def update_check():
+    if not get_settings().update_check:
+        raise HTTPException(409, "The update check is switched off (XT_UPDATE_CHECK=false)")
+    updates.check()
+    return updates.info()
 
 
 @router.get("/about", dependencies=[Depends(require("admin"))])

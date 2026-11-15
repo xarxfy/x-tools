@@ -18,6 +18,7 @@ import { ServicesPage } from "./pages/ServicesPage";
 import { CredentialsPage } from "./pages/CredentialsPage";
 import { CustomerPage, CustomersPage } from "./pages/CustomersPage";
 import { DomainsPage } from "./pages/DomainsPage";
+import { JobsPage } from "./pages/JobsPage";
 import { DockerPage, ProxmoxPage, ServerRedirect, ServersPage } from "./pages/FleetPages";
 import { AssistantPage } from "./pages/AssistantPage";
 import { CloudflarePage } from "./pages/CloudflarePage";
@@ -51,6 +52,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/servers/:id" element={<ServerRedirect />} />
             <Route path="/servers/:id/guest/:node/:vmid" element={<ServerRedirect />} />
             <Route path="/proxmox/:id/:node/:vmid" element={<GuestPage />} />
+            <Route path="/jobs" element={<JobsPage />} />
             <Route path="/proxmox" element={<ProxmoxPage />} />
             <Route path="/docker" element={<DockerPage />} />
             <Route path="/cloudflare" element={<CloudflarePage />} />

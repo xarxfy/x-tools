@@ -63,6 +63,14 @@ const DOCS: Doc[] = [
         belong to.</p>
     </>, "domains"),
   ]),
+  doc("jobs", "Jobs and maintenance", <>
+    <p>The <Link to="/jobs">Jobs</Link> page monitors things that should happen regularly (backups, cron jobs).
+      Each job has a secret address; the job calls it when it has run
+      (<code>curl -fsS https://…/api/heartbeat/&lt;token&gt;</code>, add <code>/fail</code> to report a failure).
+      If the call stays away longer than the expected interval plus tolerance, you get an alert.</p>
+    <p>Before maintenance, <em>Pause alerts</em> on the overview silences a part of the system (or everything) for a
+      while. Problems stay visible but nothing is sent, and no “back to normal” follows.</p>
+  </>, "jobs heartbeat cron backup monitor maintenance pause silence alerts"),
   doc("customers", "Customers", <>
     <p>Customers bundle contact details, agreements and the services/sites you host for them. A service belongs
       to at most one customer.</p>

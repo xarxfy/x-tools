@@ -12,6 +12,8 @@ set in the UI under *Settings*.
 | `XT_TRUST_PROXY` | `true` | Trust `X-Forwarded-*` headers. Set `false` when X-TOOLS is reached directly |
 | `XT_COMPOSE_ROOTS` | `/opt,/srv,/home` | Folders that may contain compose projects |
 | `XT_SITES_DIR` | `/srv/x-tools-sites` | Where the deployer checks out customer websites ([installation.md](installation.md#deploying-customer-websites-optional)) |
+| `XT_UPDATE_CHECK` | `true` | Ask GitHub for new versions (shown in Settings → About); `false` switches the outbound request off |
+| `XT_UPDATE_REPO` | `xarxfy/x-tools` | GitHub repository whose tags are checked |
 | `XT_HOME_DIR` | – | Home folder shown as `~` in paths |
 | `XT_CHECK_HOST` | `127.0.0.1` | Host on which service ports are checked when a service has no host |
 | `XT_PROTECTED_CONTAINERS` | `x-tools,x-tools-collector,x-tools-deployer` | Containers that cannot be stopped from the UI |

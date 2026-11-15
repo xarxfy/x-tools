@@ -12,8 +12,8 @@ from sqlalchemy import select
 from app.collector.exchange import load_snapshot
 from app.core.config import get_settings
 from app.core.db import session_scope
-from app.models import Agent, Customer, Service
-from app.monitor import sites, state
+from app.models import Agent, Customer, Heartbeat, Service
+from app.monitor import jobs, sites, state
 from app.monitor.ports import port_key, port_status
 
 ALERT_STATE = "alert_state"
@@ -151,6 +151,26 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
                     add(f"service:{aid}:{s['name']}", "system", "warn", f"{name}: service {s['name']} failed", link)
         except (KeyError, TypeError, AttributeError) as error:
             add(f"agent:{aid}:broken", "agent", "warn", f"{name}: report cannot be read ({error})", link)
+
+    # Jobs (heartbeats)
+    with session_scope() as db:
+        beats = list(db.scalars(select(Heartbeat)))
+        for h in beats:
+            st = jobs.job_state(h)
+            if st == "fail":
+                add(f"job:{h.id}", "job", "down", f"Job '{h.name}' reported a failure", "/jobs")
+            elif st == "late":
+                last = jobs.utc(h.last_ok_at)
+                since = f"last success {ago(last.timestamp())}" if last else "never reported"
+                add(f"job:{h.id}", "job", "down", f"Job '{h.name}' did not report ({since}, expected every "
+                    f"{h.interval_minutes // 60 if h.interval_minutes % 60 == 0 else h.interval_minutes} "
+                    f"{'h' if h.interval_minutes % 60 == 0 else 'min'})", "/jobs")
+
+    # Automatic backup of X-TOOLS itself
+    from app.monitor import autobackup
+    problem = autobackup.problem()
+    if problem:
+        add("backup:auto", "system", "warn", problem, "/settings?tab=backup")
 
     # Customer websites
     from app.api.features import load as features

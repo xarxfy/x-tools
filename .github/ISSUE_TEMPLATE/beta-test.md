@@ -137,7 +137,17 @@ labels: beta
 - [ ] Private repository with an access token works; the token and variables are never shown again
 - [ ] *Stop* stops the containers; deleting with *also remove containers and files* removes them
 
-## 16. Notifications
+## 16. Pause alerts, jobs, automatic backup, updates
+
+- [ ] *Pause alerts* on the overview: pick a service for 30 min; its problem is marked *paused* and no message arrives
+- [ ] *End now* removes the banner; a problem that is still there is reported after the delay
+- [ ] *Jobs → Add job*: call the shown address with `curl`; the job is *on time*; stop calling and it turns *overdue* with a message
+- [ ] `…/fail` marks the job failed and sends a message; the next successful call says *back to normal*
+- [ ] *Settings → Backup → Automatic backup*: add a folder, set a passphrase, *Back up now* writes a file; an unwritable folder shows a problem
+- [ ] A backup file from the folder can be restored with the passphrase (on a test instance)
+- [ ] *Settings → About → Updates* shows the check result; *Check now* works
+
+## 17. Notifications
 
 - [ ] Telegram and/or ntfy: *Send test* arrives
 - [ ] With the main switch off, a clear hint is shown and only tests are sent
@@ -146,26 +156,26 @@ labels: beta
 - [ ] A container stopped **through X-TOOLS** is not reported; started and stopped outside again, it is
 - [ ] *Monitoring checked … ago* is shown; open problems list whether they were notified
 
-## 17. Account and security
+## 18. Account and security
 
 - [ ] Change your password; other sessions are logged out
 - [ ] Turn on two-factor login (QR code); login asks for the code
 - [ ] A recovery code works once, then it is used up; turn two-factor login off again
 
-## 18. Users, roles, audit log
+## 19. Users, roles, audit log
 
 - [ ] **Viewer**: sees everything, no credentials, no container/Proxmox actions, no logs, only *Account* in settings
 - [ ] **Operator**: edits services and credentials, controls containers and guests; no users, agents, backups
 - [ ] Disable a user → logged out, cannot log in; reset the password → new password works
 - [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes
 
-## 19. Backup and update
+## 20. Backup and update
 
 - [ ] *Settings → Backup*: download a backup with a passphrase
 - [ ] Restore it (ideally on a test installation): data and credentials are back, everyone is logged out
 - [ ] `git pull && sudo sh deploy/setup.sh` keeps data, users and settings
 
-## 20. Look and feel
+## 21. Look and feel
 
 - [ ] Phone: menu works, no horizontal scrolling, dialogs fit on the screen
 - [ ] Dark mode looks right

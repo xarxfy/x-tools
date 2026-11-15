@@ -26,6 +26,8 @@ from app.core.audit import audit
 from app.core import db as dbmod
 from app.core import security
 from app.core.config import VERSION, get_settings
+from app.core.security import encrypt_json
+from app.monitor import autobackup
 
 router = APIRouter(prefix="/api/backup", tags=["backup"], dependencies=[Depends(require("admin"))])
 
@@ -136,3 +138,77 @@ def restore_backup(body: RestoreIn):
         s.commit()
     audit("backup.restored", "", f"meta: {files['meta.json'].decode()[:200]}", username=actor_name, user=False)
     return Response(status_code=204)
+
+
+# --- automatic backups -----------------------------------------------------------------------
+
+
+class LocationIn(BaseModel):
+    id: str | None = Field(default=None, max_length=12)
+    name: str = Field(min_length=1, max_length=60)
+    type: str = Field(pattern="^(folder|webdav)$")
+    path: str = Field(default="", max_length=200)
+    url: str = Field(default="", max_length=300)
+    username: str = Field(default="", max_length=120)
+    password: str | None = Field(default=None, max_length=300)  # None: keep, "": remove
+
+
+class AutoIn(BaseModel):
+    enabled: bool
+    frequency: str = Field(pattern="^(daily|weekly)$")
+    time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    weekday: int = Field(default=0, ge=0, le=6)
+    keep: int = Field(default=14, ge=1, le=365)
+    passphrase: str | None = Field(default=None, min_length=10, max_length=256)  # None: keep
+    locations: list[LocationIn] = Field(default_factory=list, max_length=5)
+
+
+@router.get("/auto")
+def get_auto():
+    return autobackup.public(autobackup.load())
+
+
+@router.put("/auto")
+def put_auto(body: AutoIn):
+    cfg = autobackup.load()
+    old = {l["id"]: l for l in cfg["locations"]}
+    locations = []
+    for loc in body.locations:
+        if loc.type == "folder":
+            try:
+                autobackup.check_folder(loc.path)
+            except autobackup.LocationError as error:
+                raise HTTPException(422, f"{loc.name}: {error}") from None
+            item = {"type": "folder", "path": loc.path.rstrip("/") or "/"}
+        else:
+            if not loc.url.startswith(("https://", "http://")):
+                raise HTTPException(422, f"{loc.name}: the WebDAV address must start with https://")
+            previous = (old.get(loc.id or "") or {}).get("password", "")
+            password = encrypt_json(loc.password) if loc.password else ("" if loc.password == "" else previous)
+            item = {"type": "webdav", "url": loc.url.rstrip("/"), "username": loc.username, "password": password}
+        locations.append({"id": loc.id if loc.id in old else autobackup.new_location_id(), "name": loc.name, **item})
+    if body.enabled and not (body.passphrase or cfg["passphrase"]):
+        raise HTTPException(422, "Automatic backups need a passphrase")
+    if body.enabled and not locations:
+        raise HTTPException(422, "Add at least one location")
+
+    def change(data):
+        data.update(enabled=body.enabled, frequency=body.frequency, time=body.time, weekday=body.weekday,
+                    keep=body.keep, locations=locations)
+        if body.passphrase:
+            data["passphrase"] = encrypt_json(body.passphrase)
+        return data
+    from app.monitor import state
+    state.update(autobackup.KEY, change, default=autobackup.defaults())
+    audit("backup.auto_config", "", "on" if body.enabled else "off")
+    return autobackup.public(autobackup.load())
+
+
+@router.post("/auto/run")
+def run_auto():
+    cfg = autobackup.load()
+    if not cfg["passphrase"] or not cfg["locations"]:
+        raise HTTPException(422, "Set a passphrase and at least one location first")
+    result = autobackup.run()
+    audit("backup.auto_run", "", "ok" if result["ok"] else "failed")
+    return autobackup.public(autobackup.load())

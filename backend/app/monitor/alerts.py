@@ -4,7 +4,7 @@ import threading
 import time
 
 from app.core.config import get_settings
-from app.monitor import history, notify, sites, state
+from app.monitor import history, maintenance, notify, sites, state
 from app.monitor.issues import ALERT_STATE, find_issues
 
 START_DELAY = 30  # let everything come up after a (re)start before alerting
@@ -21,6 +21,7 @@ def check_alerts(now: float | None = None) -> dict | None:
         print(f"History: {error}", flush=True)
     current = {i["key"]: i for i in issues if settings["events"].get(i["kind"], True) and not i.get("manual")}
     now = now or time.time()
+    paused = maintenance.silenced_keys(list(current.values()), now)
     active = bool(notify.active_channels(settings))
     new, solved = [], []
 
@@ -28,14 +29,17 @@ def check_alerts(now: float | None = None) -> dict | None:
         open_issues = data.setdefault("open", {})
         for key, issue in current.items():
             entry = open_issues.setdefault(key, {"since": now, "sent": False})
-            entry.update(text=issue["text"], level=issue["level"])
+            entry.update(text=issue["text"], level=issue["level"], paused=key in paused)
+            if key in paused:
+                entry["since"] = now  # the delay starts again when the window is over
+                continue
             if active and not entry["sent"] and now - entry["since"] >= settings["delay"] * 60:
                 new.append(issue)
                 entry["sent"] = True
         for key in list(open_issues):
             if key not in current:
                 entry = open_issues.pop(key)
-                if active and entry.get("sent") and settings["recovery"]:
+                if active and entry.get("sent") and settings["recovery"] and not entry.get("paused"):
                     solved.append(entry)
         return data
     state.update(ALERT_STATE, change)
@@ -88,6 +92,11 @@ def start_background() -> None:
                      args=("Monitoring", START_DELAY, lambda: get_settings().alert_interval, check_alerts)).start()
     threading.Thread(target=_loop, name="sites", daemon=True,
                      args=("Website checks", 20, lambda: get_settings().site_interval, sites.run_checks)).start()
+    from app.monitor import autobackup, updates
+    threading.Thread(target=_loop, name="backup", daemon=True,
+                     args=("Automatic backup", 60, lambda: 60, autobackup.run_if_due)).start()
+    threading.Thread(target=_loop, name="updates", daemon=True,
+                     args=("Update check", 120, lambda: 1800, updates.check_if_due)).start()
     from app.integrations import cloudflare
     threading.Thread(target=_loop, name="cloudflare", daemon=True,
                      args=("Cloudflare", 25, lambda: 60, cloudflare.refresh_if_due)).start()

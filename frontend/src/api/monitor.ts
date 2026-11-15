@@ -9,6 +9,7 @@ export interface Issue {
   text: string;
   link: string;
   manual?: boolean;
+  paused?: boolean;
 }
 
 export interface Overview {

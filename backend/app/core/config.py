@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     # deployer container under the same path, so relative bind mounts in compose files resolve on the host.
     sites_dir: str = "/srv/x-tools-sites"
 
+    # Ask GitHub once in a while whether a newer X-TOOLS version exists (shown in Settings → About).
+    update_check: bool = True
+    update_repo: str = "xarxfy/x-tools"
+    github_api: str = "https://api.github.com"
+
     # Seconds between two Docker snapshots.
     collect_interval: int = 60
 

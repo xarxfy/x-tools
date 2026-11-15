@@ -201,6 +201,13 @@ Database migrations run automatically.
 
 ## Backup
 
+*Settings → Backup → Automatic backup* makes the encrypted backup on a schedule. Locations are folders (the newest N
+files are kept) and WebDAV (Nextcloud etc., upload only). A folder must be writable **inside the container**: the
+default `/data/backups` lies in the data volume; for another folder add a volume to `x-tools` in
+`deploy/docker-compose.yml`. A backup in the same volume does not protect against losing the server – copy the folder
+elsewhere (rsync, NAS) or add a WebDAV location. The passphrase is stored encrypted in the database so the job can run
+without you; a failed backup shows up as a problem.
+
 **In the UI:** *Settings → Backup* downloads database and secret key as one file, encrypted with a passphrase you
 choose, and restores such a file.
 
