@@ -12,6 +12,9 @@ def main() -> None:
     serve = sub.add_parser("serve", help="run the web UI and API (default)")
     serve.add_argument("--host", default=os.environ.get("XT_HOST", "0.0.0.0"))
     serve.add_argument("--port", type=int, default=int(os.environ.get("XT_PORT", "8080")))
+    reset = sub.add_parser("reset-admin", help="set a new password and switch off 2FA of an admin (run on the server)")
+    reset.add_argument("username", nargs="?", help="needed when there are several admins")
+    reset.add_argument("--generate", action="store_true", help="create a random password and print it")
     sub.add_parser("collect", help="run the Docker collector (needs the Docker socket)")
     sub.add_parser("deploy", help="run the deployer for customer websites (needs network and the Docker socket)")
     sub.add_parser("agent", help="report this server to an X-TOOLS instance (see deploy/agent)")
@@ -21,6 +24,11 @@ def main() -> None:
         from app.collector.agent import run as run_agent
 
         run_agent()
+        return
+    if args.command == "reset-admin":
+        from app.cli_admin import run as run_reset
+
+        run_reset(args.username, args.generate)
         return
     if args.command == "deploy":
         from app.collector.deployer import run as run_deployer

@@ -2,7 +2,7 @@
 # X-TOOLS installer and helper – one command to install, update, inspect or remove X-TOOLS.
 #
 #   Install:    curl -fsSL <address of this file> | sudo bash
-#   Afterwards: sudo x-tools-ctl update | status | logs | setup-code | uninstall
+#   Afterwards: sudo x-tools-ctl update | status | logs | setup-code | reset-admin | uninstall
 #
 # What the installer does: checks Docker (offers to install it), fetches X-TOOLS with git into /opt/x-tools,
 # asks a few questions (how you reach it, time zone, optional website deployer), writes deploy/.env,
@@ -277,6 +277,13 @@ cmd_setup_code() {
   [ -n "$code" ] && say "$code" || say "No setup code: the first account already exists."
 }
 
+cmd_reset_admin() {
+  docker ps --format '{{.Names}}' | grep -qx x-tools || die "The x-tools container is not running (sudo x-tools-ctl status)."
+  local tty=(); [ -t 0 ] && [ -t 1 ] && tty=(-it)
+  # shellcheck disable=SC2086
+  docker exec "${tty[@]}" x-tools x-tools reset-admin ${ARGS:-}
+}
+
 cmd_uninstall() {
   [ -d "$DIR" ] || die "No installation found in $DIR."
   warn "This removes the X-TOOLS containers. Make a backup first (Settings → Backup) if you want to keep your data."
@@ -302,6 +309,7 @@ X-TOOLS helper
   status         containers, health and version
   logs [lines]   follow the log of the web container
   setup-code     show the one-time code for the first login
+  reset-admin [user] [--generate]   lost password or 2FA device: set a new password, switch 2FA off
   uninstall      remove X-TOOLS (asks about the data)
 Options: --yes (take all defaults), XT_DIR=… XT_REF=… (see the top of this file)
 EOF
@@ -334,6 +342,7 @@ main() {
     status) cmd_status ;;
     logs) cmd_logs ${ARGS:-} ;;
     setup-code) cmd_setup_code ;;
+    reset-admin) cmd_reset_admin ;;
     uninstall) cmd_uninstall ;;
     *) usage; exit 1 ;;
   esac

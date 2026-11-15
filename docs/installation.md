@@ -44,6 +44,7 @@ It also installs the helper **`x-tools-ctl`**:
 | `sudo x-tools-ctl status` | containers, health, version |
 | `sudo x-tools-ctl logs` | follows the log of the web container |
 | `sudo x-tools-ctl setup-code` | shows the one-time code for the first login again |
+| `sudo x-tools-ctl reset-admin [user] [--generate]` | **locked out?** sets a new password for an admin and switches its two-factor login off, ends all its sessions (asks for the password, or `--generate` prints a random one) |
 | `sudo x-tools-ctl uninstall` | removes X-TOOLS; asks separately whether to delete the data (make a backup first) |
 
 Running the installer again on a server that has X-TOOLS is the same as `update`. Updating a private repository needs

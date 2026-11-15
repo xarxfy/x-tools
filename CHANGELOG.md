@@ -6,6 +6,8 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- `x-tools-ctl reset-admin`: new password and 2FA off for an admin who is locked out (runs on the server).
+- Screenshots in the README, `SECURITY.md`, `CONTRIBUTING.md`, release notes for GitHub in `docs/releases/`.
 - `uninstall.sh`: one-command uninstaller like the installer (asks before removing, data separately; `--yes --force`
   for unattended runs).
 - Guide [docs/guide.md](docs/guide.md): how the parts work, first steps, and everything to do behind Cloudflare

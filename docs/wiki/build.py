@@ -60,6 +60,8 @@ Remove it again: `curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/ma
 | see what changed | [Changelog](Changelog) |
 | hack on it | [Development](Development) |
 
+![Overview](https://raw.githubusercontent.com/xarxfy/x-tools/main/docs/screenshots/overview.png)
+
 ## What you get
 
 Overview with problems and history · Services, domains and encrypted credentials · Docker and Proxmox pages ·

@@ -146,6 +146,7 @@ website unless you want it private; the check would then see the login page.
 | Server shows “does not report” | Agent stopped, wrong URL, or firewall blocks outbound HTTPS | On that server: `journalctl -u x-tools-agent -n 30` |
 | Job turns *overdue* although it runs | The job's call is blocked (Access/WAF) or uses an old address | `curl -i <address>` from the job's machine must answer `{"ok":true,…}` |
 | Login works but the audit log shows Cloudflare IPs | `XT_TRUST_PROXY=false` | Set `true` when X-TOOLS is behind Cloudflare/a proxy |
+| Lost the admin password or the phone with the 2FA codes (and the recovery codes) | – | On the server: `sudo x-tools-ctl reset-admin` (several admins: add the name; `--generate` prints a random password). Another admin can also reset you under *Settings → Users* |
 | Notification links point to the wrong address | `XT_BASE_URL` not set | Set it to the public `https://…` address |
 | Cloudflare page: “530” / tunnel down | `cloudflared` not running or wrong service URL | `systemctl status cloudflared`, check the route points to `localhost:8080` |
 | No message although a problem is shown | Main notification switch off, problem paused, or the event type switched off | *Settings → Notifications*; overview shows *paused* badges |
