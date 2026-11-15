@@ -23,8 +23,8 @@
 #   XT_INSTALL_DOCKER yes | no                             (default: ask)
 set -euo pipefail
 
-# Set this to the public repository at release time.
-REPO_DEFAULT="https://git.xcloudy.dev/mguettler/x-tools.git"
+# Public repository of X-TOOLS.
+REPO_DEFAULT="https://github.com/xarxfy/x-tools.git"
 SELF_URL_DEFAULT=""
 
 DIR="${XT_DIR:-/opt/x-tools}"
@@ -73,7 +73,7 @@ need_root() {
   if [ "$(id -u)" != 0 ]; then
     command -v sudo >/dev/null 2>&1 || die "Please run as root (sudo is not installed)."
     if [ -f "$0" ] && [ "${0##*/}" != bash ]; then exec sudo -E bash "$0" "$@"; fi
-    die "Please run as root: curl -fsSL <address> | sudo bash"
+    die "Please run as root: curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/install.sh | sudo bash"
   fi
 }
 

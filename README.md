@@ -28,7 +28,7 @@ something breaks.
 Requirements: Linux with Docker and the compose plugin.
 
 ```sh
-curl -fsSL <address of install.sh> | sudo bash
+curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/install.sh | sudo bash
 ```
 
 The installer checks Docker (and offers to install it), asks how you reach X-TOOLS (own domain with automatic HTTPS,

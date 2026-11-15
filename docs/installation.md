@@ -17,7 +17,7 @@ Docker Desktop (macOS/Windows) is not supported: X-TOOLS uses the host network f
 ### One command (recommended)
 
 ```sh
-curl -fsSL <address of install.sh> | sudo bash
+curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/install.sh | sudo bash
 ```
 
 For a private repository add a token for this run: `curl … | sudo XT_GIT_TOKEN=<token> bash` (it is never stored).
