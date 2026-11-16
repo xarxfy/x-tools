@@ -55,6 +55,16 @@ class UserSession(Base):
     user: Mapped[User] = relationship()
 
 
+class CustomerCategory(Base):
+    """Priority class of customers (A-customer, B-customer, … – the names are free); `position` is the order."""
+
+    __tablename__ = "customer_categories"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(40))
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Customer(Base):
     __tablename__ = "customers"
 
@@ -66,6 +76,8 @@ class Customer(Base):
     owner: Mapped[str] = mapped_column(String(120), default="")  # who registered the domain
     agreements: Mapped[str] = mapped_column(Text, default="")
     notes: Mapped[str] = mapped_column(Text, default="")
+    category_id: Mapped[str | None] = mapped_column(
+        ForeignKey("customer_categories.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     services: Mapped[list["Service"]] = relationship(back_populates="customer")

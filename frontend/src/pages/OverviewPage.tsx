@@ -69,9 +69,9 @@ export function OverviewPage() {
             </p>
           </div>
         </div>
-        <div className="chips">
+        <div className="ov-chips">
           {chips.map((c) => (
-            <Link key={c.to} to={c.to} className="chip">
+            <Link key={c.to} to={c.to} className="ov-chip">
               <Icon name={c.icon} size={15} /><b>{c.value}</b><span>{c.label}</span>
             </Link>
           ))}
@@ -118,7 +118,7 @@ export function OverviewPage() {
                   {h.updates ? <span className="badge">{t("overview.updates", { count: h.updates })}</span> : null}
                   {h.reboot && <span className="badge badge-warn">{t("overview.reboot")}</span>}
                 </div>
-                <div className="host-meters">
+                <div className="ov-host-meters">
                   {([["load", h.load], ["mem", h.mem], ["disk", h.disk]] as [string, number | null][]).map(([k, v]) => v === null ? null : (
                     <div key={k} className="mini" title={`${t(`overview.${k}`)} ${v} %`}>
                       <span>{t(`overview.${k}`)}</span>

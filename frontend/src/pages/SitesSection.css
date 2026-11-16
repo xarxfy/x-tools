@@ -55,3 +55,38 @@
     grid-column: 1 / -1;
   }
 }
+
+.category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.category-pill {
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 980px;
+  background: var(--fill);
+  color: var(--text);
+  cursor: pointer;
+}
+.category-pill.active {
+  background: var(--accent);
+  color: #fff;
+}
+.category-badge {
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+.category-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.category-row .input {
+  flex: 1;
+}

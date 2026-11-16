@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import require
+from app.collector import linux_admin
 from app.collector.linux import PROTECTED as PROTECTED_UNITS
 from app.collector.proxmox import DISK_KEY, validate_changes
 from app.core.audit import audit
@@ -142,18 +143,62 @@ def agent_action(aid: str, body: ActionIn, db: Session = Depends(get_db)):
         params = {"lines": body.lines}
         what = f"{agent.name}: {body.target}"
         detail = ""
-    command = {"id": secrets.token_hex(12), "action": body.action, "target": body.target, "params": params,
+    return dispatch(agent, body.action, body.target, params, what, detail)
+
+
+def dispatch(agent: Agent, action: str, target: str, params: dict, what: str, detail: str = "") -> dict:
+    """Queues a command for the agent, waits for its answer and writes the audit log."""
+    command = {"id": secrets.token_hex(12), "action": action, "target": target, "params": params,
                "expires_at": time.time() + COMMAND_TTL}
     queue.add(agent.id, command)
     result = queue.wait_result(command["id"], WAIT_RESULT)
     if result is None:
         queue.drop(agent.id, command["id"])
-        audit(body.action, what, "no answer from the agent")
+        audit(action, what, "no answer from the agent")
         raise HTTPException(504, "The agent did not answer – is it running (and on version 3 or newer)?")
-    audit(body.action, what, detail if result.get("ok") else f"{detail} failed: {result.get('error', '')}".strip())
+    audit(action, what, detail if result.get("ok") else f"{detail} failed: {result.get('error', '')}".strip())
     if not result.get("ok"):
         raise HTTPException(502, result.get("error") or "The action failed")
     return result
+
+
+class ManageIn(BaseModel):
+    action: str = Field(max_length=30)
+    target: str = Field(default="host", max_length=40)
+    args: dict = Field(default_factory=dict)
+
+
+@router.post("/{aid}/manage", dependencies=[Depends(require("admin"))])
+def agent_manage(aid: str, body: ManageIn, db: Session = Depends(get_db)):
+    """Server administration (updates, users and SSH keys, ufw firewall) – administrators only."""
+    agent = db.get(Agent, aid)
+    if agent is None:
+        raise HTTPException(404, "Agent not found")
+    report = agent.last_report or {}
+    if agent.disabled or not report.get("control"):
+        raise HTTPException(409, "Control is not switched on for this agent – create a new install command with "
+                                 "“Allow control”")
+    linux = report.get("linux")
+    if not linux:
+        raise HTTPException(422, "This agent does not report a Linux server")
+    try:
+        args = linux_admin.validate(body.action, body.target, body.args)
+    except linux_admin.AdminError as error:
+        raise HTTPException(422, str(error)) from None
+    if body.action.startswith("user.") and body.action != "user.create":
+        if body.target not in {u.get("name") for u in linux.get("users") or []}:
+            raise HTTPException(422, "Unknown user")
+    what = f"{agent.name}: {body.target}" if body.action.startswith("user.") else agent.name
+    detail = ""
+    if body.action == "ufw.add":
+        detail = " ".join(str(args[k]) for k in ("rule", "port", "proto", "source") if args[k])
+    elif body.action == "user.key_remove":
+        detail = args["fingerprint"]
+    elif body.action == "user.create":
+        detail = "sudo" if args["sudo"] else ""
+    elif body.action == "ufw.delete":
+        detail = f"#{args['number']} {args['to']} {args['action']} {args['from']}"
+    return dispatch(agent, body.action, body.target, args, what, detail)
 
 
 # --- agent side (key authentication, see agents.agent_for_key) ---------------------------

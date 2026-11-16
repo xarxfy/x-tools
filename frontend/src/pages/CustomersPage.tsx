@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  useCustomers, useDeleteCustomer, usePortStatus, useSaveCustomer, useServices,
+  useCategories, useCategoryActions, useCustomers, useDeleteCustomer, usePortStatus, useSaveCustomer, useServices,
   type Customer, type CustomerInput,
 } from "../api/data";
 import { Icon } from "../components/Icon";
@@ -22,7 +22,7 @@ function worst(checks: (SiteCheck | undefined)[]): "up" | "warn" | "down" | "off
 }
 
 const EMPTY: CustomerInput = {
-  name: "", contact: "", email: "", phone: "", owner: "", agreements: "", notes: "", service_ids: [],
+  name: "", contact: "", email: "", phone: "", owner: "", agreements: "", notes: "", category_id: null, service_ids: [],
 };
 
 export function CustomersPage() {
@@ -31,15 +31,21 @@ export function CustomersPage() {
   const services = useServices();
   const checks = useSiteChecks();
   const [query, setQuery] = useState("");
+  const categories = useCategories().data ?? [];
+  const [category, setCategory] = useState("");
   const [adding, setAdding] = useState(false);
+  const [managing, setManaging] = useState(false);
   const navigate = useNavigate();
   const edit = useCan()("operator");
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const byId = new Map((services.data ?? []).map((s) => [s.id, s]));
-  const list = customers.data.filter((c) =>
-    matches(query, c.name, c.contact, c.email, ...c.service_ids.flatMap((id) => byId.get(id)?.domains ?? [])),
-  );
+  const rank = new Map(categories.map((c, i) => [c.id, i]));
+  const catName = new Map(categories.map((c) => [c.id, c.name]));
+  const list = customers.data
+    .filter((c) => !category || (category === "none" ? !c.category_id : c.category_id === category))
+    .filter((c) => matches(query, c.name, c.contact, c.email, ...c.service_ids.flatMap((id) => byId.get(id)?.domains ?? [])))
+    .sort((a, b) => (rank.get(a.category_id ?? "") ?? 999) - (rank.get(b.category_id ?? "") ?? 999) || a.name.localeCompare(b.name));
 
   return (
     <>
@@ -52,6 +58,20 @@ export function CustomersPage() {
           </button>
         )}
       </PageHead>
+      {(categories.length > 0 || edit) && (
+        <div className="category-bar">
+          {categories.length > 0 && (
+            <>
+              <button type="button" className={`category-pill${category === "" ? " active" : ""}`} onClick={() => setCategory("")}>{t("customers.allCategories")}</button>
+              {categories.map((c) => (
+                <button key={c.id} type="button" className={`category-pill${category === c.id ? " active" : ""}`} onClick={() => setCategory(c.id)}>{c.name}</button>
+              ))}
+              <button type="button" className={`category-pill${category === "none" ? " active" : ""}`} onClick={() => setCategory("none")}>{t("customers.noCategory")}</button>
+            </>
+          )}
+          {edit && <button type="button" className="btn btn-ghost btn-small" onClick={() => setManaging(true)}>{t("customers.manageCategories")}</button>}
+        </div>
+      )}
       {list.length === 0 ? (
         <Empty>{customers.data.length ? t("common.noMatch") : t("customers.empty")}</Empty>
       ) : (
@@ -62,7 +82,7 @@ export function CustomersPage() {
               <Link key={c.id} to={`/customers/${c.id}`} className="list-row">
                 <Dot state={worst(domains.map((d) => checks.data?.[d]))} />
                 <span className="list-main">
-                  <span className="list-title">{c.name}</span>
+                  <span className="list-title">{c.name}{c.category_id && catName.get(c.category_id) && <span className="badge category-badge">{catName.get(c.category_id)}</span>}</span>
                   <span className="list-sub">
                     {[c.contact, domains.slice(0, 3).join(", ")].filter(Boolean).join(" · ") || t("customers.noDetails")}
                   </span>
@@ -76,6 +96,7 @@ export function CustomersPage() {
           })}
         </div>
       )}
+      {managing && <CategoryDialog onClose={() => setManaging(false)} />}
       {adding && (
         <CustomerDialog customer={null} onClose={() => setAdding(false)}
                         onSaved={(c) => navigate(`/customers/${c.id}`)} />
@@ -96,6 +117,7 @@ export function CustomerPage() {
   const checks = useSiteChecks();
   const runChecks = useRunSiteChecks();
   const edit = useCan()("operator");
+  const categories = useCategories().data ?? [];
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const customer = customers.data.find((c) => c.id === id);
@@ -124,7 +146,7 @@ export function CustomerPage() {
       <p style={{ margin: "0 0 6px" }}>
         <Link to="/customers">‹ {t("nav.customers")}</Link>
       </p>
-      <PageHead title={customer.name}>
+      <PageHead title={customer.name} sub={categories.find((c) => c.id === customer.category_id)?.name}>
         {edit && (
           <button type="button" className="btn" onClick={() => setEditing(true)}>
             <Icon name="edit" size={16} />
@@ -256,6 +278,7 @@ function CustomerDialog({
 }) {
   const { t } = useTranslation();
   const services = useServices();
+  const categories = useCategories().data ?? [];
   const save = useSaveCustomer();
   const remove = useDeleteCustomer();
   const navigate = useNavigate();
@@ -311,6 +334,16 @@ function CustomerDialog({
                  onChange={set("owner")} />
         </label>
       </div>
+      {categories.length > 0 && (
+        <label className="field">
+          {t("customers.category")}
+          <select className="input" value={form.category_id ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value || null }))}>
+            <option value="">{t("customers.noCategory")}</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
+      )}
       <div className="field">
         {t("customers.sitesTitle")}
         {services.data?.length ? (
@@ -338,6 +371,42 @@ function CustomerDialog({
       </label>
       {save.error && <p className="error-text">{save.error.message}</p>}
       {remove.error && <p className="error-text">{remove.error.message}</p>}
+    </Dialog>
+  );
+}
+
+function CategoryDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
+  const categories = useCategories().data ?? [];
+  const { add, rename, remove, order } = useCategoryActions();
+  const [name, setName] = useState("");
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const error = add.error ?? rename.error ?? remove.error ?? order.error;
+  const move = (index: number, by: number) => {
+    const ids = categories.map((c) => c.id);
+    [ids[index], ids[index + by]] = [ids[index + by], ids[index]];
+    order.mutate(ids);
+  };
+  return (
+    <Dialog title={t("customers.manageCategories")} onClose={onClose}
+            onSubmit={() => name.trim() && add.mutate(name.trim(), { onSuccess: () => setName("") })}
+            footer={<><span className="spacer" /><button type="button" className="btn" onClick={onClose}>{t("common.close")}</button></>}>
+      <p className="hint">{t("customers.categoriesHint")}</p>
+      {categories.map((c, i) => (
+        <div key={c.id} className="category-row">
+          <input className="input" maxLength={40} value={edits[c.id] ?? c.name}
+                 onChange={(e) => setEdits((x) => ({ ...x, [c.id]: e.target.value }))}
+                 onBlur={() => { const v = (edits[c.id] ?? c.name).trim(); if (v && v !== c.name) rename.mutate({ id: c.id, name: v }); setEdits((x) => { const { [c.id]: _, ...rest } = x; return rest; }); }} />
+          <button type="button" className="btn btn-ghost btn-small" disabled={i === 0} onClick={() => move(i, -1)} aria-label={t("customers.up")}>↑</button>
+          <button type="button" className="btn btn-ghost btn-small" disabled={i === categories.length - 1} onClick={() => move(i, 1)} aria-label={t("customers.down")}>↓</button>
+          <ConfirmDelete compact busy={remove.isPending} onConfirm={() => remove.mutate(c.id)} />
+        </div>
+      ))}
+      <div className="category-row">
+        <input className="input" maxLength={40} placeholder={t("customers.categoryPlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
+        <button type="submit" className="btn btn-primary btn-small" disabled={!name.trim() || add.isPending}>{t("customers.addCategory")}</button>
+      </div>
+      {error && <p className="error-text">{error.message}</p>}
     </Dialog>
   );
 }

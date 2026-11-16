@@ -1,21 +1,22 @@
 """Customers: contacts and agreements for hosted sites; services are linked to a customer."""
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user, require
 from app.core.audit import audit
 from app.core.db import get_db
-from app.models import Customer, Service
-from app.schemas import CustomerIn, CustomerOut
+from app.models import Customer, CustomerCategory, Service
+from app.schemas import CategoryIn, CustomerIn, CustomerOut
 
 router = APIRouter(prefix="/api/customers", tags=["customers"], dependencies=[Depends(current_user)])
 
 
 def to_out(c: Customer) -> CustomerOut:
     return CustomerOut(id=c.id, name=c.name, contact=c.contact, email=c.email, phone=c.phone, owner=c.owner,
-                       agreements=c.agreements, notes=c.notes, service_ids=sorted(s.id for s in c.services))
+                       agreements=c.agreements, notes=c.notes, category_id=c.category_id, service_ids=sorted(s.id for s in c.services))
 
 
 def get_customer(db: Session, cid: str) -> Customer:
@@ -28,6 +29,9 @@ def get_customer(db: Session, cid: str) -> Customer:
 def apply(customer: Customer, body: CustomerIn, db: Session) -> None:
     for field in ("name", "contact", "email", "phone", "owner", "agreements", "notes"):
         setattr(customer, field, getattr(body, field))
+    if body.category_id and db.get(CustomerCategory, body.category_id) is None:
+        raise HTTPException(422, "Unknown category")
+    customer.category_id = body.category_id or None
     wanted = set(body.service_ids)
     services = list(db.scalars(select(Service).where(Service.id.in_(wanted)))) if wanted else []
     if len(services) != len(wanted):
@@ -70,4 +74,76 @@ def delete_customer(cid: str, db: Session = Depends(get_db)):
     db.delete(customer)  # services stay, customer_id becomes NULL
     db.commit()
     audit("customer.deleted", customer.name)
+    return Response(status_code=204)
+
+
+# --- categories (priority classes) ------------------------------------------------------------------
+
+categories = APIRouter(prefix="/api/customer-categories", tags=["customers"], dependencies=[Depends(current_user)])
+
+
+def category_out(c: CustomerCategory) -> dict:
+    return {"id": c.id, "name": c.name, "position": c.position}
+
+
+@categories.get("")
+def list_categories(db: Session = Depends(get_db)):
+    return [category_out(c) for c in db.scalars(select(CustomerCategory).order_by(CustomerCategory.position,
+                                                                                    CustomerCategory.name))]
+
+
+def unique_name(db: Session, name: str, own: str = "") -> None:
+    for c in db.scalars(select(CustomerCategory)):
+        if c.id != own and c.name.lower() == name.lower():
+            raise HTTPException(409, "A category with this name already exists")
+
+
+@categories.post("", status_code=201, dependencies=[Depends(require("operator"))])
+def create_category(body: CategoryIn, db: Session = Depends(get_db)):
+    unique_name(db, body.name)
+    last = db.scalars(select(CustomerCategory.position).order_by(CustomerCategory.position.desc())).first()
+    category = CustomerCategory(name=body.name, position=(last + 1) if last is not None else 0)
+    db.add(category)
+    db.commit()
+    audit("customer.category.created", category.name)
+    return category_out(category)
+
+
+class OrderIn(BaseModel):
+    ids: list[str] = Field(max_length=100)
+
+
+@categories.put("/order", dependencies=[Depends(require("operator"))])
+def order_categories(body: OrderIn, db: Session = Depends(get_db)):
+    found = {c.id: c for c in db.scalars(select(CustomerCategory))}
+    if set(body.ids) != set(found):
+        raise HTTPException(422, "The list must contain every category exactly once")
+    for position, cid in enumerate(body.ids):
+        found[cid].position = position
+    db.commit()
+    return [category_out(found[cid]) for cid in body.ids]
+
+
+@categories.put("/{cid}", dependencies=[Depends(require("operator"))])
+def rename_category(cid: str, body: CategoryIn, db: Session = Depends(get_db)):
+    category = db.get(CustomerCategory, cid)
+    if category is None:
+        raise HTTPException(404, "Category not found")
+    unique_name(db, body.name, cid)
+    category.name = body.name
+    db.commit()
+    audit("customer.category.renamed", category.name)
+    return category_out(category)
+
+
+@categories.delete("/{cid}", status_code=204, dependencies=[Depends(require("operator"))])
+def delete_category(cid: str, db: Session = Depends(get_db)):
+    category = db.get(CustomerCategory, cid)
+    if category is None:
+        raise HTTPException(404, "Category not found")
+    for customer in db.scalars(select(Customer).where(Customer.category_id == cid)):
+        customer.category_id = None  # customers stay, without a category
+    db.delete(category)
+    db.commit()
+    audit("customer.category.deleted", category.name)
     return Response(status_code=204)

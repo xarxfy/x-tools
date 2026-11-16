@@ -5,6 +5,12 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- Linux servers can be administered by admins (agent version 7): install updates (with log), manage local users and
+  their SSH keys (add/remove keys, sudo, lock/unlock, create/delete), manage the ufw firewall (status, rules, on/off),
+  with lock-out protection.
+- Customer categories with free names and order (e.g. A-customer, B-customer): badge, filter, sorted list.
+
 ### Changed
 - Overview page redesigned: status banner with counters, two columns (problems and events | servers with load/RAM/disk, jobs, backup, websites).
 

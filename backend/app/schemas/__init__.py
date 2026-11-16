@@ -104,6 +104,7 @@ class CustomerIn(BaseModel):
     owner: str = Field(default="", max_length=120)
     agreements: str = Field(default="", max_length=5000)
     notes: str = Field(default="", max_length=5000)
+    category_id: str | None = Field(default=None, max_length=12)
     service_ids: list[str] = Field(default_factory=list, max_length=100)
 
     _strip = field_validator("name", "contact", "email", "phone", "owner", "agreements", "notes", mode="before")(strip)
@@ -118,4 +119,11 @@ class CustomerOut(BaseModel):
     owner: str
     agreements: str
     notes: str
+    category_id: str | None = None
     service_ids: list[str]
+
+
+class CategoryIn(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+
+    _strip = field_validator("name", mode="before")(strip)

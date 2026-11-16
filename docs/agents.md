@@ -6,7 +6,7 @@ only reports; with **control** switched on, operators can also start/stop contai
 
 | Kind | Install it on | Reports |
 |---|---|---|
-| **Linux server** | any Linux server, VM or LXC (systemd) | host metrics, systemd services, listening ports, disks, pending updates, reboot flag – optionally Docker as well |
+| **Linux server** | any Linux server, VM or LXC (systemd) | host metrics, systemd services, listening ports, disks, pending updates, reboot flag, local users with SSH keys, ufw firewall – optionally Docker as well |
 | **Proxmox host** | the Proxmox host | host metrics, nodes, storage, all LXCs and VMs (Proxmox API, read-only token) |
 | **Docker host** | every server, LXC or VM that runs Docker | containers, compose files, Dockerfiles, git status, host metrics |
 
@@ -42,7 +42,26 @@ role **operator** or **admin** can:
 On Linux servers the agent runs as root (it has to talk to systemd), so control is limited to this fixed list:
 only services the agent reported itself, never `x-tools-agent` itself, no arbitrary commands. Stopping `ssh` or the
 network service can lock you out – there is a confirmation, but think before you click. Pending updates are read from
-the local package cache (apt, dnf); X-TOOLS does not install them.
+the local package cache (apt, dnf).
+
+### Administering a Linux server (admins only)
+
+With control switched on, users with the role **admin** get three more things on the *Servers* page (agent version 7
+or newer – an outdated agent is marked in *Settings → Agents*; update it with the install command):
+
+- **Install updates** – runs `apt-get update` + `apt-get upgrade` (or `dnf upgrade`) in the background and shows the
+  log (refreshed every few seconds). No `dist-upgrade`, no automatic reboot, no unattended runs.
+- **Users and SSH keys** – lists the login users (root and users from UID 1000) with sudo, lock state, last login and
+  key fingerprints. You can add or remove SSH keys, give or take sudo, lock or unlock an account (sets an account
+  expiry, so keys stop working, too), create users (no password, optionally with a key) and delete users. The root
+  account and system accounts cannot be locked, demoted or deleted; the only sudo user cannot be locked, demoted or
+  deleted either, so the server never ends up without an administrator.
+- **Firewall (ufw)** – shows status, default policy and numbered rules; add and delete rules (allow, deny, reject,
+  limit; port or range, protocol, optional source address) and turn the firewall on or off. Turning it on allows the
+  SSH port(s) first; rules that would block SSH or delete the last SSH rule are refused.
+
+Everything is validated by X-TOOLS and again by the agent; arguments never reach a shell, the agent never follows
+symbolic links in a user's `~/.ssh`, and every action is in the audit log.
 
 How it stays safe:
 

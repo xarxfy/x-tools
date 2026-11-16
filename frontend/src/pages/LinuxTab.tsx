@@ -6,6 +6,7 @@ import type { AgentSummary, LinuxInfo, LinuxService } from "../api/monitor";
 import { useCan } from "../api/users";
 import { fmtBytes, level, pct } from "../components/format";
 import { Dialog, Dot, Empty, SearchField, matches } from "../components/ui";
+import { FirewallSection, UpdateControl, UsersSection } from "./LinuxAdmin";
 
 const PROTECTED = new Set(["x-tools-agent.service"]);
 
@@ -84,6 +85,7 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
   const { t } = useTranslation();
   const canOperate = useCan()("operator");
   const control = canOperate && agent.control;
+  const canManage = useCan()("admin") && agent.control;
   const [query, setQuery] = useState("");
   const [onlyFailed, setOnlyFailed] = useState(false);
   const [allPorts, setAllPorts] = useState(false);
@@ -116,6 +118,7 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
           <span className="state-up">{t("linux.upToDate")}</span>
         )}
         {info.reboot_required && <span className="badge badge-warn">{t("linux.rebootRequired")}</span>}
+        <UpdateControl agent={agent} info={info} canManage={canManage} />
         <span className="spacer" />
         {control && <RebootButton agentId={agent.id} hostname={agent.hostname || agent.name} />}
       </div>
@@ -193,6 +196,9 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
           </div>
         </>
       )}
+
+      <FirewallSection agent={agent} info={info} canManage={canManage} />
+      <UsersSection agent={agent} info={info} canManage={canManage} />
 
       {logs && (
         <Dialog wide title={`${logs.name} – ${t("docker.logs")}`} onClose={() => setLogs(null)}

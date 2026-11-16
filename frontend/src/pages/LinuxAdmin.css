@@ -1,0 +1,32 @@
+.update-log {
+  max-height: 55vh;
+  overflow: auto;
+}
+.user-facts,
+.user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.user-badge {
+  margin-left: 8px;
+}
+.sub-title {
+  font-size: 15px;
+  margin: 18px 0 8px;
+}
+.key-add {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 10px;
+}
+.key-add textarea {
+  flex: 1;
+  font-size: 12px;
+}
+.fw-default {
+  margin: 0 2px 8px;
+}

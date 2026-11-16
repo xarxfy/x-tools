@@ -97,12 +97,12 @@
   stroke-width: 3;
 }
 
-.chips {
+.ov-chips {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
-.chip {
+.ov-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -113,14 +113,14 @@
   font-size: 14px;
   box-shadow: 0 0 0 1px var(--line, rgba(0, 0, 0, 0.06));
 }
-.chip:hover {
+.ov-chip:hover {
   text-decoration: none;
   background: var(--card-hover);
 }
-.chip svg {
+.ov-chip svg {
   color: var(--accent);
 }
-.chip span {
+.ov-chip span {
   color: var(--muted);
 }
 .ov-grid {
@@ -167,7 +167,7 @@ a.side-row:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.host-meters {
+.ov-host-meters {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;

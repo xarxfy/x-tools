@@ -9,7 +9,8 @@ Environment:
   XT_AGENT_URL, XT_AGENT_KEY            where to report, key from Settings → Agents
   XT_AGENT_INTERVAL                     seconds (default 60, min 30)
   XT_AGENT_CONTROL                      1 = accept commands from X-TOOLS (start/stop containers, Proxmox
-                                        guests and systemd services, read logs, reboot). Off by default.
+                                        guests and systemd services, read logs, reboot; on Linux servers also
+                                        install updates, manage users/SSH keys and the ufw firewall). Off by default.
   XT_AGENT_LINUX                        1 = report systemd services, ports, disks and updates of this server
   XT_AGENT_DOCKER                       0 = ignore Docker even if the socket exists
   CF_ACCESS_CLIENT_ID/_SECRET           optional Cloudflare Access service token
@@ -26,12 +27,12 @@ import time
 import urllib.error
 import urllib.request
 
-from app.collector import linux, proxmox
+from app.collector import linux, linux_admin, proxmox
 from app.collector.collector import collect_snapshot, host_path, system_info
 from app.core.config import get_settings
 from app.collector.httpjson import post_json
 
-AGENT_VERSION = "6"
+AGENT_VERSION = "7"
 
 
 DETAILS_INTERVAL = max(120, int(os.environ.get("XT_PROXMOX_DETAILS_INTERVAL", "600")))
@@ -60,13 +61,20 @@ def linux_info() -> dict | None:
     """Services, ports and disks every report; OS and update information every few minutes."""
     if os.environ.get("XT_AGENT_LINUX", "0") != "1":
         return None
-    if _linux["data"] is None or time.time() - _linux["at"] > LINUX_DETAILS_INTERVAL:
+    job = linux_admin.update_job()
+    finished = bool(job and job["finished"] and job["finished"] > _linux["at"])  # new package state after an update
+    if _linux["data"] is None or finished or time.time() - _linux["at"] > LINUX_DETAILS_INTERVAL:
         try:
             _linux["data"] = linux.details()
+            for key, fn in (("users", linux_admin.users), ("firewall", linux_admin.ufw_status)):
+                try:
+                    _linux["data"][key] = fn()
+                except Exception as error:  # noqa: BLE001
+                    _linux["data"][key] = None if key == "users" else {"installed": True, "error": str(error)[:200]}
         except Exception as error:  # noqa: BLE001 – must never stop the report
             _linux["data"] = {"error": str(error)[:300], "fetched_at": time.time()}
         _linux["at"] = time.time()
-    out = {**_linux["data"], "collected_at": time.time()}
+    out = {**_linux["data"], "collected_at": time.time(), "update_job": job}
     for key, fn in (("services", linux.services), ("ports", linux.ports), ("disks", linux.disks)):
         try:
             out[key] = fn()
@@ -99,6 +107,12 @@ def execute(command: dict) -> dict:
                 raise ValueError("Linux server mode is not enabled on this agent")
             result = linux.service_action(verb, target, params.get("lines"))
             return result
+        elif action in linux_admin.ACTIONS:
+            if os.environ.get("XT_AGENT_LINUX", "0") != "1":
+                raise ValueError("Linux server mode is not enabled on this agent")
+            result = linux_admin.admin_action(action, target, params)
+            _linux["at"] = 0.0  # read users, firewall and updates again with the next report
+            return result
         elif action == "system.reboot":
             if os.environ.get("XT_AGENT_LINUX", "0") != "1":
                 raise ValueError("Linux server mode is not enabled on this agent")
@@ -112,7 +126,7 @@ def execute(command: dict) -> dict:
         else:
             raise ValueError("Unknown command")
         return {"ok": True}
-    except (ValueError, OSError, subprocess.SubprocessError) as error:
+    except (ValueError, OSError, subprocess.SubprocessError) as error:  # AdminError is a ValueError
         return {"ok": False, "error": str(error)[:300]}
 
 
@@ -196,7 +210,8 @@ def run() -> None:
                 if isinstance(error, ValueError):
                     error = "answer was not JSON (login page?)"
                 print(f"Report failed ({failures}×): {error}{hint}", flush=True)
-        report_now.wait(interval)
+        # while an update runs, report more often so that X-TOOLS shows its log almost live
+        report_now.wait(10 if (linux_admin.update_job() or {}).get("state") == "running" else interval)
         if report_now.is_set():
             report_now.clear()
             time.sleep(3)  # give Docker/Proxmox a moment to change state

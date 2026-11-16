@@ -79,7 +79,7 @@ def test_commands(tmp_path, monkeypatch):
     assert agent.execute({"action": "system.reboot", "target": "host", "params": {}})["ok"] is False
 
 
-REPORT = {"version": "6", "hostname": "web1", "control": True,
+REPORT = {"version": "7", "hostname": "web1", "control": True,
           "system": {"cpus": 2, "mem_total": 100, "mem_used": 50, "disk_total": 100, "disk_used": 10},
           "docker": None, "proxmox": None,
           "linux": {"os": "Debian 13", "kernel": "6.12", "updates": ["curl"], "reboot_required": True,

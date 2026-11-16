@@ -33,6 +33,7 @@ def create_app() -> FastAPI:
                   docs_url="/api/docs" if docs else None, openapi_url="/api/openapi.json" if docs else None)
     app.include_router(auth.router)
     app.include_router(services.router)
+    app.include_router(customers.categories)
     app.include_router(customers.router)
     app.include_router(sites.router)
     app.include_router(jobs.router)

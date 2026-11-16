@@ -220,6 +220,52 @@ export interface LinuxService {
   description: string;
 }
 
+export interface SshKey {
+  type: string;
+  fingerprint: string;
+  comment: string;
+  options: boolean;
+}
+
+export interface LinuxUser {
+  name: string;
+  uid: number;
+  home: string;
+  shell: string;
+  login: boolean;
+  sudo: boolean;
+  locked: boolean;
+  password: boolean;
+  last_login: number | null;
+  keys: SshKey[];
+}
+
+export interface UfwRule {
+  number: number;
+  to: string;
+  action: string;
+  direction: string;
+  from: string;
+  comment: string;
+}
+
+export interface Firewall {
+  installed: boolean;
+  active?: boolean;
+  default?: string;
+  rules?: UfwRule[];
+  ssh_ports?: number[];
+  error?: string;
+}
+
+export interface UpdateJob {
+  state: "running" | "ok" | "failed";
+  log: string;
+  started: number | null;
+  finished: number | null;
+  manager: string;
+}
+
 export interface LinuxInfo {
   os?: string;
   kernel?: string;
@@ -229,6 +275,9 @@ export interface LinuxInfo {
   services?: LinuxService[] | null;
   ports?: { port: number; proto: string; address: string; process: string }[];
   disks?: { mount: string; fstype: string; used: number; total: number }[];
+  users?: LinuxUser[] | null;
+  firewall?: Firewall | null;
+  update_job?: UpdateJob | null;
   error?: string;
 }
 
@@ -403,3 +452,7 @@ export interface About {
 }
 
 export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: () => api<About>("/about") });
+
+/** Server administration (updates, users, ufw) – administrators only. */
+export const manageAgent = (agentId: string, action: string, target = "host", args: Record<string, unknown> = {}) =>
+  api<{ ok: boolean }>(`/agents/${agentId}/manage`, { method: "POST", body: { action, target, args } });

@@ -46,6 +46,7 @@ export interface CustomerInput {
   owner: string;
   agreements: string;
   notes: string;
+  category_id: string | null;
   service_ids: string[];
 }
 
@@ -64,6 +65,41 @@ export const usePortStatus = () =>
     queryFn: () => api<Record<string, boolean>>("/services/ports"),
     refetchInterval: 60_000,
   });
+
+export interface Category {
+  id: string;
+  name: string;
+  position: number;
+}
+
+export const useCategories = () =>
+  useQuery({ queryKey: ["categories"], queryFn: () => api<Category[]>("/customer-categories") });
+
+export function useCategoryActions() {
+  const qc = useQueryClient();
+  const done = () => {
+    qc.invalidateQueries({ queryKey: ["categories"] });
+    qc.invalidateQueries({ queryKey: ["customers"] });
+  };
+  const add = useMutation({
+    mutationFn: (name: string) => api<Category>("/customer-categories", { method: "POST", body: { name } }),
+    onSuccess: done,
+  });
+  const rename = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      api<Category>(`/customer-categories/${id}`, { method: "PUT", body: { name } }),
+    onSuccess: done,
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api<void>(`/customer-categories/${id}`, { method: "DELETE" }),
+    onSuccess: done,
+  });
+  const order = useMutation({
+    mutationFn: (ids: string[]) => api<Category[]>("/customer-categories/order", { method: "PUT", body: { ids } }),
+    onSuccess: done,
+  });
+  return { add, rename, remove, order };
+}
 
 export const useCustomers = () => useQuery({ queryKey: ["customers"], queryFn: () => api<Customer[]>("/customers") });
 

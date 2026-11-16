@@ -59,11 +59,13 @@ cloud = service("Nextcloud", [(18304, "Web")], ["cloud.example.com"], "/home/mar
 git = service("Gitea", [(18305, "Web")], ["git.example.com"], "/home/marc/apps/gitea")
 mail = service("Mail relay", [(18399, "SMTP")], [], "/home/marc/apps/mail", "Docker Compose")
 call("/api/services", {"name": "Grafana", "ports": [{"port": 18305, "label": "Web"}], "domains": ["grafana.example.com"]})
+cat_a = call("/api/customer-categories", {"name": "A-customer"})["id"]
+cat_b = call("/api/customer-categories", {"name": "B-customer"})["id"]
 call("/api/customers", {"name": "ACME Shop GmbH", "contact": "Anna Meyer", "email": "anna@acme-example.com",
                         "phone": "+49 30 1234567", "agreements": "Hosting incl. updates, 99.5 % availability, monthly invoice",
-                        "service_ids": [shop, blog]})
+                        "category_id": cat_a, "service_ids": [shop, blog]})
 call("/api/customers", {"name": "Bakery Smith", "contact": "Tom Smith", "email": "tom@smith-bakery.example",
-                        "service_ids": [bakery]})
+                        "category_id": cat_b, "service_ids": [bakery]})
 
 from app.core.db import session_scope  # noqa: E402  (after the server wrote the database)
 from app.models import Agent, Customer, Event, Heartbeat, Metric  # noqa: E402
@@ -118,7 +120,7 @@ def agent(name, kind, report):
 def svc(name, desc, active="active", sub="running"):
     return {"name": name + ".service", "active": active, "sub": sub, "enabled": "enabled", "description": desc}
 
-linux_report = {"version": "6", "hostname": "web-01", "control": True,
+linux_report = {"version": "7", "hostname": "web-01", "control": True,
     "system": {"cpus": 2, "uptime": 86400 * 41.2, "load": [0.31, 0.25, 0.2], "mem_total": 4 * GB, "mem_used": 1.7 * GB,
                "disk_total": 40 * GB, "disk_used": 17 * GB, "hostname": "web-01"},
     "linux": {"os": "Debian GNU/Linux 13 (trixie)", "kernel": "6.12.115+deb13-amd64", "arch": "x86_64",
@@ -135,14 +137,32 @@ linux_report = {"version": "6", "hostname": "web-01", "control": True,
                         {"port": 443, "proto": "tcp", "address": "0.0.0.0", "process": "nginx"},
                         {"port": 5432, "proto": "tcp", "address": "127.0.0.1", "process": "postgres"}],
               "disks": [{"mount": "/", "fstype": "ext4", "used": 17 * GB, "total": 40 * GB},
-                        {"mount": "/var/backups", "fstype": "ext4", "used": 61 * GB, "total": 100 * GB}]},
+                        {"mount": "/var/backups", "fstype": "ext4", "used": 61 * GB, "total": 100 * GB}],
+              "users": [
+                  {"name": "root", "uid": 0, "home": "/root", "shell": "/bin/bash", "login": True, "sudo": True, "locked": False,
+                   "password": False, "last_login": time.time() - 86400 * 30, "keys": []},
+                  {"name": "marc", "uid": 1000, "home": "/home/marc", "shell": "/bin/bash", "login": True, "sudo": True,
+                   "locked": False, "password": False, "last_login": time.time() - 3600 * 5,
+                   "keys": [{"type": "ssh-ed25519", "fingerprint": "SHA256:" + "k3Yd9" * 8 + "abc", "comment": "marc@laptop", "options": False}]},
+                  {"name": "deploy", "uid": 1001, "home": "/home/deploy", "shell": "/bin/bash", "login": True, "sudo": False,
+                   "locked": False, "password": False, "last_login": time.time() - 86400 * 2, "keys": []},
+                  {"name": "freelancer", "uid": 1002, "home": "/home/freelancer", "shell": "/bin/bash", "login": True, "sudo": False,
+                   "locked": True, "password": False, "last_login": None, "keys": []}],
+              "firewall": {"installed": True, "active": True, "default": "deny (incoming), allow (outgoing), disabled (routed)",
+                           "ssh_ports": [22],
+                           "rules": [{"number": 1, "to": "22/tcp", "action": "LIMIT", "direction": "IN", "from": "Anywhere", "comment": "ssh"},
+                                     {"number": 2, "to": "80/tcp", "action": "ALLOW", "direction": "IN", "from": "Anywhere", "comment": "web"},
+                                     {"number": 3, "to": "443/tcp", "action": "ALLOW", "direction": "IN", "from": "Anywhere", "comment": "web"},
+                                     {"number": 4, "to": "5432/tcp", "action": "ALLOW", "direction": "IN", "from": "10.0.0.0/24", "comment": "database"}]},
+              "update_job": {"state": "ok", "started": time.time() - 86400, "finished": time.time() - 86400 + 140, "manager": "apt",
+                             "log": "$ apt-get update\nGet:1 http://deb.debian.org/debian trixie InRelease\nReading package lists...\n$ apt-get -y upgrade\n5 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n"}},
     "docker": None, "proxmox": None}
 linux_id = agent("web-01", "linux", linux_report)
 
 def guest(vmid, name, typ, status, cpu, maxcpu, mem, maxmem, up):
     return {"vmid": vmid, "name": name, "type": typ, "status": status, "node": "pve", "cpu": cpu, "maxcpu": maxcpu,
             "mem": mem * GB, "maxmem": maxmem * GB, "uptime": up}
-pve_report = {"version": "6", "hostname": "pve", "control": True,
+pve_report = {"version": "7", "hostname": "pve", "control": True,
     "system": {"cpus": 16, "uptime": 86400 * 63, "load": [1.9, 2.1, 1.8], "mem_total": 64 * GB, "mem_used": 38 * GB,
                "disk_total": 1800 * GB, "disk_used": 910 * GB, "hostname": "pve"},
     "docker": None, "linux": None,
@@ -159,7 +179,7 @@ pve_report = {"version": "6", "hostname": "pve", "control": True,
                 "details": None}}
 pve_id = agent("pve", "proxmox", pve_report)
 
-dk_report = {"version": "6", "hostname": "docker-host", "control": True,
+dk_report = {"version": "7", "hostname": "docker-host", "control": True,
     "system": {"cpus": 4, "uptime": 86400 * 30, "load": [0.4, 0.5, 0.5], "mem_total": 8 * GB, "mem_used": 3.8 * GB,
                "disk_total": 60 * GB, "disk_used": 24 * GB, "hostname": "docker-host"},
     "linux": None, "proxmox": None,
