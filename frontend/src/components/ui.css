@@ -536,3 +536,6 @@ a.list-title svg,
 .data-table td.nowrap {
   overflow-wrap: normal;
 }
+.data-table-sort {
+  display: none;
+}

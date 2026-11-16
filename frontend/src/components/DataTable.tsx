@@ -41,12 +41,16 @@ export function DataTable<T>({ columns, rows, rowKey, rowClass, initialSort }: {
     return (typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true })) * sort.dir;
   });
   return (
+    <>
+    <select className="input data-table-sort" aria-label="Sort" value={sort.key} onChange={(e) => setSort({ key: e.target.value, dir: 1 })}>
+      {columns.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+    </select>
     <div className="card data-table-wrap">
       <table className="data-table">
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={c.key} className={c.hideSmall ? "hide-sm" : undefined} aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}>
+              <th key={c.key} aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}>
                 <button type="button" onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key ? (-s.dir as 1 | -1) : 1 }))}>
                   {c.label}{sort.key === c.key ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
                 </button>
@@ -57,11 +61,12 @@ export function DataTable<T>({ columns, rows, rowKey, rowClass, initialSort }: {
         <tbody>
           {sorted.map((r) => (
             <tr key={rowKey(r)} className={rowClass?.(r)}>
-              {columns.map((c) => <td key={c.key} className={[c.nowrap ? "nowrap" : "", c.hideSmall ? "hide-sm" : ""].filter(Boolean).join(" ") || undefined}>{c.render(r)}</td>)}
+              {columns.map((c) => <td key={c.key} data-label={c.label} className={c.nowrap ? "nowrap" : undefined}>{c.render(r)}</td>)}
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+    </>
   );
 }

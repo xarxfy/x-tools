@@ -72,18 +72,58 @@ body {
     width: 100%;
     justify-content: flex-start;
   }
-  .data-table .hide-sm {
+  /* tables become one card per row: label on the left, value on the right */
+  .data-table-wrap {
+    background: none;
+    box-shadow: none;
+    border: 0;
+    overflow: visible;
+  }
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+  .data-table thead {
     display: none;
+  }
+  .data-table tbody tr {
+    background: var(--card, var(--inset));
+    border-radius: 14px;
+    padding: 6px 12px;
+    margin-bottom: 10px;
+  }
+  .data-table td {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 0;
+    text-align: right;
+  }
+  .data-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 12.5px;
+    text-align: left;
+  }
+  .data-table td > * {
+    min-width: 0;
+  }
+  .data-table td.nowrap {
+    overflow-wrap: anywhere;
+  }
+  .data-table-sort {
+    display: block;
+    margin-bottom: 10px;
   }
   .search-button kbd,
   .sp-input kbd {
     display: none;
-  }
-  .data-table th button {
-    padding: 8px 6px;
-  }
-  .data-table td {
-    padding: 8px 6px;
   }
   .data-table .agent-bar {
     flex-wrap: nowrap;
