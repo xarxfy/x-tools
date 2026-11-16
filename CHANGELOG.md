@@ -5,40 +5,33 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
-### Changed
-- Wide screens (full-screen browser): the content uses the width (up to 1560/1760 px, centered) instead of sticking
-  to the left at 1180 px; the overview's right column gets wider.
-- **New menu structure**: the sidebar has headings – *Infrastructure* (Servers, Proxmox, Docker), *Manage* (Services,
-  Domains, Customers) – plus *Monitoring*; *Administration*, *Help* and your account sit at the bottom.
-  - *Services* has the stored logins as a second tab (the *Credentials* entry is gone).
-  - *Domains* has DNS and tunnels (Cloudflare) as a second tab.
-  - *Monitoring* holds jobs, the history of problems and the maintenance windows.
-  - Your own account (password, two-factor, language) is behind your name at the bottom; *Settings* is gone.
-    The switch for the customers area, version and updates moved to *Administration → System*.
-  - Old links (`/settings`, `/jobs`, `/credentials`, `/cloudflare`) are forwarded.
-- **Agents are managed on the page of their kind**: *Add Linux server / Docker host / Proxmox host* on the Servers,
-  Docker and Proxmox pages; rename, install command, disable and delete on the page of the host. Operators may do
-  this (new permission *Manage agents* replaces *Administration → Agents*).
+## [1.0.0-beta.3] – 2026-11-16
 
 ### Added
-- **Administration** area (sidebar entry only for people with administration permissions): users, **roles and
-  permissions**, audit log, agents, notifications, Cloudflare connection and backup. *Settings* keeps account,
-  general settings and about. Old `/settings?tab=…` links are forwarded.
 - **Roles with free permissions**: create your own roles and tick what they may do (18 permissions in five areas).
   Viewer and Operator are adjustable presets, Administrator is fixed. Nobody can give a role or a user more
   permissions than they have; the last user who can manage users cannot be removed or demoted; a role that is in use
   cannot be deleted.
-- Server groups and tags with free names (no predefined ones): groups split the server list into sections, tags
+- **Administration** (sidebar entry only for people with administration permissions): users, roles and permissions,
+  audit log, system (customers switch, version, updates), notifications, Cloudflare connection, backup.
+- **Server groups and tags** with free names (nothing predefined): groups split the server list into sections, tags
   filter it; maintenance windows can cover a whole group or tag; *Install updates on N* per group.
+- Servers: every server has its own page (`/servers/<id>`) with the tabs Overview, Services, Network and Users.
+- *Monitoring*: jobs, the history of problems (7/30/90 days) and the maintenance windows in one place.
 
 ### Changed
+- **New menu structure**: the sidebar has headings – *Infrastructure* (Servers, Proxmox, Docker), *Manage* (Services,
+  Domains, Customers) – plus *Monitoring*; *Administration*, *Help* and your account sit at the bottom.
+  *Services* has the stored logins as a second tab (no separate *Credentials*), *Domains* has DNS and tunnels
+  (Cloudflare) as a second tab. Your own account (password, two-factor, language) is behind your name at the
+  bottom; *Settings* is gone. Old links (`/settings`, `/jobs`, `/credentials`, `/cloudflare`, `#agent-…`) are forwarded.
+- **Agents are managed on the page of their kind**: *Add Linux server / Docker host / Proxmox host* on the Servers,
+  Docker and Proxmox pages; rename, install command, disable and delete on the page of the host. Operators may do
+  this (permission *Manage agents*, in the operator preset).
+- The Servers page is a list (status, OS, tags, load/RAM/disk, updates).
+- Wide screens: the content uses the width (up to 1560/1760 px, centered) instead of a narrow left column.
 - The API checks permissions instead of three fixed ranks; `/api/auth/me` returns the permissions of the user.
-- The Servers page is now a list (status, OS, tags, load/RAM/disk, updates); every server has its own page
-  (`/servers/<id>`) with the tabs Overview, Services, Network and Users. Old `#agent-…` links still work.
-
-### Changed
-- After an administration action (users, SSH keys, firewall) the list is updated within seconds: the agent reads only the
-  changed part and reports at once.
+- After an administration action (users, SSH keys, firewall) the list is updated within seconds.
 
 ### Fixed
 - Administration (users, SSH keys, updates, firewall) failed because the agent's systemd service was read-only. The
@@ -46,6 +39,12 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
   the install command.
 - Errors from agents (and from Cloudflare/notification calls) are reported with status 424 instead of 502/504:
   Cloudflare replaced those with its own error page and hid the real message.
+
+### Notes
+- Update with `sudo x-tools-ctl update`; the database is migrated automatically (roles, groups, categories).
+  Existing users keep their role. Log in again (or reload) so the browser knows your permissions.
+- Agents of version 7 keep working. Linux servers that should be administered (updates, users, firewall) need a new
+  install command once, because their systemd service has to be writable.
 
 ## [1.0.0-beta.2] – 2026-11-16
 

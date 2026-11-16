@@ -9,7 +9,7 @@ something breaks.
 > review or security audit**. Read the code before you trust it, make backups, and think twice before exposing it to
 > the internet or giving it control (Docker socket, Proxmox, root agents) over systems you care about. Use at your own risk.
 >
-> **Status: beta (1.0.0-beta.2).** All areas are in place; expect rough edges until the final 1.0.0.
+> **Status: beta (1.0.0-beta.3).** All areas are in place; expect rough edges until the final 1.0.0.
 > Beta testers: [checklist](docs/beta-testing.md) – tick it in the browser ([beta-checklist.html](docs/beta-checklist.html))
 > or in an issue from the template *Beta test*. What changed: [CHANGELOG](CHANGELOG.md).
 
