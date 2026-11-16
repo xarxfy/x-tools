@@ -7,7 +7,7 @@ GitLab (.gitlab/issue_templates) and GitHub (.github/ISSUE_TEMPLATE).
 Items may use `code`, *emphasis* and [links](url).
 """
 
-VERSION = "1.0.0-beta.4"
+VERSION = "1.0.0-beta.5"
 
 SETUP_FIELDS = [
     ("version", "X-TOOLS version (sidebar bottom) and date of `git pull`"),
@@ -133,11 +133,18 @@ SECTIONS = [
         "`sudo x-tools-ctl uninstall` asks before removing data; a reinstall afterwards still finds the data if you kept it",
         "`curl -fsSL …/uninstall.sh | sudo bash` does the same from outside; the second question is about the data",
     ]),
-    ("customers", "Customers (optional area)", [
-        "*Settings → General*: switching on shows *Customers*, switching off hides it again",
-        "Add a customer, assign services; the customer page shows contact, sites and agreements",
+    ("customers", "Customers, tickets and order (optional area)", [
+        "*Settings → General*: switching on shows *Customers* and *Tickets*, switching off hides them again",
+        "The customer list is a table (category, contact, services, servers, status, contract end, open tickets); sorting, search, filter by category and by tag work; on a phone every customer is a card",
+        "Add a customer with two contact people, a contract end and a period of notice, a link and tags; the customer page has the tabs Overview, Services and websites, Servers and jobs, Tickets, History",
+        "A link that does not start with http(s) is rejected; contract data is hidden for a role without *Contract data*",
         "Website checks show DNS/HTTPS/certificate; *Check now* updates them",
-        "*Categories*: create A-customer/B-customer, reorder them, assign customers; filter and sorting in the list work; deleting a category keeps its customers",
+        "*Tickets*: create a ticket on a customer (status, priority, assignee, due date, service/server), comment on it, change the status; the history shows who changed what; the list *Tickets* filters by status, assignee and priority",
+        "An overdue ticket, an urgent ticket and a contract whose notice deadline is within 60 days show on the overview",
+        "*Administration → Order*: create tags, a category and a group with colours; rename a tag (it changes on servers and customers), merge two tags, delete one",
+        "On a server (*Group & tags*) and on a customer you can only pick tags from the list; the colours show in the lists",
+        "*PDF report* (on *Servers* and on a customer): the PDF opens, umlauts are right, a customer report only has that customer's services and servers, no credentials or notes",
+        "On *Inventory* and *Network* the tables do not scroll sideways; on a phone each row is a card",
     ]),
     ("linux", "Linux servers (agent kind *Linux server*)", [
         "*Add server → Linux server*: the install command works on a Debian/Ubuntu server; it appears under *Servers*",

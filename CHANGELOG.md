@@ -5,6 +5,8 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+## [1.0.0-beta.5] – 2026-11-16
+
 ### Added
 - **Customers as a small CRM:** the customer list is a sortable table (category, contact, services and domains,
   servers, status, contract end, open tickets) with filters by category and free **tags**. A customer page has tabs

@@ -9,6 +9,7 @@ const shots = [
   ['servers', '/servers', { w: 1280, h: 760 }],
   ['server', '/servers', { w: 1280, h: 900 }],
   ['proxmox', '/proxmox', { w: 1280, h: 860 }],
+  ['customers', '/customers', { w: 1280, h: 560 }],
   ['customer', null, { w: 1280, h: 1000 }],
   ['jobs', '/monitoring', { w: 1280, h: 560 }],
   ['roles', '/admin?tab=roles', { w: 1280, h: 700 }],

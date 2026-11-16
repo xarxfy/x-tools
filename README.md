@@ -9,7 +9,7 @@ something breaks.
 > review or security audit**. Read the code before you trust it, make backups, and think twice before exposing it to
 > the internet or giving it control (Docker socket, Proxmox, root agents) over systems you care about. Use at your own risk.
 >
-> **Status: beta (1.0.0-beta.4).** All areas are in place; expect rough edges until the final 1.0.0.
+> **Status: beta (1.0.0-beta.5).** All areas are in place; expect rough edges until the final 1.0.0.
 > Beta testers: [checklist](docs/beta-testing.md) – tick it in the browser ([beta-checklist.html](docs/beta-checklist.html))
 > or in an issue from the template *Beta test*. What changed: [CHANGELOG](CHANGELOG.md).
 
@@ -22,7 +22,7 @@ something breaks.
 </tr>
 <tr>
 <td><img src="docs/screenshots/proxmox.png" alt="Proxmox: LXCs and VMs"><br><sub>Proxmox – LXCs and VMs</sub></td>
-<td><img src="docs/screenshots/customer.png" alt="Customer page with websites deployed from git"><br><sub>Customers – website checks, deploy from git</sub></td>
+<td><img src="docs/screenshots/customers.png" alt="Customers: table with categories, tags, contract end and open tickets"><br><sub>Customers – a small CRM: contacts, contracts, tickets, websites</sub></td>
 </tr>
 <tr>
 <td><img src="docs/screenshots/overview-dark.png" alt="Dark mode"><br><sub>Dark mode</sub></td>
@@ -44,7 +44,8 @@ something breaks.
 | **Proxmox** | Nodes, storage, host network, updates; every LXC/VM with resources, network, IPs, snapshots, backups and its `.conf` file |
 | **Agents** | More servers: Linux servers, Proxmox hosts (nodes, LXCs, VMs) and Docker hosts – one install command, outbound only, optional control (start/stop) |
 | **Cloudflare** | DNS, tunnels, routes and Access apps, checked against your services; optionally edit DNS records and tunnel routes |
-| **Customers** | Optional: contacts, agreements, external website checks – and deploying their websites from git |
+| **Customers** | Optional, a small CRM: a table of customers with categories and tags, contact people, contract data with notice deadlines, links, servers/jobs/services per customer, **tickets** with a history, website checks – and deploying their websites from git |
+| **Reports** | A PDF report of your servers and services – for everything or for one customer |
 | **Notifications** | Telegram and ntfy, with delay and "back to normal"; pause alerts during maintenance |
 | **Jobs** | Heartbeat monitors: cron jobs and backups report in, silence raises an alert |
 | **Users** | Roles (viewer, operator, admin), two-factor login, audit log, encrypted backups (also automatic) |
