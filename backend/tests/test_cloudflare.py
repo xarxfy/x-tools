@@ -148,7 +148,7 @@ def test_cloudflare_changes(cf):
 
         # DNS record outside the zone is refused, inside works; delete
         rec = {"zone_id": "z1", "type": "TXT", "name": "x.other.org", "content": "hello"}
-        assert cf.post("/api/cloudflare/dns", json=rec, headers=h).status_code == 502
+        assert cf.post("/api/cloudflare/dns", json=rec, headers=h).status_code == 424
         assert cf.post("/api/cloudflare/dns", json={**rec, "name": "x.example.com"}, headers=h).status_code == 200
         rid = next(r["id"] for r in ROUTES["/zones/z1/dns_records"] if r.get("name") == "x.example.com")
         assert cf.delete(f"/api/cloudflare/dns/z1/{rid}", headers=h).status_code == 204

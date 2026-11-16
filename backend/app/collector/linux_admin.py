@@ -7,6 +7,7 @@ removes the firewall rule that lets SSH in.
 """
 
 import base64
+import errno
 import hashlib
 import ipaddress
 import os
@@ -269,10 +270,17 @@ def _would_orphan(name: str) -> bool:
     return not others
 
 
+READ_ONLY_HINT = ("The agent may not write to the system (its service is read-only: installed before version 7 or "
+                  "without control). Create a new install command with “Allow control” and run it on this server.")
+
+
 def _cmd(args: list[str]) -> None:
     out = run(args, timeout=60)
     if out.returncode != 0:
-        raise AdminError((out.stderr or out.stdout or f"{args[0]} failed").strip()[:300])
+        text = (out.stderr or out.stdout or f"{args[0]} failed").strip()
+        if "read-only file system" in text.lower() or "cannot lock" in text.lower():
+            text = f"{text[:150]} – {READ_ONLY_HINT}"
+        raise AdminError(text[:400])
 
 
 def _write_keys(p: pwd.struct_passwd, lines: list[str]) -> None:
@@ -286,8 +294,11 @@ def _write_keys(p: pwd.struct_passwd, lines: list[str]) -> None:
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "w") as f:
         f.write("".join(line + "\n" for line in lines))
-    os.chown(tmp, p.pw_uid, p.pw_gid)
-    os.replace(tmp, path)
+    try:
+        os.chown(tmp, p.pw_uid, p.pw_gid)
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)  # only left over when something failed
 
 
 def _existing_lines(p: pwd.struct_passwd) -> list[str]:
@@ -505,6 +516,15 @@ def start_update() -> dict:
 
 def admin_action(action: str, target: str, args: dict) -> dict:
     """Entry point for the agent."""
+    try:
+        return _admin_action(action, target, args)
+    except OSError as error:
+        if error.errno == errno.EROFS:
+            raise AdminError(READ_ONLY_HINT) from None
+        raise
+
+
+def _admin_action(action: str, target: str, args: dict) -> dict:
     args = validate(action, target, args)
     if action == "system.update":
         return start_update()

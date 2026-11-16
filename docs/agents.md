@@ -60,6 +60,11 @@ or newer – an outdated agent is marked in *Settings → Agents*; update it wit
   limit; port or range, protocol, optional source address) and turn the firewall on or off. Turning it on allows the
   SSH port(s) first; rules that would block SSH or delete the last SSH rule are refused.
 
+For this the agent's service must be allowed to write to the system. The install command for a **Linux server with
+control** therefore creates the service without `ProtectSystem`/`ProtectHome` (other agents keep the strict,
+read-only unit). An agent installed earlier shows a hint (“…its service is read-only…”) when an action fails for
+this reason: create a new install command and run it on the server.
+
 Everything is validated by X-TOOLS and again by the agent; arguments never reach a shell, the agent never follows
 symbolic links in a user's `~/.ssh`, and every action is in the audit log.
 

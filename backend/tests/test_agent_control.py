@@ -45,7 +45,7 @@ def test_actions(admin):
     res = admin.post(f"/api/agents/{r['id']}/action",
                      json={"action": "proxmox.shutdown", "target": "101", "node": "pve", "type": "lxc"}, headers=h)
     t.join()
-    assert res.status_code == 502 and "403" in res.json()["detail"]
+    assert res.status_code == 424 and "403" in res.json()["detail"]
     assert seen[1]["params"] == {"node": "pve", "type": "lxc"}
 
     # validation before anything is queued

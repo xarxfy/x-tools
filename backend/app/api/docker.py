@@ -55,9 +55,9 @@ def run(action: str, container: str, lines: int | None = None) -> dict:
     except ActionError as error:
         raise HTTPException(422, str(error)) from None
     except TimeoutError as error:
-        raise HTTPException(504, str(error)) from None
+        raise HTTPException(424, str(error)) from None
     if not result.get("ok"):
-        raise HTTPException(502, result.get("error") or "Action failed")
+        raise HTTPException(424, result.get("error") or "Action failed")
     return result
 
 

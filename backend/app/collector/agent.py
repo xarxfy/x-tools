@@ -127,7 +127,7 @@ def execute(command: dict) -> dict:
             raise ValueError("Unknown command")
         return {"ok": True}
     except (ValueError, OSError, subprocess.SubprocessError) as error:  # AdminError is a ValueError
-        return {"ok": False, "error": str(error)[:300]}
+        return {"ok": False, "error": str(error)[:480]}
 
 
 def get_json(url: str, headers: dict, timeout: float) -> object:

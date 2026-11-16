@@ -29,6 +29,10 @@ ACTIONS = {"docker.start", "docker.stop", "docker.restart", "docker.logs",
            "systemd.start", "systemd.stop", "systemd.restart", "systemd.logs", "system.reboot"}
 
 
+# Errors reported by an agent use 424, not 502/504: Cloudflare replaces origin answers with 502/504 by its own
+# error page, and the real message would never reach the user.
+
+
 class Queue:
     def __init__(self):
         self.cond = threading.Condition()
@@ -155,10 +159,10 @@ def dispatch(agent: Agent, action: str, target: str, params: dict, what: str, de
     if result is None:
         queue.drop(agent.id, command["id"])
         audit(action, what, "no answer from the agent")
-        raise HTTPException(504, "The agent did not answer – is it running (and on version 3 or newer)?")
+        raise HTTPException(424, "The agent did not answer – is it running (and on version 3 or newer)?")
     audit(action, what, detail if result.get("ok") else f"{detail} failed: {result.get('error', '')}".strip())
     if not result.get("ok"):
-        raise HTTPException(502, result.get("error") or "The action failed")
+        raise HTTPException(424, result.get("error") or "The action failed")
     return result
 
 

@@ -173,16 +173,7 @@ ExecStart=/usr/bin/env python3 -I /opt/x-tools-agent/agent.pyz
 EnvironmentFile=/etc/x-tools-agent/agent.env
 Restart=always
 RestartSec=15
-# Read-only everywhere; the agent only reads and sends.
-NoNewPrivileges=yes
-ProtectSystem=strict
-ProtectHome=read-only
-PrivateTmp=yes
-ProtectKernelTunables=yes
-ProtectKernelModules=yes
-ProtectControlGroups=yes
-RestrictSUIDSGID=yes
-LockPersonality=yes
+__HARDENING__
 
 [Install]
 WantedBy=multi-user.target
@@ -203,6 +194,27 @@ echo "Remove: systemctl disable --now x-tools-agent; rm -rf /opt/x-tools-agent /
 """
 
 
+HARDENED = """# Read-only everywhere; the agent only reads and sends.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes"""
+# A Linux server with control can be administered (install updates, users, SSH keys, firewall): the agent has to
+# write to the system then, so the file system must not be read-only. The kernel protections stay.
+ADMIN = """# Control is on: the agent installs updates and manages users, SSH keys and the firewall, so the file
+# system is writable. The agent only does this on commands from X-TOOLS (fixed list of actions).
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+LockPersonality=yes"""
+
+
 def render_script(base: str, data: dict) -> str:
     env = [f"XT_AGENT_URL={base}", f"XT_AGENT_KEY={data['key']}", f"XT_TIMEZONE={get_settings().timezone}",
            f"XT_COMPOSE_ROOTS={data.get('compose_roots') or '/opt,/srv,/home,/root'}",
@@ -218,7 +230,8 @@ def render_script(base: str, data: dict) -> str:
         env += [f"PROXMOX_URL={data['proxmox_url'].rstrip('/')}", f"PROXMOX_TOKEN_ID={data['proxmox_token_id']}",
                 f"PROXMOX_TOKEN_SECRET={data['proxmox_token_secret']}",
                 f"PROXMOX_VERIFY_TLS={'1' if data.get('proxmox_verify_tls') else '0'}"]
-    return (SCRIPT.replace("__URL__", base).replace("__KEY__", data["key"])
+    hardening = ADMIN if data.get("kind") == "linux" and data.get("control") else HARDENED
+    return (SCRIPT.replace("__HARDENING__", hardening).replace("__URL__", base).replace("__KEY__", data["key"])
             .replace("__CURL_HEADERS__", curl_headers).replace("__ENV__", "\n".join(env)))
 
 

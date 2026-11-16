@@ -140,7 +140,7 @@ def test_notification(body: TestIn):
         raise HTTPException(422, "Save a topic first")
     result = notify.notify(settings, "🔔 X-TOOLS: test", "Notifications work.", "info", only=[body.channel])
     if result[body.channel]:
-        raise HTTPException(502, result[body.channel])
+        raise HTTPException(424, result[body.channel])
     return {"ok": True}
 
 

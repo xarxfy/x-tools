@@ -5,6 +5,13 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Fixed
+- Administration (users, SSH keys, updates, firewall) failed because the agent's systemd service was read-only. The
+  install command of a Linux server with control now creates a writable service; older agents show a hint to renew
+  the install command.
+- Errors from agents (and from Cloudflare/notification calls) are reported with status 424 instead of 502/504:
+  Cloudflare replaced those with its own error page and hid the real message.
+
 ## [1.0.0-beta.2] – 2026-11-16
 
 ### Added

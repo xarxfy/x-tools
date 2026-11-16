@@ -52,7 +52,7 @@ def run(fn, *args):
         fn(*args)
     except cf.CloudflareError as error:
         cf.refresh()
-        raise HTTPException(502, str(error)) from None
+        raise HTTPException(424, str(error)) from None
 
 
 def service_rows(db: Session) -> list[dict]:

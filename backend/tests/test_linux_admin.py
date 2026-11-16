@@ -205,3 +205,31 @@ def test_standalone_agent_starts(tmp_path):
     pyz.write_bytes(agent_bundle())
     out = subprocess.run([sys.executable, "-I", str(pyz)], capture_output=True, text=True, env={"PATH": os.environ["PATH"]})
     assert "XT_AGENT_URL and XT_AGENT_KEY must be set" in out.stderr, out.stderr
+
+
+def test_service_unit_is_writable_only_for_controlled_linux_servers():
+    from app.api.agent_install import InstallOptions, render_script
+    def script(**kw):
+        return render_script("https://x.test", {"key": "k", **InstallOptions(**kw).model_dump()})
+    assert "ProtectSystem=strict" not in script(kind="linux", control=True)
+    assert "__HARDENING__" not in script(kind="linux", control=True)
+    for kw in ({"kind": "linux"}, {"kind": "docker", "control": True}, {"kind": "proxmox", "control": True,
+               "proxmox_url": "https://127.0.0.1:8006", "proxmox_token_id": "a@pam!b", "proxmox_token_secret": "s"}):
+        text = script(**kw)
+        assert "ProtectSystem=strict" in text and "ProtectHome=read-only" in text and "NoNewPrivileges=yes" in text, kw
+
+
+def test_read_only_system_gives_a_hint(tmp_path, monkeypatch):
+    fake_user(tmp_path, monkeypatch)
+    sh_bin(tmp_path, monkeypatch, "usermod", "echo 'usermod: cannot open /etc/passwd: Read-only file system' >&2; exit 1")
+    monkeypatch.setattr(la, "_would_orphan", lambda n: False)
+    with pytest.raises(la.AdminError, match="install command"):
+        la.admin_action("user.sudo", "marc", {})
+    (tmp_path / "marc" / ".ssh").mkdir(mode=0o700)
+    import errno
+
+    def boom(*a, **k):
+        raise OSError(errno.EROFS, "Read-only file system")
+    monkeypatch.setattr(la.os, "replace", boom)
+    with pytest.raises(la.AdminError, match="install command"):
+        la.admin_action("user.key_add", "marc", {"key": KEY})
