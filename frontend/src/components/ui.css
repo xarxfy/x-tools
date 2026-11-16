@@ -496,10 +496,11 @@ a.list-title svg,
   white-space: nowrap;
 }
 .data-table-wrap {
-  overflow-x: auto;
+  overflow: hidden;
 }
 .data-table {
   width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -508,11 +509,11 @@ a.list-title svg,
   font-weight: 600;
   font-size: 12.5px;
   color: var(--muted);
-  white-space: nowrap;
   border-bottom: 1px solid var(--fill);
   padding: 0;
 }
 .data-table th button {
+  text-align: left;
   border: 0;
   background: none;
   font: inherit;
@@ -524,6 +525,7 @@ a.list-title svg,
   padding: 9px 12px;
   border-bottom: 1px solid var(--fill);
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 .data-table tbody tr:last-child td {
   border-bottom: 0;
@@ -532,5 +534,5 @@ a.list-title svg,
   background: color-mix(in srgb, var(--down) 9%, transparent);
 }
 .data-table td.nowrap {
-  white-space: nowrap;
+  overflow-wrap: normal;
 }

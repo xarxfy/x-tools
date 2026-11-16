@@ -79,8 +79,11 @@ body {
   .sp-input kbd {
     display: none;
   }
-  .data-table td:last-child {
-    white-space: nowrap;
+  .data-table th button {
+    padding: 8px 6px;
+  }
+  .data-table td {
+    padding: 8px 6px;
   }
   .data-table .agent-bar {
     flex-wrap: nowrap;
