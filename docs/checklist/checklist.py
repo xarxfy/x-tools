@@ -44,6 +44,13 @@ SECTIONS = [
         "*Servers → SSH keys* lists the keys with the servers and users; *Remove everywhere* works (test with a test key)",
         "A role without *Manage servers* sees neither *SSH keys* nor the admin actions in *Group actions*",
     ]),
+    ("inventory", "Inventory and network (agent version 8 – renew the install command)", [
+        "*Servers → Inventory* lists every server with system, kernel, IPs, agent, updates, uptime; sorting works; *Export CSV* opens in a spreadsheet",
+        "An old distribution (e.g. Debian 11) shows *support ended*",
+        "*Servers → Network* lists the IPs of servers and Proxmox guests; add an entry for a device without agent (router, NAS), edit it, delete it",
+        "Give two systems with different names the same address (an entry with the IP of a server): it is flagged; the same machine as agent and guest is not",
+        "Docker/virtual interfaces are hidden until *show Docker/virtual* is ticked",
+    ]),
     ("overview", "Overview", [
         "*Needs attention* lists real problems (or *All good*); every entry leads to the right place",
         "The banner shows the overall state; the counters (LXCs/VMs, containers, services, customers) are plausible",

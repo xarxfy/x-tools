@@ -18,6 +18,7 @@ PERMISSIONS: dict[str, str] = {
     "servers.manage": "servers",
     "servers.organize": "servers",
     "agents.manage": "servers",
+    "network.edit": "servers",
     "cloudflare.edit": "servers",
     "admin.users": "administration",
     "admin.roles": "administration",

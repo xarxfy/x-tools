@@ -32,7 +32,7 @@ from app.collector.collector import collect_snapshot, host_path, system_info
 from app.core.config import get_settings
 from app.collector.httpjson import post_json
 
-AGENT_VERSION = "7"
+AGENT_VERSION = "8"
 
 
 DETAILS_INTERVAL = max(120, int(os.environ.get("XT_PROXMOX_DETAILS_INTERVAL", "600")))
@@ -176,13 +176,27 @@ def hostname() -> str:
         return socket.gethostname()
 
 
+_network: dict = {"data": [], "at": 0.0}
+
+
+def network_info() -> list[dict]:
+    """Interfaces and IP addresses of this machine (every few minutes; every kind of agent reports them)."""
+    if time.time() - _network["at"] > LINUX_DETAILS_INTERVAL or not _network["at"]:
+        try:
+            _network["data"] = linux.interfaces()
+        except Exception:  # noqa: BLE001 – must never stop the report
+            _network["data"] = []
+        _network["at"] = time.time()
+    return _network["data"]
+
+
 def build_report() -> dict:
     has_docker = os.environ.get("XT_AGENT_DOCKER", "1") != "0" and os.path.exists(get_settings().docker_socket)
     docker = collect_snapshot() if has_docker else None
     return {"version": AGENT_VERSION, "hostname": hostname(), "sent_at": time.time(),
             "control": os.environ.get("XT_AGENT_CONTROL", "0") == "1",
             "system": (docker or {}).get("system") or system_info(), "docker": docker, "proxmox": proxmox_info(),
-            "linux": linux_info()}
+            "linux": linux_info(), "network": network_info()}
 
 
 def run() -> None:

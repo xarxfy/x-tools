@@ -120,7 +120,7 @@ def agent(name, kind, report):
 def svc(name, desc, active="active", sub="running"):
     return {"name": name + ".service", "active": active, "sub": sub, "enabled": "enabled", "description": desc}
 
-linux_report = {"version": "7", "hostname": "web-01", "control": True,
+linux_report = {"version": "8", "hostname": "web-01", "control": True,
     "system": {"cpus": 2, "uptime": 86400 * 41.2, "load": [0.31, 0.25, 0.2], "mem_total": 4 * GB, "mem_used": 1.7 * GB,
                "disk_total": 40 * GB, "disk_used": 17 * GB, "hostname": "web-01"},
     "linux": {"os": "Debian GNU/Linux 13 (trixie)", "kernel": "6.12.115+deb13-amd64", "arch": "x86_64",
@@ -157,12 +157,20 @@ linux_report = {"version": "7", "hostname": "web-01", "control": True,
               "update_job": {"state": "ok", "started": time.time() - 86400, "finished": time.time() - 86400 + 140, "manager": "apt",
                              "log": "$ apt-get update\nGet:1 http://deb.debian.org/debian trixie InRelease\nReading package lists...\n$ apt-get -y upgrade\n5 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n"}},
     "docker": None, "proxmox": None}
+def net(name, ip, prefix=24, virtual=False):
+    return {"name": name, "mac": "bc:24:11:%02x:%02x:%02x" % (random.randrange(256), random.randrange(256), random.randrange(256)),
+            "state": "up", "virtual": virtual, "addrs": [{"ip": ip, "prefix": prefix}]}
+
+linux_report["network"] = [net("eth0", "10.0.0.21"), net("docker0", "172.17.0.1", 16, True)]
+linux_report["linux"].update(os_id="debian", os_version="13")
 linux_id = agent("web-01", "linux", linux_report)
 db_report = json.loads(json.dumps(linux_report))
 db_report["hostname"] = "db-01"
 db_report["system"].update(hostname="db-01", load=[0.9, 0.7, 0.6], mem_used=3.1 * GB, disk_used=22 * GB)
 db_report["linux"].update(updates=[], reboot_required=False, firewall={"installed": False}, update_job=None,
                           services=[svc("postgresql@16-main", "PostgreSQL Cluster 16-main"), svc("ssh", "OpenBSD Secure Shell server")])
+db_report["network"] = [net("eth0", "10.0.0.22"), net("docker0", "172.17.0.1", 16, True)]
+db_report["linux"].update(os_id="debian", os_version="11", os="Debian GNU/Linux 11 (bullseye)")
 db_id = agent("db-01", "linux", db_report)
 grp_prod = call("/api/server-groups", {"name": "Production"})["id"]
 call("/api/server-groups", {"name": "Home network"})
@@ -173,7 +181,7 @@ call(f"/api/agents/{db_id}/meta", {"group_id": grp_prod, "tags": ["debian", "dat
 def guest(vmid, name, typ, status, cpu, maxcpu, mem, maxmem, up):
     return {"vmid": vmid, "name": name, "type": typ, "status": status, "node": "pve", "cpu": cpu, "maxcpu": maxcpu,
             "mem": mem * GB, "maxmem": maxmem * GB, "uptime": up}
-pve_report = {"version": "7", "hostname": "pve", "control": True,
+pve_report = {"version": "8", "hostname": "pve", "control": True,
     "system": {"cpus": 16, "uptime": 86400 * 63, "load": [1.9, 2.1, 1.8], "mem_total": 64 * GB, "mem_used": 38 * GB,
                "disk_total": 1800 * GB, "disk_used": 910 * GB, "hostname": "pve"},
     "docker": None, "linux": None,
@@ -188,9 +196,17 @@ pve_report = {"version": "7", "hostname": "pve", "control": True,
                 "storage": [{"storage": "local-zfs", "node": "pve", "disk": 520 * GB, "maxdisk": 1000 * GB},
                             {"storage": "backup", "node": "pve", "disk": 390 * GB, "maxdisk": 800 * GB}],
                 "details": None}}
+pve_report["network"] = [net("vmbr0", "10.0.0.2")]
+pve_report["proxmox"]["details"] = {"fetched_at": time.time(), "backups": [], "nodes": {}, "guests": {
+    "pve/100": {"fetched_at": time.time(), "ips": [{"interface": "eth0", "address": "10.0.0.30"}]},
+    "pve/101": {"fetched_at": time.time(), "config": {"nets": [{"name": "eth0", "ip": "10.0.0.53/24", "mac": "bc:24:11:aa:00:01"}]}},
+    "pve/102": {"fetched_at": time.time(), "ips": [{"interface": "enp0s18", "address": "10.0.0.60"}]},
+    "pve/103": {"fetched_at": time.time(), "ips": [{"interface": "eth0", "address": "10.0.0.70"}]},
+    "pve/104": {"fetched_at": time.time(), "ips": [{"interface": "eth0", "address": "10.0.0.80"}]},
+    "pve/106": {"fetched_at": time.time(), "ips": [{"interface": "eth0", "address": "10.0.0.90"}]}}}
 pve_id = agent("pve", "proxmox", pve_report)
 
-dk_report = {"version": "7", "hostname": "docker-host", "control": True,
+dk_report = {"version": "8", "hostname": "docker-host", "control": True,
     "system": {"cpus": 4, "uptime": 86400 * 30, "load": [0.4, 0.5, 0.5], "mem_total": 8 * GB, "mem_used": 3.8 * GB,
                "disk_total": 60 * GB, "disk_used": 24 * GB, "hostname": "docker-host"},
     "linux": None, "proxmox": None,
@@ -198,7 +214,11 @@ dk_report = {"version": "7", "hostname": "docker-host", "control": True,
                "projects": [project("paperless", "/opt/paperless", [ct("paperless-web", "paperless-ngx:2.13", ports=[8000]),
                             ct("paperless-broker", "redis:7")], "services:\n  web:\n    image: paperless-ngx:2.13\n")],
                "containers": []}}
+dk_report["network"] = [net("eth0", "10.0.0.30"), net("br-3f2a", "172.18.0.1", 16, True)]
 dk_id = agent("docker-host", "docker", dk_report)
+for ip, name, notes in (("10.0.0.1", "Router", "Fritz!Box, ground floor"), ("10.0.0.40", "NAS", "Synology, backups"),
+                        ("10.0.0.22", "Old printer", "to be removed")):
+    call("/api/network/entries", {"ip": ip, "name": name, "notes": notes})
 
 # --- history: metrics (7 days), events, jobs, sites -----------------------------------------
 with session_scope() as db:

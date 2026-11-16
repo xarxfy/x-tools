@@ -8,7 +8,7 @@ from app.api.deps import current_user
 from app.api.features import load as load_features
 from app.collector.exchange import load_snapshot
 from app.core.db import get_db
-from app.models import Agent, Customer, Heartbeat, ServerGroup, Service, Site
+from app.models import Agent, Customer, Heartbeat, NetworkEntry, ServerGroup, Service, Site
 from app.monitor.issues import all_containers
 
 router = APIRouter(prefix="/api/search", tags=["search"], dependencies=[Depends(current_user)])
@@ -52,7 +52,8 @@ def search_all(db: Session, query: str) -> list[dict]:
         link = f"/servers/{a.id}" if a.kind == "linux" else f"{page}#agent-{a.id}"
         group = groups.get(a.group_id or "", "")
         sub = " · ".join(x for x in (a.kind, group, ", ".join(f"#{t}" for t in a.tags or [])) if x)
-        add("server", a.name, sub, link, report.get("hostname"), (report.get("linux") or {}).get("os"), a.notes, *(a.tags or []))
+        ips = [ad["ip"] for i in report.get("network") or [] if not i.get("virtual") for ad in i.get("addrs", [])]
+        add("server", a.name, sub, link, report.get("hostname"), (report.get("linux") or {}).get("os"), a.notes, *ips, *(a.tags or []))
         tags.update(a.tags or [])
         for c in all_containers(report.get("docker")):
             add("container", c.get("name", ""), f"{a.name} · {c.get('image', '')}", f"/docker#agent-{a.id}", c.get("image"))
@@ -71,6 +72,8 @@ def search_all(db: Session, query: str) -> list[dict]:
             ports, s.notes, *(s.domains or []))
         for d in s.domains or []:
             add("domain", d, s.name, f"/domains?q={d}")
+    for e in db.scalars(select(NetworkEntry)):
+        add("network", e.name, e.ip, "/servers?view=network", e.ip, e.notes)
     for j in db.scalars(select(Heartbeat)):
         add("job", j.name, "", "/monitoring")
     if load_features().customers:
@@ -80,7 +83,7 @@ def search_all(db: Session, query: str) -> list[dict]:
             add("site", w.name, w.repo_url, f"/customers/{w.customer_id}" if w.customer_id else "/customers", w.branch)
 
     out: list[dict] = []
-    for kind in ("server", "service", "container", "guest", "domain", "customer", "site", "job", "tag"):
+    for kind in ("server", "service", "container", "guest", "network", "domain", "customer", "site", "job", "tag"):
         items = sorted(found.get(kind, []), key=lambda x: (x[0], x[1]["title"].lower()))
         out += [i for _, i in items[:PER_TYPE]]
     return out

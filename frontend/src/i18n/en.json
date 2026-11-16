@@ -1305,6 +1305,10 @@
     "admin.audit": {
       "name": "Audit log",
       "hint": "see who did what"
+    },
+    "network.edit": {
+      "name": "Edit IP entries",
+      "hint": "add, change and delete IP addresses of devices without agent"
     }
   },
   "hub": {
@@ -1331,7 +1335,8 @@
       "customer": "Customers",
       "site": "Websites",
       "job": "Jobs",
-      "tag": "Tags"
+      "tag": "Tags",
+      "network": "IP entries"
     }
   },
   "bulk": {
@@ -1374,5 +1379,55 @@
     "removeEverywhere": "Remove everywhere",
     "confirmRemove": "Remove this key from {{count}} servers (all users listed)?",
     "key": "Public SSH key"
+  },
+  "inventory": {
+    "tab": {
+      "inventory": "Inventory",
+      "network": "Network"
+    },
+    "intro": "One row per server: system, kernel, agent, updates, uptime. Click a heading to sort.",
+    "thisServer": "This server",
+    "name": "Name",
+    "kind": "Type",
+    "group": "Group",
+    "tags": "Tags",
+    "os": "System",
+    "kernel": "Kernel",
+    "ips": "IP addresses",
+    "agent": "Agent",
+    "uptime": "Uptime",
+    "updates": "Updates",
+    "lastReport": "Last report",
+    "eol": "support ended",
+    "eolSoon": "support ends {{date}}",
+    "outdated": "update",
+    "export": "Export CSV"
+  },
+  "network": {
+    "intro": "IP addresses of your servers, Proxmox guests and your own entries (devices without agent). The same address on two systems is flagged.",
+    "none": "No addresses yet. Servers report them with an agent of version 8; you can add devices by hand.",
+    "ip": "IP address",
+    "name": "Name",
+    "type": "Type",
+    "iface": "Interface",
+    "network": "Network",
+    "notes": "Notes",
+    "kinds": {
+      "server": "Server",
+      "guest": "Guest",
+      "manual": "Entry"
+    },
+    "showVirtual": "show Docker/virtual",
+    "addEntry": "Add entry",
+    "editEntry": "Edit entry",
+    "entryHint": "For devices without agent: router, NAS, printer, switch, a VM somewhere else …",
+    "conflicts_one": "{{count}} address is used twice",
+    "conflicts_other": "{{count}} addresses are used twice",
+    "conflictHint": "Compare the names – the same machine can also appear under two names (e.g. agent and guest with different names)."
+  },
+  "kinds": {
+    "linux": "Linux",
+    "proxmox": "Proxmox",
+    "docker": "Docker"
   }
 }

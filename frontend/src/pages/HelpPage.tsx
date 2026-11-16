@@ -82,7 +82,11 @@ const DOCS: Doc[] = [
       review, run, and see the result per server: install updates, add or remove an SSH key, add a firewall rule,
       restart a service. The tab <em>SSH keys</em> shows which key has access to which server and user and removes
       an old key everywhere with one click.</p>
-  </>, "search find ctrl k notes group actions bulk ssh keys everywhere"),
+    <p><strong>Inventory and network</strong> (tabs on <Link to="/servers">Servers</Link>): the inventory lists every
+      server with system, kernel, IPs, agent version, updates and uptime (and warns about systems out of support); the
+      network tab lists all IP addresses of servers, Proxmox guests and your own entries for devices without agent, and
+      flags an address that is used twice. Both can be exported as CSV.</p>
+  </>, "search find ip addresses inventory network csv ctrl k notes group actions bulk ssh keys everywhere"),
   doc("jobs", "Jobs and maintenance", <>
     <p>The <Link to="/monitoring">Monitoring → Jobs</Link> page monitors things that should happen regularly (backups, cron jobs).
       Each job has a secret address; the job calls it when it has run

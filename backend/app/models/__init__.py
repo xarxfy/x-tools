@@ -175,6 +175,18 @@ class Setting(Base):
     value: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class NetworkEntry(Base):
+    """An IP address entered by hand: a device without agent (router, NAS, printer, switch …)."""
+
+    __tablename__ = "network_entries"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    ip: Mapped[str] = mapped_column(String(45))
+    name: Mapped[str] = mapped_column(String(80))
+    notes: Mapped[str] = mapped_column(String(300), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class ServerGroup(Base):
     """A group of servers with a free name (Production, Customer A, Home network …); `position` is the order."""
 

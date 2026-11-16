@@ -1305,6 +1305,10 @@
     "admin.audit": {
       "name": "Audit-Log",
       "hint": "einsehen, wer was getan hat"
+    },
+    "network.edit": {
+      "name": "IP-Einträge bearbeiten",
+      "hint": "IP-Adressen von Geräten ohne Agent anlegen, ändern und löschen"
     }
   },
   "hub": {
@@ -1331,7 +1335,8 @@
       "customer": "Kunden",
       "site": "Websites",
       "job": "Jobs",
-      "tag": "Tags"
+      "tag": "Tags",
+      "network": "IP-Einträge"
     }
   },
   "bulk": {
@@ -1374,5 +1379,55 @@
     "removeEverywhere": "Überall entfernen",
     "confirmRemove": "Diesen Schlüssel auf {{count}} Servern entfernen (alle aufgeführten Benutzer)?",
     "key": "Öffentlicher SSH-Schlüssel"
+  },
+  "inventory": {
+    "tab": {
+      "inventory": "Inventar",
+      "network": "Netzwerk"
+    },
+    "intro": "Eine Zeile pro Server: System, Kernel, Agent, Updates, Uptime. Ein Klick auf die Überschrift sortiert.",
+    "thisServer": "Dieser Server",
+    "name": "Name",
+    "kind": "Art",
+    "group": "Gruppe",
+    "tags": "Tags",
+    "os": "System",
+    "kernel": "Kernel",
+    "ips": "IP-Adressen",
+    "agent": "Agent",
+    "uptime": "Laufzeit",
+    "updates": "Updates",
+    "lastReport": "Letzter Report",
+    "eol": "Support beendet",
+    "eolSoon": "Support endet {{date}}",
+    "outdated": "Update",
+    "export": "CSV exportieren"
+  },
+  "network": {
+    "intro": "IP-Adressen deiner Server, Proxmox-Gäste und eigener Einträge (Geräte ohne Agent). Dieselbe Adresse auf zwei Systemen wird markiert.",
+    "none": "Noch keine Adressen. Server melden sie mit einem Agent ab Version 8; Geräte kannst du von Hand eintragen.",
+    "ip": "IP-Adresse",
+    "name": "Name",
+    "type": "Art",
+    "iface": "Schnittstelle",
+    "network": "Netz",
+    "notes": "Notizen",
+    "kinds": {
+      "server": "Server",
+      "guest": "Gast",
+      "manual": "Eintrag"
+    },
+    "showVirtual": "Docker/virtuelle zeigen",
+    "addEntry": "Eintrag hinzufügen",
+    "editEntry": "Eintrag bearbeiten",
+    "entryHint": "Für Geräte ohne Agent: Router, NAS, Drucker, Switch, eine VM an anderer Stelle …",
+    "conflicts_one": "{{count}} Adresse wird doppelt verwendet",
+    "conflicts_other": "{{count}} Adressen werden doppelt verwendet",
+    "conflictHint": "Vergleiche die Namen – dieselbe Maschine kann auch unter zwei Namen auftauchen (z. B. Agent und Gast mit unterschiedlichem Namen)."
+  },
+  "kinds": {
+    "linux": "Linux",
+    "proxmox": "Proxmox",
+    "docker": "Docker"
   }
 }

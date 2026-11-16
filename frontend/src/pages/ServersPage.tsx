@@ -13,6 +13,7 @@ import { level } from "../components/format";
 import { HostHead, Pending, ServerRedirect, SetupHint, agentState, reported } from "./FleetPages";
 import { LinuxTab, type ServerTab } from "./LinuxTab";
 import { GroupActionsDialog, SshKeysTab } from "./GroupActions";
+import { InventoryTab, NetworkTab } from "./InventoryTabs";
 import { fmtDuration } from "../components/format";
 import { AddAgentButton, AgentManageBar } from "./AgentManage";
 import { NoteText } from "../components/NoteText";
@@ -380,13 +381,14 @@ export function ServersPage() {
   const agents = useAgents();
   const groups = useServerGroups();
   const [params, setParams] = useSearchParams();
-  const keys = can("servers.manage") ? ["servers", "keys"] : ["servers"];
+  const keys = ["servers", "inventory", "network", ...(can("servers.manage") ? ["keys"] : [])];
   const view = keys.find((k) => k === params.get("view")) ?? "servers";
   const setView = (k: string) => setParams((p) => { const n = new URLSearchParams(p); if (k === "servers") n.delete("view"); else n.set("view", k); return n; }, { replace: true });
   return (
     <Hub title={t("nav.servers")} tab={view} onTab={setView}
-         tabs={keys.map((k) => ({ key: k, label: t(k === "servers" ? "hub.serversTab" : "bulk.keysTab") }))}>
-      {view === "keys" ? <SshKeysTab servers={(agents.data ?? []).filter(isLinux)} groups={groups.data ?? []} /> : <ServersList />}
+         tabs={keys.map((k) => ({ key: k, label: t(k === "servers" ? "hub.serversTab" : k === "keys" ? "bulk.keysTab" : `inventory.tab.${k}`) }))}>
+      {view === "keys" ? <SshKeysTab servers={(agents.data ?? []).filter(isLinux)} groups={groups.data ?? []} />
+        : view === "inventory" ? <InventoryTab /> : view === "network" ? <NetworkTab /> : <ServersList />}
     </Hub>
   );
 }

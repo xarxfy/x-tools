@@ -57,6 +57,20 @@ The *Servers* page is a list of your Linux servers. Group them and tag them howe
   its log on its own page).
 - Click a server to open its page with the tabs **Overview**, **Services**, **Network** (ports, firewall) and **Users**.
 
+### Inventory and network
+
+- **Servers → Inventory**: one row per server – type, group, tags, system (with a hint *support ended* / *support ends
+  …* for distributions whose security support is over), kernel, IP addresses, agent version, uptime, pending
+  updates, last report. Click a heading to sort, *Export CSV* for documentation. The support dates are a built-in
+  table of Debian, Ubuntu, Rocky/Alma/CentOS/RHEL releases; check the vendor if it matters.
+- **Servers → Network**: all IP addresses X-TOOLS knows – servers (interfaces reported by the agent, version 8 or
+  newer), Proxmox guests (from their configuration and the guest agent) and **your own entries** for devices without
+  agent (router, NAS, printer, switch …; permission *Edit IP entries*). The same address on two systems with
+  different names is flagged. Docker/virtual interfaces are hidden unless you switch them on and never count as a
+  conflict. *Export CSV* exports the list.
+- Agents older than version 8 do not report interfaces; for Proxmox hosts the node addresses are read from the
+  network configuration instead. Renew the install command to update an agent.
+
 ### Notes, group actions and SSH keys
 
 - **Notes**: every server has a free-text note on its page (what it is for, who is responsible; `https://…` links are
