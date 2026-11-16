@@ -11,7 +11,7 @@ from pathlib import Path
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-VERSION = "1.0.0-beta.3"
+VERSION = "1.0.0-beta.4"
 
 
 class Settings(BaseSettings):

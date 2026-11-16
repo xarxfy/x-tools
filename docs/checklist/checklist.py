@@ -7,7 +7,7 @@ GitLab (.gitlab/issue_templates) and GitHub (.github/ISSUE_TEMPLATE).
 Items may use `code`, *emphasis* and [links](url).
 """
 
-VERSION = "1.0.0-beta.3"
+VERSION = "1.0.0-beta.4"
 
 SETUP_FIELDS = [
     ("version", "X-TOOLS version (sidebar bottom) and date of `git pull`"),

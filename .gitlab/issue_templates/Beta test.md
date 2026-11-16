@@ -1,4 +1,4 @@
-<!-- Beta test of X-TOOLS 1.0.0-beta.3. Tick what works; for problems add a comment below the item or a separate issue. The full instructions: docs/beta-testing.md -->
+<!-- Beta test of X-TOOLS 1.0.0-beta.4. Tick what works; for problems add a comment below the item or a separate issue. The full instructions: docs/beta-testing.md -->
 
 ## Your setup
 

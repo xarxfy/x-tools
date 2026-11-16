@@ -5,28 +5,41 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+## [1.0.0-beta.4] – 2026-11-16
+
 ### Added
+- **Global search** (`Ctrl/Cmd+K` or `/`, or the *Search* button in the sidebar): servers, containers, Proxmox
+  guests, services (names, ports, domains, notes), domains, customers, websites, jobs, IP entries and tags.
+- **Notes** on servers (free text with clickable links) and longer notes on services (up to 5000 characters); notes
+  are searchable.
+- **Group actions** on the Servers page: one action on several servers (by group, tag or selection) – install
+  updates, add/remove an SSH key, add a firewall rule, restart a service – with a review step and a result per server.
+- **SSH keys** tab: which key has access to which server and user; remove a key everywhere with one click.
+- **Inventory** (*Servers → Inventory*): a sortable table of all servers with system, kernel, IPs, agent version,
+  updates and uptime, a hint for systems out of support, and CSV export.
+- **Network** (*Servers → Network*): all IP addresses of servers, Proxmox guests and your own entries (devices
+  without agent, permission *Edit IP entries*); the same address on two different systems is flagged; CSV export.
 - **Use it like an app on your phone**: *Add to Home Screen* on iPhone/iPad (Safari) or *Install app* on Android gives
-  X-TOOLS its own icon and a full-screen look (web app manifest, home-screen icons, status-bar colours).
-- Phone layout: header with search and menu stays on top and respects the notch and home bar, dialogs slide up from the
-  bottom, tab bars scroll sideways, tables show the important columns, larger touch targets, no zooming into input fields.
+  X-TOOLS its own icon and a full-screen look.
+
+### Changed
+- Phone layout: the header with search and menu stays on top and respects the notch and home bar, dialogs slide up
+  from the bottom, tab bars scroll sideways, tables show the important columns, larger touch targets, no zooming into
+  input fields.
+- Agent version **8**: every agent reports its network interfaces; Linux servers also report the distribution
+  (for the support hint).
 
 ### Security
-- Test that goes through every API route: not logged in → 401, a role without permissions → 403.
+- A test goes through every API route: not logged in → 401, a role without permissions → 403.
 - Fixed: the secret heartbeat address of a job was shown by the name of the role (operator/admin) instead of the
   permission *Edit jobs*.
 - Heartbeat addresses: clients that call unknown addresses are throttled (known addresses are never blocked).
 - Updated React Router (open-redirect advisories); `npm audit` shows two moderate findings that need the breaking
   major version 7 (X-TOOLS only navigates to its own paths).
 
-### Added
-- **Global search** (`Ctrl/Cmd+K` or `/`, or the *Search* button in the sidebar): servers, containers, Proxmox
-  guests, services (names, ports, domains, notes), domains, customers, websites, jobs and tags; arrow keys and Enter.
-- **Group actions** on the Servers page: one action on several servers (by group, tag or selection) – install
-  updates, add/remove an SSH key, add a firewall rule, restart a service – with a review step and a result per server.
-- **SSH keys** tab: which key has access to which server and user; remove a key everywhere with one click.
-- **Notes** on servers (free text with clickable links, on the server's page) and longer notes on services
-  (up to 5000 characters, first line shown in the list); notes are searchable.
+### Notes
+- Update with `sudo x-tools-ctl update`; the database is migrated automatically. Agents of versions 6 and 7 keep
+  working; renew the install command of a server to get its IP addresses in the network overview.
 
 ## [1.0.0-beta.3] – 2026-11-16
 
