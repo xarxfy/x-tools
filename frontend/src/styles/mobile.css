@@ -128,22 +128,24 @@ body {
   .data-table .agent-bar {
     flex-wrap: nowrap;
   }
-  /* tab bars scroll sideways instead of being cut off */
-  .tabs {
+  /* tab bars wrap onto a second line instead of scrolling or being cut off */
+  .tabs,
+  .server-tabs {
     display: flex;
+    flex-wrap: wrap;
     max-width: 100%;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
+    gap: 2px;
   }
-  .tabs::-webkit-scrollbar {
-    display: none;
+  .tabs button,
+  .server-tabs button {
+    flex: 1 1 auto;
+    white-space: normal;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: center;
   }
-  .tabs button {
-    flex: 1 0 auto;
-    white-space: nowrap;
-  }
+
   /* dialogs slide up from the bottom like on iOS */
   .dialog,
   .dialog-wide {
