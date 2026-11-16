@@ -280,3 +280,16 @@ def test_server_groups_and_tags(admin):
     assert admin.delete(f"/api/server-groups/{a['id']}", headers=h).status_code == 204
     listed = [x for x in admin.get("/api/agents").json() if x["id"] == ag["id"]][0]
     assert listed["group_id"] is None and listed["tags"] == ["db", "Important"]
+
+
+def test_notes(admin):
+    h = csrf_headers(admin)
+    ag = admin.post("/api/agents", json={"name": "Notes1", "kind": "linux"}, headers=h).json()
+    r = admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": [], "notes": "  DB for ACME\nhttps://wiki.example/db  "}, headers=h)
+    assert r.json()["notes"] == "DB for ACME\nhttps://wiki.example/db"
+    # tags without notes keep the notes
+    assert admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": ["x"]}, headers=h).json()["notes"].startswith("DB for ACME")
+    assert admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": [], "notes": "x" * 5001}, headers=h).status_code == 422
+    long = "n" * 2000
+    s = admin.post("/api/services", json={"name": "Wiki", "notes": long}, headers=h)
+    assert s.status_code == 201 and s.json()["notes"] == long

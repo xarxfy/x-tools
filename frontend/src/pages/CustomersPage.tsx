@@ -14,6 +14,7 @@ import { useRunSiteChecks, useSiteChecks, type SiteCheck } from "../api/monitor"
 import { ago } from "../components/format";
 import { useCan } from "../api/users";
 import { SitesSection } from "./SitesSection";
+import { NoteText } from "../components/NoteText";
 
 function worst(checks: (SiteCheck | undefined)[]): "up" | "warn" | "down" | "off" {
   const levels = checks.map((c) => c?.level).filter(Boolean);
@@ -255,7 +256,7 @@ export function CustomerPage() {
           <div className="card card-pad">
             <dl className="details">
               {customer.agreements && (<><dt>{t("customers.agreements")}</dt><dd>{customer.agreements}</dd></>)}
-              {customer.notes && (<><dt>{t("customers.notes")}</dt><dd>{customer.notes}</dd></>)}
+              {customer.notes && (<><dt>{t("customers.notes")}</dt><dd><NoteText text={customer.notes} /></dd></>)}
             </dl>
           </div>
         </>
@@ -368,7 +369,7 @@ function CustomerDialog({
       </label>
       <label className="field">
         {t("customers.notes")}
-        <textarea className="input" rows={2} maxLength={5000} value={form.notes} onChange={set("notes")} />
+        <textarea className="input" rows={4} maxLength={5000} value={form.notes} onChange={set("notes")} />
       </label>
       {save.error && <p className="error-text">{save.error.message}</p>}
       {remove.error && <p className="error-text">{remove.error.message}</p>}

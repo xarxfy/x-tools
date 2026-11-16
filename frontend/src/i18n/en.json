@@ -244,7 +244,11 @@
         "network": "Network",
         "users": "Users"
       },
-      "notFound": "Server not found"
+      "notFound": "Server not found",
+      "notes": "Notes",
+      "addNotes": "Add notes",
+      "noNotes": "No notes yet.",
+      "notesHint": "Free text for your team: what is this server for, who is responsible, links (https://…) become clickable."
     }
   },
   "docker": {
@@ -1311,5 +1315,22 @@
     "maintenanceTab": "Maintenance",
     "noWindows": "No maintenance windows. Pausing alerts silences them for a while (e.g. during work on a server).",
     "days": "{{count}} days"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search servers, services, domains, customers …",
+    "hint": "Type a name, domain, port, tag or a word from a note. Arrow keys and Enter open a result.",
+    "none": "Nothing found for “{{query}}”.",
+    "types": {
+      "server": "Servers",
+      "service": "Services",
+      "container": "Containers",
+      "guest": "Proxmox guests",
+      "domain": "Domains",
+      "customer": "Customers",
+      "site": "Websites",
+      "job": "Jobs",
+      "tag": "Tags"
+    }
   }
 }

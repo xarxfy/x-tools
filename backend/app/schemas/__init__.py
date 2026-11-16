@@ -40,7 +40,7 @@ class ServiceIn(BaseModel):
     ports: list[Port] = Field(default_factory=list, max_length=10)
     folder: str = Field(default="", max_length=200)
     type: str = Field(default="", max_length=60)
-    notes: str = Field(default="", max_length=300)
+    notes: str = Field(default="", max_length=5000)
     customer_id: str | None = None
     # None keeps the stored checklist (the normal edit dialog does not send it).
     checklist: list[ChecklistItem] | None = Field(default=None, max_length=40)

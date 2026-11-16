@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   portKey, useCustomers, useDeleteService, usePortStatus, useSaveService, useServices,
@@ -30,7 +30,9 @@ export function ServicesPage() {
   const can = useCan();
   const edit = can("services.edit");
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get("q") ?? "");
+  useEffect(() => { const q = params.get("q"); if (q !== null) setQuery(q); }, [params]); // from the global search
   const [editing, setEditing] = useState<Service | "new" | null>(null);
   const [keys, setKeys] = useState<Service | null>(null);
   const customersOn = useFeatures().data?.customers ?? false;
@@ -82,6 +84,7 @@ export function ServicesPage() {
                     .filter(Boolean)
                     .join(" · ")}
                 </div>
+                {s.notes && <div className="note-preview" title={s.notes}>{s.notes.split("\n")[0]}</div>}
                 {(s.ports.length > 0 || s.domains.length > 0) && (
                   <div className="chips">
                     {s.ports.map((p) => (
@@ -265,7 +268,7 @@ export function ServiceDialog({
       )}
       <label className="field">
         {t("services.notes")}
-        <textarea className="input" maxLength={300} value={form.notes} onChange={set("notes")} />
+        <textarea className="input" rows={4} maxLength={5000} value={form.notes} onChange={set("notes")} />
       </label>
       {customersOn && service?.customer_id && (
         <Link to={`/customers/${service.customer_id}`} onClick={onClose}>{t("services.openCustomer")}</Link>

@@ -98,6 +98,7 @@ export interface AgentSummary {
   control: boolean;
   group_id: string | null;
   tags: string[];
+  notes: string;
   load: number | null;
   mem: number | null;
   disk: number | null;
@@ -505,7 +506,7 @@ export function useGroupActions() {
 export function useSaveAgentMeta(agentId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { group_id: string | null; tags: string[] }) =>
+    mutationFn: (body: { group_id: string | null; tags: string[]; notes?: string }) =>
       api<AgentSummary>(`/agents/${agentId}/meta`, { method: "PUT", body }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["agents"] }),
   });

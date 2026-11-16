@@ -83,3 +83,12 @@ button.tag {
     display: none;
   }
 }
+.notes-card {
+  margin-bottom: 14px;
+}
+.notes-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}

@@ -6,6 +6,7 @@ import { useAppStatus, useLogout, useMe } from "../api/auth";
 import { useFeatures } from "../api/monitor";
 import { useUpdateInfo } from "../api/ops";
 import { useCan } from "../api/users";
+import { SearchPalette } from "./SearchPalette";
 import "./Layout.css";
 
 type NavItem = { to: string; key: string; icon: IconName };
@@ -36,6 +37,7 @@ const ADMIN_PERMISSIONS = ["admin.users", "admin.roles", "admin.audit", "admin.s
 export function Layout() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { data: me } = useMe();
@@ -48,6 +50,19 @@ export function Layout() {
   const adminArea = ADMIN_PERMISSIONS.some((p) => can(p));
   const visible = (item: NavItem) => item.key !== "customers" || features.data?.customers;
 
+  // Ctrl/Cmd+K, or "/" outside of input fields, opens the search
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName ?? "";
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(tag) || (e.target as HTMLElement | null)?.isContentEditable;
+      if (((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") || (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey)) {
+        e.preventDefault();
+        setSearching(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   useEffect(() => setOpen(false), [location.pathname]); // close the mobile menu after navigating
 
   const link = (item: NavItem, size = 18) => (
@@ -78,6 +93,9 @@ export function Layout() {
           </button>
         </div>
         <nav className="nav-main" aria-label={t("nav.menu")}>
+          <button type="button" className="search-button" onClick={() => setSearching(true)}>
+            <Icon name="search" size={16} /><span>{t("search.title")}</span><kbd>{navigator.platform.includes("Mac") ? "⌘K" : "Ctrl K"}</kbd>
+          </button>
           {TOP.map((item) => link(item))}
           {GROUPS.map((group) => {
             const items = group.items.filter(visible);
@@ -124,6 +142,7 @@ export function Layout() {
       <main>
         <Outlet />
       </main>
+      {searching && <SearchPalette onClose={() => setSearching(false)} />}
     </div>
   );
 }

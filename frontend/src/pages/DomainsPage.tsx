@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useServices } from "../api/data";
 import { useFeatures } from "../api/monitor";
@@ -10,7 +10,9 @@ import { Empty, Loading, PageHead, SearchField, matches, rootDomain } from "../c
 export function DomainsPage() {
   const { t } = useTranslation();
   const services = useServices();
-  const [query, setQuery] = useState("");
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(params.get("q") ?? "");
+  useEffect(() => { const q = params.get("q"); if (q !== null) setQuery(q); }, [params]); // from the global search
   const customersOn = useFeatures().data?.customers ?? false;
 
   if (!services.data) return <Loading error={services.error} retry={() => services.refetch()} />;

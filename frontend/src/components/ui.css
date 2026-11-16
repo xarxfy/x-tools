@@ -484,3 +484,14 @@ a.list-title svg,
 .page-head-embedded p {
   margin: 0;
 }
+.note-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.note-preview {
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

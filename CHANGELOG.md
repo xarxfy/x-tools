@@ -5,6 +5,12 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- **Global search** (`Ctrl/Cmd+K` or `/`, or the *Search* button in the sidebar): servers, containers, Proxmox
+  guests, services (names, ports, domains, notes), domains, customers, websites, jobs and tags; arrow keys and Enter.
+- **Notes** on servers (free text with clickable links, on the server's page) and longer notes on services
+  (up to 5000 characters, first line shown in the list); notes are searchable.
+
 ## [1.0.0-beta.3] – 2026-11-16
 
 ### Added

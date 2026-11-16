@@ -66,7 +66,7 @@ def summary(a: Agent) -> dict:
             "has_linux": bool(report.get("linux")),
             "outdated": bool(report) and str(report.get("version", "")) != AGENT_VERSION,
             "control": bool(report.get("control")),
-            "group_id": a.group_id, "tags": a.tags or [],
+            "group_id": a.group_id, "tags": a.tags or [], "notes": a.notes or "",
             "latest_version": AGENT_VERSION}
 
 
@@ -154,6 +154,7 @@ def new_install(aid: str, request: Request, body: dict = Body(...), db: Session 
 class MetaIn(BaseModel):
     group_id: str | None = Field(default=None, max_length=12)
     tags: list[str] = Field(default_factory=list, max_length=20)
+    notes: str | None = Field(default=None, max_length=5000)  # None keeps the stored notes
 
 
 def clean_tags(tags: list[str]) -> list[str]:
@@ -177,6 +178,8 @@ def update_meta(aid: str, body: MetaIn, db: Session = Depends(get_db)):
         raise HTTPException(422, "Unknown group")
     agent.group_id = body.group_id or None
     agent.tags = clean_tags(body.tags)
+    if body.notes is not None:
+        agent.notes = body.notes.strip()
     db.commit()
     audit("agent.meta", agent.name, ", ".join(agent.tags))
     return summary(agent)

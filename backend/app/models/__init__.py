@@ -143,7 +143,7 @@ class Service(Base):
     # Where the ports are checked; empty = XT_CHECK_HOST (the X-TOOLS host).
     host: Mapped[str] = mapped_column(String(255), default="", server_default="")
     type: Mapped[str] = mapped_column(String(60), default="")
-    notes: Mapped[str] = mapped_column(String(300), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
     # Setup checklist from the assistant: [{"text": "...", "done": false}]
     checklist: Mapped[list] = mapped_column(JSON, default=list)
     # A service belongs to at most one customer.
@@ -201,6 +201,7 @@ class Agent(Base):
     install_options: Mapped[str | None] = mapped_column(Text, nullable=True)
     group_id: Mapped[str | None] = mapped_column(ForeignKey("server_groups.id", ondelete="SET NULL"), nullable=True)
     tags: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")  # free tags of this server
+    notes: Mapped[str] = mapped_column(Text, default="", server_default="")  # free text: what is this server for …
 
 
 class Event(Base):

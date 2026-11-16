@@ -166,7 +166,8 @@ db_report["linux"].update(updates=[], reboot_required=False, firewall={"installe
 db_id = agent("db-01", "linux", db_report)
 grp_prod = call("/api/server-groups", {"name": "Production"})["id"]
 call("/api/server-groups", {"name": "Home network"})
-call(f"/api/agents/{linux_id}/meta", {"group_id": grp_prod, "tags": ["debian", "web", "customer-acme"]}, method="PUT")
+call(f"/api/agents/{linux_id}/meta", {"group_id": grp_prod, "tags": ["debian", "web", "customer-acme"],
+     "notes": "Web server for the ACME shop and blog.\nResponsible: Anna Meyer (anna@acme-example.com)\nRunbook: https://wiki.example.com/runbooks/web-01"}, method="PUT")
 call(f"/api/agents/{db_id}/meta", {"group_id": grp_prod, "tags": ["debian", "database"]}, method="PUT")
 
 def guest(vmid, name, typ, status, cpu, maxcpu, mem, maxmem, up):

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,6 +14,7 @@ import { HostHead, Pending, ServerRedirect, SetupHint, agentState, reported } fr
 import { LinuxTab, type ServerTab } from "./LinuxTab";
 import { fmtDuration } from "../components/format";
 import { AddAgentButton, AgentManageBar } from "./AgentManage";
+import { NoteText } from "../components/NoteText";
 import "./ServersPage.css";
 
 const isLinux = (a: AgentSummary) => !a.disabled && (a.kind === "linux" || a.has_linux);
@@ -153,7 +154,9 @@ export function ServersPage() {
   const can = useCan();
   const edit = can("servers.organize");
   const [query, setQuery] = useState("");
-  const [tag, setTag] = useState("");
+  const [params] = useSearchParams();
+  const [tag, setTag] = useState(params.get("tag") ?? "");
+  useEffect(() => { const x = params.get("tag"); if (x !== null) setTag(x); }, [params]); // from the global search
   const [managing, setManaging] = useState(false);
   const [pause, setPause] = useState<{ scope: string; target: string } | null>(null);
   if (hash.startsWith("#agent-")) return <Navigate to={`/servers/${hash.slice(7)}`} replace />; // old links
@@ -266,6 +269,42 @@ function MetaDialog({ agent, onClose }: { agent: AgentSummary; onClose: () => vo
   );
 }
 
+function NotesDialog({ agent, onClose }: { agent: AgentSummary; onClose: () => void }) {
+  const { t } = useTranslation();
+  const save = useSaveAgentMeta(agent.id);
+  const [text, setText] = useState(agent.notes);
+  return (
+    <Dialog wide title={t("servers.page.notes")} onClose={onClose}
+            onSubmit={() => save.mutate({ group_id: agent.group_id, tags: agent.tags, notes: text }, { onSuccess: onClose })}
+            footer={<><span className="spacer" /><button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
+              <button type="submit" className="btn btn-primary" disabled={save.isPending}>{t("common.save")}</button></>}>
+      <p className="hint">{t("servers.page.notesHint")}</p>
+      <textarea className="input" rows={10} maxLength={5000} autoFocus value={text} onChange={(e) => setText(e.target.value)} />
+      {save.error && <p className="error-text">{save.error.message}</p>}
+    </Dialog>
+  );
+}
+
+/** What is this server for – free text for the team. */
+function NotesCard({ agent }: { agent: AgentSummary }) {
+  const { t } = useTranslation();
+  const edit = useCan()("servers.organize");
+  const [open, setOpen] = useState(false);
+  if (!agent.notes && !edit) return null;
+  return (
+    <>
+      <section className="card card-pad notes-card">
+        <div className="notes-head">
+          <strong>{t("servers.page.notes")}</strong>
+          {edit && <button type="button" className="btn btn-ghost btn-small" onClick={() => setOpen(true)}>{agent.notes ? t("common.edit") : t("servers.page.addNotes")}</button>}
+        </div>
+        {agent.notes ? <NoteText text={agent.notes} /> : <span className="muted">{t("servers.page.noNotes")}</span>}
+      </section>
+      {open && <NotesDialog agent={agent} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
 export function ServerPage({ agent }: { agent: AgentSummary }) {
   const { t } = useTranslation();
   const detail = useAgent(agent.id);
@@ -305,6 +344,7 @@ export function ServerPage({ agent }: { agent: AgentSummary }) {
           </button>
         ))}
       </div>
+      {tab === "overview" && <NotesCard agent={agent} />}
       {!detail.data ? <Loading error={detail.error} /> : info ? <LinuxTab agent={agent} info={info} tab={tab} />
         : <Empty>{t("fleet.noData")}</Empty>}
       {editing && <MetaDialog agent={agent} onClose={() => setEditing(false)} />}
