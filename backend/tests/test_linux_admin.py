@@ -194,3 +194,14 @@ def test_customer_categories(admin):
     assert admin.put(f"/api/customer-categories/{a['id']}", json={"name": "Premium"}, headers=h).json()["name"] == "Premium"
     assert admin.delete(f"/api/customer-categories/{a['id']}", headers=h).status_code == 204
     assert admin.get(f"/api/customers/{c['id']}").json()["category_id"] is None
+
+
+def test_standalone_agent_starts(tmp_path):
+    """The zipapp that servers download must import all its modules (a missing one stops the agent at start)."""
+    import subprocess
+    import sys
+    from app.collector.bundle import agent_bundle
+    pyz = tmp_path / "agent.pyz"
+    pyz.write_bytes(agent_bundle())
+    out = subprocess.run([sys.executable, "-I", str(pyz)], capture_output=True, text=True, env={"PATH": os.environ["PATH"]})
+    assert "XT_AGENT_URL and XT_AGENT_KEY must be set" in out.stderr, out.stderr
