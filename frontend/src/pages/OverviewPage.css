@@ -213,3 +213,8 @@ a.side-list:hover {
     grid-template-columns: 1fr;
   }
 }
+@media (min-width: 1500px) {
+  .ov-grid {
+    grid-template-columns: minmax(0, 1fr) 440px;
+  }
+}

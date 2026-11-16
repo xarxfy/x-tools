@@ -110,7 +110,14 @@
 main {
   min-width: 0;
   padding: 40px 48px 72px;
-  max-width: 1180px;
+  width: 100%;
+  max-width: 1560px; /* on a very wide screen the content is centered instead of sticking to the left */
+  margin-inline: auto;
+}
+@media (min-width: 1800px) {
+  main {
+    max-width: 1760px;
+  }
 }
 
 @media (max-width: 860px) {

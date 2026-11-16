@@ -6,6 +6,8 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Changed
+- Wide screens (full-screen browser): the content uses the width (up to 1560/1760 px, centered) instead of sticking
+  to the left at 1180 px; the overview's right column gets wider.
 - **New menu structure**: the sidebar has headings – *Infrastructure* (Servers, Proxmox, Docker), *Manage* (Services,
   Domains, Customers) – plus *Monitoring*; *Administration*, *Help* and your account sit at the bottom.
   - *Services* has the stored logins as a second tab (the *Credentials* entry is gone).
