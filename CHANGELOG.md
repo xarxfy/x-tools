@@ -5,6 +5,9 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Changed
+- Overview page redesigned: status banner with counters, two columns (problems and events | servers with load/RAM/disk, jobs, backup, websites).
+
 ## [1.0.0-beta.1] – 2026-11-15 – first public beta
 
 The first version meant for testers outside the project. Everything of 0.1.0 plus:

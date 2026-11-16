@@ -1,6 +1,7 @@
 """Overview (current issues), notification settings and website checks."""
 
 import time
+from datetime import timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -12,9 +13,10 @@ from app.core.audit import audit
 from app.collector.exchange import load_snapshot
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
-from app.models import Agent, Customer, Service
-from app.monitor import maintenance, notify, sites, state, updates
-from app.monitor.issues import ALERT_STATE, all_containers, container_state, find_issues
+from app.models import Agent, Customer, Heartbeat, Service
+from app.monitor import autobackup, maintenance, notify, sites, state, updates
+from app.monitor.jobs import job_state
+from app.monitor.issues import AGENT_STALE, ALERT_STATE, all_containers, container_state, find_issues
 
 router = APIRouter(prefix="/api", tags=["monitor"], dependencies=[Depends(current_user)])
 
@@ -47,7 +49,52 @@ def overview(db: Session = Depends(get_db)):
         },
         "system": (snap or {}).get("system"),
         "notifications": bool(notify.active_channels(notify.load())),
+        "hosts": hosts(agents, (snap or {}).get("system")),
+        "jobs": jobs_summary(db),
+        "backup": backup_summary(),
+        "sites": [{"domain": d, "level": c.get("level"), "cert_expires": c.get("cert_expires")}
+                  for d, c in sorted(checks.items())],
     }
+
+
+def hosts(agents, local: dict | None) -> list[dict]:
+    """One compact row per server: this one plus every agent (state, load/memory/disk, pending updates)."""
+    def row(name, link, system, state_, linux=None, kinds=()):
+        system = system or {}
+        load = system.get("load")
+        return {
+            "name": name, "link": link, "state": state_, "kinds": list(kinds),
+            "load": round(load[0] / max(1, system.get("cpus") or 1) * 100) if load else None,
+            "mem": round(system["mem_used"] / system["mem_total"] * 100) if system.get("mem_total") else None,
+            "disk": round(system["disk_used"] / system["disk_total"] * 100) if system.get("disk_total") else None,
+            "updates": len(linux["updates"]) if linux and linux.get("updates") is not None else None,
+            "reboot": bool(linux and linux.get("reboot_required")),
+        }
+    out = []
+    if local:
+        out.append(row((local.get("hostname") or "X-TOOLS"), "/docker#local", local, "up", kinds=("docker",)))
+    now = time.time()
+    for a in agents:
+        report = a.last_report or {}
+        ts = a.last_report_at
+        age = None if ts is None else now - (ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)).timestamp()
+        state_ = "warn" if age is None else "up" if age < AGENT_STALE else "down"
+        kinds = [k for k in ("proxmox", "docker", "linux") if report.get(k)] or [a.kind]
+        page = {"proxmox": "/proxmox", "linux": "/servers"}.get(a.kind, "/docker")
+        out.append(row(a.name, f"{page}#agent-{a.id}", report.get("system"), state_, report.get("linux"), kinds))
+    return out
+
+
+def jobs_summary(db: Session) -> dict:
+    states = [job_state(h) for h in db.scalars(select(Heartbeat))]
+    return {"total": len(states), "ok": sum(s in ("ok", "waiting") for s in states),
+            "late": sum(s in ("late", "fail") for s in states), "paused": states.count("paused")}
+
+
+def backup_summary() -> dict:
+    cfg = autobackup.load()
+    last = cfg.get("last")
+    return {"enabled": bool(cfg["enabled"]), "last_at": last and last.get("at"), "last_ok": last and last.get("ok")}
 
 
 # --- Notifications ------------------------------------------------------------------

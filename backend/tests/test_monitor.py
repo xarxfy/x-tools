@@ -258,3 +258,14 @@ def test_manual_stop_cleared_when_running(admin, tmp_path, monkeypatch):
     issue = next(i for i in find_issues(ports={}) if i["key"] == "container:web")
     assert not issue.get("manual") and issue["level"] == "down"
     _ = json, tmp_path, monkeypatch
+
+
+def test_overview_summary(admin):
+    h = csrf_headers(admin)
+    admin.post("/api/agents", json={"name": "Silent"}, headers=h)
+    admin.post("/api/jobs", json={"name": "Dump", "interval_minutes": 60, "grace_minutes": 5, "paused": False}, headers=h)
+    data = admin.get("/api/overview").json()
+    assert [x["name"] for x in data["hosts"]][-1] == "Silent"
+    assert data["hosts"][-1]["state"] == "warn"  # never reported
+    assert data["jobs"] == {"total": 1, "ok": 1, "late": 0, "paused": 0}
+    assert data["backup"]["enabled"] is False and data["sites"] == []

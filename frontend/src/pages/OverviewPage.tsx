@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useFeatures, useOverview } from "../api/monitor";
 import { Icon, type IconName } from "../components/Icon";
 import { Dot, Loading, PageHead } from "../components/ui";
-import { level, pct } from "../components/format";
+import { ago, level } from "../components/format";
 import { EventList } from "../components/history";
 import { useCan } from "../api/users";
 import { issueText } from "../components/issueText";
@@ -21,38 +21,27 @@ export function OverviewPage() {
   const [pausing, setPausing] = useState(false);
   const update = useUpdateInfo(isAdmin);
   if (!overview.data) return <Loading error={overview.error} retry={() => overview.refetch()} />;
-  const { issues, counts, system, notifications } = overview.data;
+  const { issues, counts, notifications } = overview.data;
   const open = issues.filter((i) => !i.manual);
   const live = open.filter((i) => !i.paused); // paused ones (maintenance window) do not count
   const manual = issues.filter((i) => i.manual);
   const empty = counts.services === 0;
 
-  const tiles: { to: string; icon: IconName; label: string; value: string; sub?: string }[] = [
-    ...(counts.guests ? [{
-      to: "/proxmox", icon: "proxmox" as IconName, label: t("overview.guests"),
-      value: `${counts.guests_running}/${counts.guests}`, sub: t("overview.running"),
-    }] : []),
-    {
-      to: "/docker", icon: "docker", label: t("overview.containers"),
-      value: `${counts.containers_running}/${counts.containers}`, sub: t("overview.running"),
-    },
+  const chips: { to: string; icon: IconName; label: string; value: string }[] = [
+    ...(counts.guests ? [{ to: "/proxmox", icon: "proxmox" as IconName, label: t("overview.guests"), value: `${counts.guests_running}/${counts.guests}` }] : []),
+    { to: "/docker", icon: "docker", label: t("overview.containers"), value: `${counts.containers_running}/${counts.containers}` },
     { to: "/services", icon: "services", label: t("nav.services"), value: String(counts.services) },
-    ...(customersOn ? [{
-      to: "/customers", icon: "customers" as IconName, label: t("nav.customers"), value: String(counts.customers),
-      sub: counts.sites ? t("overview.sitesUp", { up: counts.sites_up, total: counts.sites }) : undefined,
-    }] : []),
+    ...(customersOn ? [{ to: "/customers", icon: "customers" as IconName, label: t("nav.customers"), value: String(counts.customers) }] : []),
   ];
-  const meters = system
-    ? ([
-      [t("servers.load"), system.load ? (system.load[0] / Math.max(1, system.cpus ?? 1)) * 100 : undefined],
-      [t("servers.memory"), system.mem_total ? pct(system.mem_used, system.mem_total) : undefined],
-      [t("servers.disk"), system.disk_total ? pct(system.disk_used, system.disk_total) : undefined],
-    ].filter(([, v]) => v !== undefined) as [string, number][])
-    : [];
+  const { hosts, jobs, backup, sites } = overview.data;
+  const sitesUp = sites.filter((s) => s.level === "up").length;
+  const soon = sites.filter((s) => s.cert_expires && (s.cert_expires - Date.now() / 1000) / 86400 < 14)
+    .map((s) => Math.max(0, Math.floor((s.cert_expires! - Date.now() / 1000) / 86400)));
+  const worst = live.some((i) => i.level === "down") ? "down" : live.length ? "warn" : "up";
 
   return (
     <>
-      <PageHead title={t("nav.overview")} sub={live.length ? t("overview.attention", { count: live.length }) : t("overview.allGood")}>
+      <PageHead title={t("nav.overview")}>
         {canPause && (
           <button type="button" className="btn" onClick={() => setPausing(true)}>
             <Icon name="jobs" size={16} />{t("maintenance.pause")}
@@ -68,67 +57,111 @@ export function OverviewPage() {
       )}
       <MaintenanceBanner />
 
-      <section className={`card status-card ${live.length ? (live.some((i) => i.level === "down") ? "is-down" : "is-warn") : "is-up"}`}>
+      <section className={`card status-card is-${worst}`}>
         <div className="status-head">
           <span className="status-icon"><Icon name={live.length ? "alert" : "check"} size={22} /></span>
-          <div>
-            <h2>{live.length ? t("overview.needsAttention") : t("overview.nothingToDo")}</h2>
+          <div className="status-text">
+            <h2>{live.length ? t("overview.attention", { count: live.length }) : t("overview.nothingToDo")}</h2>
             <p className="muted">
               {notifications ? t("overview.notifyOn") : !isAdmin ? t("overview.notifyOff") : (
-                <>
-                  {t("overview.notifyOff")} <Link to="/settings?tab=notifications">{t("overview.setUp")}</Link>
-                </>
+                <>{t("overview.notifyOff")} <Link to="/settings?tab=notifications">{t("overview.setUp")}</Link></>
               )}
             </p>
           </div>
         </div>
-        {open.length > 0 && (
-          <ul className="issue-list">
-            {open.map((i) => (
-              <li key={i.key}>
-                <Link to={i.link}>
-                  <Dot state={i.level} />
-                  <span>{issueText(i.text)}</span>
-                  {i.paused && <span className="badge">{t("maintenance.badge")}</span>}
-                  <Icon name="chevron" size={14} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-        {manual.length > 0 && (
-          <p className="muted manual-note">
-            {t("overview.manual", { names: manual.map((i) => i.text.replace(/^Container (.*): stopped by you$/, "$1")).join(", ") })}
-          </p>
-        )}
+        <div className="chips">
+          {chips.map((c) => (
+            <Link key={c.to} to={c.to} className="chip">
+              <Icon name={c.icon} size={15} /><b>{c.value}</b><span>{c.label}</span>
+            </Link>
+          ))}
+        </div>
       </section>
 
-      <div className={`tile-grid tiles-${tiles.length}`}>
-        {tiles.map((tile) => (
-          <Link key={tile.to} to={tile.to} className="card tile">
-            <span className="tile-icon"><Icon name={tile.icon} size={18} /></span>
-            <span className="tile-value">{tile.value}</span>
-            <span className="tile-label">{tile.label}{tile.sub && <span className="muted"> · {tile.sub}</span>}</span>
-          </Link>
-        ))}
-      </div>
+      <div className="ov-grid">
+        <div className="ov-main">
+          <h2 className="section-title first">{t("overview.needsAttention")}</h2>
+          <section className="card">
+            {open.length === 0 ? <p className="card-pad muted no-problems">{t("overview.noProblems")}</p> : (
+              <ul className="issue-list">
+                {open.map((i) => (
+                  <li key={i.key}>
+                    <Link to={i.link}>
+                      <Dot state={i.level} />
+                      <span>{issueText(i.text)}</span>
+                      {i.paused && <span className="badge">{t("maintenance.badge")}</span>}
+                      <Icon name="chevron" size={14} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {manual.length > 0 && (
+              <p className="muted manual-note card-pad">
+                {t("overview.manual", { names: manual.map((i) => i.text.replace(/^Container (.*): stopped by you$/, "$1")).join(", ") })}
+              </p>
+            )}
+          </section>
 
-      {meters.length > 0 && (
-        <>
-          <h2 className="section-title">{t("servers.local")}</h2>
-          <Link to="/docker#local" className="card card-pad overview-meters">
-            {meters.map(([label, value]) => (
-              <div key={label} className="meter">
-                <div className="meter-top"><span>{label}</span><b>{value.toFixed(0)} %</b></div>
-                <div className="bar"><span className={`bar-${level(value)}`} style={{ width: `${Math.min(100, value)}%` }} /></div>
-              </div>
+          <h2 className="section-title">{t("history.title")}</h2>
+          <EventList limit={8} />
+        </div>
+
+        <aside className="ov-side">
+          <h2 className="section-title first">{t("overview.servers")}</h2>
+          <section className="card host-list">
+            {hosts.length <= 1 && <p className="muted host-hint">{t("overview.serversEmpty")}</p>}
+            {hosts.map((h) => (
+              <Link key={h.link} to={h.link} className="host-row">
+                <div className="host-top">
+                  <Dot state={h.state} /><strong>{h.name}</strong>
+                  {h.updates ? <span className="badge">{t("overview.updates", { count: h.updates })}</span> : null}
+                  {h.reboot && <span className="badge badge-warn">{t("overview.reboot")}</span>}
+                </div>
+                <div className="host-meters">
+                  {([["load", h.load], ["mem", h.mem], ["disk", h.disk]] as [string, number | null][]).map(([k, v]) => v === null ? null : (
+                    <div key={k} className="mini" title={`${t(`overview.${k}`)} ${v} %`}>
+                      <span>{t(`overview.${k}`)}</span>
+                      <div className="bar"><span className={`bar-${level(v)}`} style={{ width: `${Math.min(100, v)}%` }} /></div>
+                      <b>{v} %</b>
+                    </div>
+                  ))}
+                </div>
+              </Link>
             ))}
-          </Link>
-        </>
-      )}
+          </section>
 
-      <h2 className="section-title">{t("history.title")}</h2>
-      <EventList limit={8} />
+          <h2 className="section-title">{t("overview.jobs")} · {t("overview.backup")}</h2>
+          <section className="card side-list">
+            <Link to="/jobs" className="side-row">
+              <Dot state={!jobs.total ? "off" : jobs.late ? "down" : "up"} />
+              <span>{!jobs.total ? t("overview.jobsNone") : jobs.late ? t("overview.jobsLate", { count: jobs.late }) : t("overview.jobsAllOk", { ok: jobs.ok, total: jobs.total - jobs.paused })}</span>
+              {jobs.paused > 0 && <span className="badge">{t("overview.jobsPaused", { count: jobs.paused })}</span>}
+            </Link>
+            <Link to="/settings?tab=backup" className="side-row">
+              <Dot state={!backup.enabled ? "off" : backup.last_ok === false ? "down" : backup.last_at ? "up" : "warn"} />
+              <span>{!backup.enabled ? t("overview.backupOff") : backup.last_ok === false ? t("overview.backupFail")
+                : backup.last_at ? t("overview.backupOk", { when: ago(backup.last_at) }) : t("overview.backupWait")}</span>
+            </Link>
+          </section>
+
+          {customersOn && sites.length > 0 && (
+            <>
+              <h2 className="section-title">{t("overview.websites")}</h2>
+              <Link to="/customers" className="card side-list">
+                <span className="side-row">
+                  <Dot state={sitesUp === sites.length ? "up" : sites.some((s) => s.level === "down") ? "down" : "warn"} />
+                  <span>{t("overview.websitesUp", { up: sitesUp, total: sites.length })}</span>
+                </span>
+                <span className="side-row">
+                  <Dot state={soon.length ? "warn" : "up"} />
+                  <span>{soon.length ? t("overview.certSoon", { days: Math.min(...soon) }) : t("overview.allCertsOk")}</span>
+                </span>
+              </Link>
+            </>
+          )}
+        </aside>
+      </div>
 
       {pausing && <PauseDialog onClose={() => setPausing(false)} />}
 

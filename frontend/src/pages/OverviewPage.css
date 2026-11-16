@@ -1,6 +1,24 @@
 .status-card {
   padding: 20px 22px;
-  margin-bottom: 18px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  border: 1px solid transparent;
+}
+.status-card.is-up {
+  background: color-mix(in srgb, var(--up) 9%, var(--card));
+  border-color: color-mix(in srgb, var(--up) 25%, transparent);
+}
+.status-card.is-warn {
+  background: color-mix(in srgb, var(--warn) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+}
+.status-card.is-down {
+  background: color-mix(in srgb, var(--down) 9%, var(--card));
+  border-color: color-mix(in srgb, var(--down) 28%, transparent);
 }
 .status-head {
   display: flex;
@@ -36,8 +54,8 @@
 }
 .issue-list {
   list-style: none;
-  margin: 14px -8px 0;
-  padding: 0;
+  margin: 0;
+  padding: 8px;
 }
 .issue-list a {
   display: flex;
@@ -63,47 +81,6 @@
   margin: 12px 0 0;
   font-size: 13px;
 }
-.tile-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-.tile {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 16px 18px;
-  color: var(--text);
-  transition: box-shadow 0.2s;
-}
-.tile:hover {
-  text-decoration: none;
-  background: var(--card-hover);
-  box-shadow: var(--shadow-hover);
-}
-.tile-icon {
-  color: var(--accent);
-  margin-bottom: 8px;
-}
-.tile-value {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.tile-label {
-  font-size: 14px;
-}
-.overview-meters {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  color: var(--text);
-}
-.overview-meters:hover {
-  text-decoration: none;
-  background: var(--card-hover);
-  box-shadow: var(--shadow-hover);
-}
 .start-card {
   margin-top: 18px;
 }
@@ -116,22 +93,123 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 640px) {
-  .overview-meters {
-    grid-template-columns: 1fr;
-  }
-}
 .status-icon svg {
   stroke-width: 3;
 }
-.tile-grid.tiles-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-@media (max-width: 640px) {
-  .tile-grid.tiles-3 {
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 980px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 14px;
+  box-shadow: 0 0 0 1px var(--line, rgba(0, 0, 0, 0.06));
+}
+.chip:hover {
+  text-decoration: none;
+  background: var(--card-hover);
+}
+.chip svg {
+  color: var(--accent);
+}
+.chip span {
+  color: var(--muted);
+}
+.ov-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 0 24px;
+  align-items: start;
+}
+.section-title.first {
+  margin-top: 22px;
+}
+.no-problems {
+  margin: 0;
+}
+.host-list,
+.side-list {
+  display: block;
+  color: var(--text);
+}
+.host-row {
+  display: block;
+  padding: 12px 16px;
+  color: var(--text);
+}
+.host-row + .host-row,
+.side-row + .side-row {
+  border-top: 1px solid var(--fill);
+}
+.host-row:hover,
+a.side-row:hover {
+  text-decoration: none;
+  background: var(--hover);
+}
+.host-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.host-top strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.host-meters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.mini {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.mini .bar {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: 5px;
+}
+.mini b {
+  color: var(--text);
+  font-weight: 600;
+}
+.host-hint {
+  margin: 0;
+  padding: 12px 16px 0;
+  font-size: 13px;
+}
+.side-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-size: 14px;
+}
+.side-row > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+a.side-list:hover {
+  text-decoration: none;
+}
+@media (max-width: 1080px) {
+  .ov-grid {
     grid-template-columns: 1fr;
   }
-}
-.tile-grid.tiles-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }

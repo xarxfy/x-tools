@@ -27,6 +27,22 @@ export interface Overview {
   };
   system: SystemInfo | null;
   notifications: boolean;
+  hosts: OverviewHost[];
+  jobs: { total: number; ok: number; late: number; paused: number };
+  backup: { enabled: boolean; last_at: number | null; last_ok: boolean | null };
+  sites: { domain: string; level?: "up" | "warn" | "down"; cert_expires?: number }[];
+}
+
+export interface OverviewHost {
+  name: string;
+  link: string;
+  state: "up" | "down" | "warn";
+  kinds: string[];
+  load: number | null;
+  mem: number | null;
+  disk: number | null;
+  updates: number | null;
+  reboot: boolean;
 }
 
 export interface SiteCheck {
