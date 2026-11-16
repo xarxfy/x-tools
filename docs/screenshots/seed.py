@@ -61,11 +61,19 @@ mail = service("Mail relay", [(18399, "SMTP")], [], "/home/marc/apps/mail", "Doc
 call("/api/services", {"name": "Grafana", "ports": [{"port": 18305, "label": "Web"}], "domains": ["grafana.example.com"]})
 cat_a = call("/api/customer-categories", {"name": "A-customer"})["id"]
 cat_b = call("/api/customer-categories", {"name": "B-customer"})["id"]
-call("/api/customers", {"name": "ACME Shop GmbH", "contact": "Anna Meyer", "email": "anna@acme-example.com",
-                        "phone": "+49 30 1234567", "agreements": "Hosting incl. updates, 99.5 % availability, monthly invoice",
-                        "category_id": cat_a, "service_ids": [shop, blog]})
-call("/api/customers", {"name": "Bakery Smith", "contact": "Tom Smith", "email": "tom@smith-bakery.example",
-                        "category_id": cat_b, "service_ids": [bakery]})
+import datetime as _dt
+_today = _dt.date.today()
+acme = call("/api/customers", {
+    "name": "ACME Shop GmbH", "agreements": "Hosting incl. updates, 99.5 % availability, monthly invoice",
+    "category_id": cat_a, "service_ids": [shop, blog],
+    "contacts": [{"name": "Anna Meyer", "role": "Technical", "email": "anna@acme-example.com", "phone": "+49 30 1234567"},
+                 {"name": "Jonas Weber", "role": "Billing", "email": "billing@acme-example.com", "phone": ""}],
+    "contract": {"contract_end": (_today + _dt.timedelta(days=75)).isoformat(), "notice_days": 30,
+                 "support_hours": "Mon-Fri 9-17", "response_time": "4 hours"}})
+call(f"/api/customers/{acme['id']}/tasks", {"title": "Renew the shop certificate", "due": (_today + _dt.timedelta(days=5)).isoformat()})
+call(f"/api/customers/{acme['id']}/tasks", {"title": "Agree on a maintenance window", "due": None})
+call("/api/customers", {"name": "Bakery Smith", "category_id": cat_b, "service_ids": [bakery],
+                        "contacts": [{"name": "Tom Smith", "role": "", "email": "tom@smith-bakery.example", "phone": ""}]})
 
 from app.core.db import session_scope  # noqa: E402  (after the server wrote the database)
 from app.models import Agent, Customer, Event, Heartbeat, Metric  # noqa: E402

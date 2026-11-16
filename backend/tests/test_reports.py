@@ -14,7 +14,7 @@ def test_pdf_writer_makes_valid_multi_page_file():
 
 
 def test_report_overall_and_customer(admin):
-    c = admin.post("/api/customers", json={"name": "Müller GmbH", "contact": "Eva", "agreements": "24/7"}, headers=csrf_headers(admin))
+    c = admin.post("/api/customers", json={"name": "Müller GmbH", "contacts": [{"name": "Eva", "role": "Technik"}], "agreements": "24/7"}, headers=csrf_headers(admin))
     cid = c.json()["id"]
     admin.post("/api/services", json={"name": "Shop", "host": "web1", "domains": ["shop.example.org"], "ports": [{"port": 443, "label": "https"}],
                                       "customer_id": cid, "notes": "internal-secret-note"}, headers=csrf_headers(admin))

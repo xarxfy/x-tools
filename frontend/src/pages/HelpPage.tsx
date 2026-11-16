@@ -104,11 +104,16 @@ const DOCS: Doc[] = [
       while. Problems stay visible but nothing is sent, and no “back to normal” follows.</p>
   </>, "jobs heartbeat cron backup monitor maintenance pause silence alerts"),
   doc("customers", "Customers", <>
-    <p>Customers bundle contact details, agreements and the services/sites you host for them. A service belongs
-      to at most one customer.</p>
+    <p>Customers bundle contact people, agreements and the services, servers and jobs you run for them. A service,
+      server or job belongs to at most one customer. Customers get a free category (A-customer, B-customer …).</p>
+    <p><strong>Contact people</strong> – as many as you need, each with a role (technical, billing …).
+      <strong>Contract</strong> – end of the contract, period of notice, support hours and response time. The overview
+      warns 60 days before the last day to give notice. Contract data is only visible to roles with the permission
+      <em>Contract data</em>. <strong>Tasks</strong> – small to-dos with an optional due date; overdue and soon due tasks
+      show on the overview.</p>
     <p>The area is optional: switch it on or off under <Link to="/settings">Settings → General</Link>. When it is
       off, the menu entry and the website checks disappear; stored customers are kept.</p>
-  </>, "customers contact agreements", [
+  </>, "customers contact contacts contract notice deadline support tasks todo agreements", [
     doc("customers-deploy", "Deploying websites", <>
       <p>On a customer page, <em>Websites → Add website</em> rolls out a website from a git repository: X-TOOLS
         clones it, writes the variables you entered to <code>.env</code> and starts it with docker compose (or serves

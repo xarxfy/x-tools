@@ -15,7 +15,7 @@ def test_search(admin):
     admin.put("/api/features", json={"customers": True}, headers=h)
     admin.post("/api/services", json={"name": "Wiki", "domains": ["wiki.example.com"], "notes": "runs on the db host",
                                       "ports": [{"port": 8123, "label": "Web"}]}, headers=h)
-    cust = admin.post("/api/customers", json={"name": "ACME Shop", "email": "anna@acme-example.com"}, headers=h).json()
+    cust = admin.post("/api/customers", json={"name": "ACME Shop", "contacts": [{"name": "Anna", "email": "anna@acme-example.com"}]}, headers=h).json()
     admin.post("/api/jobs", json={"name": "Database dump", "interval_minutes": 60, "grace_minutes": 5, "paused": False}, headers=h)
     ag = admin.post("/api/agents", json={"name": "web-01", "kind": "linux"}, headers=h).json()
     TestClient(admin.app).post("/api/agent/report", json=REPORT, headers={"X-Agent-Key": ag["key"]})

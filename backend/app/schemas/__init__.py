@@ -1,6 +1,7 @@
 """Request/response models shared by the API routers."""
 
 import re
+from datetime import date
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -96,31 +97,60 @@ class Credential(BaseModel):
     _strip = field_validator("label", "username", "url", "note", mode="before")(strip)
 
 
-class CustomerIn(BaseModel):
+class ContactIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
-    contact: str = Field(default="", max_length=80)
+    role: str = Field(default="", max_length=60)
     email: str = Field(default="", max_length=120)
     phone: str = Field(default="", max_length=40)
+
+    _strip = field_validator("name", "role", "email", "phone", mode="before")(strip)
+
+
+class ContractIn(BaseModel):
+    contract_end: date | None = None
+    notice_days: int | None = Field(default=None, ge=0, le=3650)
+    support_hours: str = Field(default="", max_length=120)
+    response_time: str = Field(default="", max_length=60)
+
+    _strip = field_validator("support_hours", "response_time", mode="before")(strip)
+
+
+class CustomerIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
     owner: str = Field(default="", max_length=120)
     agreements: str = Field(default="", max_length=5000)
     notes: str = Field(default="", max_length=5000)
     category_id: str | None = Field(default=None, max_length=12)
     service_ids: list[str] = Field(default_factory=list, max_length=100)
+    agent_ids: list[str] = Field(default_factory=list, max_length=100)
+    job_ids: list[str] = Field(default_factory=list, max_length=100)
+    contacts: list[ContactIn] | None = Field(default=None, max_length=30)  # None keeps the stored ones
+    contract: ContractIn | None = None  # None keeps it; ignored without customers.contracts
 
-    _strip = field_validator("name", "contact", "email", "phone", "owner", "agreements", "notes", mode="before")(strip)
+    _strip = field_validator("name", "owner", "agreements", "notes", mode="before")(strip)
+
+
+class TaskIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    due: date | None = None
+    done: bool = False
+
+    _strip = field_validator("title", mode="before")(strip)
 
 
 class CustomerOut(BaseModel):
     id: str
     name: str
-    contact: str
-    email: str
-    phone: str
     owner: str
     agreements: str
     notes: str
     category_id: str | None = None
     service_ids: list[str]
+    agent_ids: list[str] = []
+    job_ids: list[str] = []
+    contacts: list[dict] = []
+    tasks: list[dict] = []
+    contract: dict | None = None  # only for roles with customers.contracts
 
 
 class CategoryIn(BaseModel):

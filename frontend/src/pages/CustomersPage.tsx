@@ -7,6 +7,7 @@ import {
 } from "../api/data";
 import { ReportDialog } from "../components/ReportDialog";
 import { Icon } from "../components/Icon";
+import { AssignEditor, AssignedCard, ContactsCard, ContactsEditor, ContractCard, ContractEditor, TasksCard, contractLevel, openTasks } from "./CustomerExtras";
 import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { CredentialsDialog } from "./CredentialsPage";
 import { ServiceDialog, serviceState } from "./ServicesPage";
@@ -24,7 +25,7 @@ function worst(checks: (SiteCheck | undefined)[]): "up" | "warn" | "down" | "off
 }
 
 const EMPTY: CustomerInput = {
-  name: "", contact: "", email: "", phone: "", owner: "", agreements: "", notes: "", category_id: null, service_ids: [],
+  name: "", owner: "", agreements: "", notes: "", category_id: null, service_ids: [], agent_ids: [], job_ids: [], contacts: [], contract: null,
 };
 
 export function CustomersPage() {
@@ -46,7 +47,7 @@ export function CustomersPage() {
   const catName = new Map(categories.map((c) => [c.id, c.name]));
   const list = customers.data
     .filter((c) => !category || (category === "none" ? !c.category_id : c.category_id === category))
-    .filter((c) => matches(query, c.name, c.contact, c.email, ...c.service_ids.flatMap((id) => byId.get(id)?.domains ?? [])))
+    .filter((c) => matches(query, c.name, ...c.contacts.flatMap((p) => [p.name, p.email]), ...c.service_ids.flatMap((id) => byId.get(id)?.domains ?? [])))
     .sort((a, b) => (rank.get(a.category_id ?? "") ?? 999) - (rank.get(b.category_id ?? "") ?? 999) || a.name.localeCompare(b.name));
 
   return (
@@ -86,10 +87,12 @@ export function CustomersPage() {
                 <span className="list-main">
                   <span className="list-title">{c.name}{c.category_id && catName.get(c.category_id) && <span className="badge category-badge">{catName.get(c.category_id)}</span>}</span>
                   <span className="list-sub">
-                    {[c.contact, domains.slice(0, 3).join(", ")].filter(Boolean).join(" · ") || t("customers.noDetails")}
+                    {[c.contacts[0]?.name, domains.slice(0, 3).join(", ")].filter(Boolean).join(" · ") || t("customers.noDetails")}
                   </span>
                 </span>
                 <span className="list-side">
+                  {contractLevel(c) === "warn" || contractLevel(c) === "down" ? <span className="badge badge-warn">{t("customers.deadlineBadge")}</span> : null}
+                  {openTasks(c).length > 0 && <span className="badge">{t("customers.tasksOpen", { count: openTasks(c).length })}</span>}
                   <span className="badge">{t("customers.services", { count: c.service_ids.length })}</span>
                   <Icon name="chevron" size={16} />
                 </span>
@@ -136,15 +139,6 @@ export function CustomerPage() {
     );
   }
   const own = (services.data ?? []).filter((s) => s.customer_id === customer.id);
-  const contact: [string, string][] = (
-    [
-      [t("customers.contact"), customer.contact],
-      [t("customers.email"), customer.email],
-      [t("customers.phone"), customer.phone],
-      [t("customers.owner"), customer.owner],
-    ] as [string, string][]
-  ).filter(([, v]) => v);
-
   return (
     <>
       <p style={{ margin: "0 0 6px" }}>
@@ -162,23 +156,9 @@ export function CustomerPage() {
 
       {reporting && <ReportDialog customerId={customer.id} onClose={() => setReporting(false)} />}
       <h2 className="section-title">{t("customers.contactTitle")}</h2>
-      <div className="card card-pad">
-        {contact.length ? (
-          <dl className="details">
-            {contact.map(([k, v]) => (
-              <div key={k} style={{ display: "contents" }}>
-                <dt>{k}</dt>
-                <dd>
-                  {k === t("customers.email") ? <a href={`mailto:${v}`}>{v}</a>
-                    : k === t("customers.phone") ? <a href={`tel:${v.replace(/\s/g, "")}`}>{v}</a> : v}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <span className="muted">{t("customers.noContact")}</span>
-        )}
-      </div>
+      <ContactsCard customer={customer} />
+      <ContractCard customer={customer} />
+      <TasksCard customer={customer} edit={edit} />
 
       <h2 className="section-title">{t("customers.sitesTitle")}</h2>
       {own.length === 0 ? (
@@ -213,6 +193,8 @@ export function CustomerPage() {
           ))}
         </div>
       )}
+
+      <AssignedCard customer={customer} />
 
       <SitesSection customerId={customer.id} />
 
@@ -288,7 +270,8 @@ function CustomerDialog({
   const save = useSaveCustomer();
   const remove = useDeleteCustomer();
   const navigate = useNavigate();
-  const [form, setForm] = useState<CustomerInput>(() => (customer ? { ...customer } : EMPTY));
+  const canContracts = useCan()("customers.contracts");
+  const [form, setForm] = useState<CustomerInput>(() => (customer ? { ...customer } : canContracts ? { ...EMPTY, contract: { contract_end: null, notice_days: null, support_hours: "", response_time: "" } } : EMPTY));
   const set = (key: keyof CustomerInput) => (e: { target: { value: string } }) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
   const toggle = (id: string) =>
@@ -321,25 +304,12 @@ function CustomerDialog({
         {t("customers.name")}
         <input className="input" required maxLength={80} autoFocus value={form.name} onChange={set("name")} />
       </label>
-      <div className="grid-2">
-        <label className="field">
-          {t("customers.contact")}
-          <input className="input" maxLength={80} value={form.contact} onChange={set("contact")} />
-        </label>
-        <label className="field">
-          {t("customers.email")}
-          <input className="input" type="email" maxLength={120} value={form.email} onChange={set("email")} />
-        </label>
-        <label className="field">
-          {t("customers.phone")}
-          <input className="input" type="tel" maxLength={40} value={form.phone} onChange={set("phone")} />
-        </label>
-        <label className="field">
-          {t("customers.owner")}
-          <input className="input" maxLength={120} placeholder={t("customers.ownerHint")} value={form.owner}
-                 onChange={set("owner")} />
-        </label>
-      </div>
+      <ContactsEditor form={form} setForm={setForm} />
+      <label className="field">
+        {t("customers.owner")}
+        <input className="input" maxLength={120} placeholder={t("customers.ownerHint")} value={form.owner}
+               onChange={set("owner")} />
+      </label>
       {categories.length > 0 && (
         <label className="field">
           {t("customers.category")}
@@ -366,6 +336,8 @@ function CustomerDialog({
           <span className="hint">{t("customers.noServicesYet")}</span>
         )}
       </div>
+      <AssignEditor form={form} setForm={setForm} />
+      {canContracts && <ContractEditor form={form} setForm={setForm} />}
       <label className="field">
         {t("customers.agreements")}
         <span className="hint">{t("customers.agreementsHint")}</span>

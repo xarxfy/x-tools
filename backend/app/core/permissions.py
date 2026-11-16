@@ -9,6 +9,7 @@ PERMISSIONS: dict[str, str] = {
     "services.edit": "services",
     "credentials.manage": "services",
     "customers.edit": "customers",
+    "customers.contracts": "customers",
     "sites.deploy": "customers",
     "jobs.edit": "monitoring",
     "alerts.pause": "monitoring",

@@ -158,7 +158,38 @@
     "categoryPlaceholder": "New category, e.g. A-customer",
     "addCategory": "Add",
     "up": "Move up",
-    "down": "Move down"
+    "down": "Move down",
+    "contacts": "Contact people",
+    "contactName": "Name",
+    "contactRole": "Role (technical, billing …)",
+    "addContact": "Add contact",
+    "contractTitle": "Contract",
+    "contractEnd": "Contract ends",
+    "noticeDays": "Period of notice (days)",
+    "noticeValue_one": "{{count}} day",
+    "noticeValue_other": "{{count}} days",
+    "noticeBy": "Give notice by",
+    "supportHours": "Support hours",
+    "supportHoursHint": "e.g. Mon–Fri 9–17",
+    "responseTime": "Response time",
+    "responseTimeHint": "e.g. 4 hours",
+    "ended": "ended",
+    "today": "today",
+    "inDays_one": "in {{count}} day",
+    "inDays_other": "in {{count}} days",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago",
+    "deadlineBadge": "Deadline",
+    "tasksTitle": "Tasks",
+    "tasksOpen_one": "{{count}} task",
+    "tasksOpen_other": "{{count}} tasks",
+    "taskPlaceholder": "New task …",
+    "taskDue": "Due date",
+    "addTask": "Add",
+    "serversTitle": "Servers",
+    "jobsTitle": "Jobs",
+    "job": "Job",
+    "assignHint": "A server or job belongs to one customer; picking it here moves it from another."
   },
   "domains": {
     "sub_one": "{{count}} domain",
@@ -362,7 +393,9 @@
     "setUpBackup": "Set up",
     "noProblems": "No problems right now.",
     "statusDown": "Something is down",
-    "statusWarn": "Needs a look"
+    "statusWarn": "Needs a look",
+    "customerTodos": "Customers: deadlines and tasks",
+    "noticeBy": "give notice by {{date}}"
   },
   "sites": {
     "title": "Website checks",
@@ -1245,6 +1278,10 @@
     "customers.edit": {
       "name": "Edit customers",
       "hint": "customers, categories, website checks"
+    },
+    "customers.contracts": {
+      "name": "Contract data",
+      "hint": "see and edit contract data of customers (end, notice, support hours)"
     },
     "sites.deploy": {
       "name": "Deploy websites",

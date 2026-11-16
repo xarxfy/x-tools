@@ -30,7 +30,7 @@ from cryptography.fernet import Fernet, InvalidToken  # noqa: E402
 
 from app.core.db import run_migrations, session_scope  # noqa: E402
 from app.core.security import encrypt_json  # noqa: E402
-from app.models import Agent, CredentialSet, Customer, Service, Setting  # noqa: E402
+from app.models import Agent, CredentialSet, Customer, CustomerContact, Service, Setting  # noqa: E402
 
 
 def read_json(path: Path, default):
@@ -87,11 +87,14 @@ def main() -> None:
         service_ids = {s["id"] for s in services if s.get("id")}
         for c in customers:
             db.merge(Customer(
-                id=c["id"], name=c.get("name", "")[:80], contact=c.get("contact", ""), email=c.get("email", ""),
-                phone=c.get("phone", ""), owner=c.get("owner", ""), agreements=c.get("agreements", ""),
+                id=c["id"], name=c.get("name", "")[:80], owner=c.get("owner", ""), agreements=c.get("agreements", ""),
                 notes=c.get("notes", ""),
             ))
             db.flush()
+            db.query(CustomerContact).filter_by(customer_id=c["id"]).delete()  # an import can run again
+            if c.get("contact") or c.get("email") or c.get("phone"):  # the single contact becomes the first contact person
+                db.add(CustomerContact(customer_id=c["id"], name=(c.get("contact") or c.get("email") or c.get("phone"))[:80],
+                                       email=c.get("email", "")[:120], phone=c.get("phone", "")[:40]))
             for sid in c.get("services", []):
                 if sid in service_ids:
                     db.get(Service, sid).customer_id = c["id"]

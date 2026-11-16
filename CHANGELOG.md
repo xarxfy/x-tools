@@ -6,11 +6,18 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **Customers, extended:** several **contact people** per customer (with a role), **contract data** (end, period of
+  notice, support hours, response time) with a warning on the overview 60 days before the last day to give notice,
+  **tasks** with a due date, and **servers and jobs** that belong to a customer (also used by the customer's PDF
+  report). Contract data needs the new permission *Contract data* (`customers.contracts`; part of the operator
+  preset, viewers do not see it).
 - **PDF report** (button *PDF report* on *Servers* and on a customer page): servers (system, IPs, updates, uptime) and
   services with domains and ports, for everything or for one customer, in English or German. Credentials and notes
   are never included. No extra dependency.
 
 ### Changed
+- The single contact of a customer (name, e-mail, phone) became the first contact person; existing data is migrated
+  automatically.
 - Tables no longer scroll sideways; on phones every row becomes a card, and tab bars wrap onto a second line.
 
 ## [1.0.0-beta.4] – 2026-11-16

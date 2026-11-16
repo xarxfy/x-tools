@@ -33,7 +33,7 @@ export function OverviewPage() {
     { to: "/services", icon: "services", label: t("nav.services"), value: String(counts.services) },
     ...(customersOn ? [{ to: "/customers", icon: "customers" as IconName, label: t("nav.customers"), value: String(counts.customers) }] : []),
   ];
-  const { hosts, jobs, backup, sites } = overview.data;
+  const { hosts, jobs, backup, sites, customer_todos } = overview.data;
   const sitesUp = sites.filter((s) => s.level === "up").length;
   const soon = sites.filter((s) => s.cert_expires && (s.cert_expires - Date.now() / 1000) / 86400 < 14)
     .map((s) => Math.max(0, Math.floor((s.cert_expires! - Date.now() / 1000) / 86400)));
@@ -144,6 +144,24 @@ export function OverviewPage() {
                 : backup.last_at ? t("overview.backupOk", { when: ago(backup.last_at) }) : t("overview.backupWait")}</span>
             </Link>
           </section>
+
+          {customersOn && customer_todos.length > 0 && (
+            <>
+              <h2 className="section-title">{t("overview.customerTodos")}</h2>
+              <section className="card side-list">
+                {customer_todos.map((x, i) => (
+                  <Link key={i} to={`/customers/${x.customer_id}`} className="side-row">
+                    <Dot state={x.level} />
+                    <span>
+                      <b>{x.customer}</b>{" · "}
+                      {x.kind === "contract" ? t("overview.noticeBy", { date: new Date(`${x.date}T00:00:00`).toLocaleDateString() }) : x.text}
+                      {" "}<span className="muted">({x.days === 0 ? t("customers.today") : x.days > 0 ? t("customers.inDays", { count: x.days }) : t("customers.daysAgo", { count: -x.days })})</span>
+                    </span>
+                  </Link>
+                ))}
+              </section>
+            </>
+          )}
 
           {customersOn && sites.length > 0 && (
             <>

@@ -78,7 +78,8 @@ def search_all(db: Session, query: str) -> list[dict]:
         add("job", j.name, "", "/monitoring")
     if load_features().customers:
         for c in db.scalars(select(Customer)):
-            add("customer", c.name, c.contact or "", f"/customers/{c.id}", c.email, c.phone, c.owner, c.notes, c.agreements)
+            add("customer", c.name, (c.contacts[0].name if c.contacts else ""), f"/customers/{c.id}",
+                *[x for p in c.contacts for x in (p.name, p.email, p.phone)], c.owner, c.notes, c.agreements)
         for w in db.scalars(select(Site)):
             add("site", w.name, w.repo_url, f"/customers/{w.customer_id}" if w.customer_id else "/customers", w.branch)
 

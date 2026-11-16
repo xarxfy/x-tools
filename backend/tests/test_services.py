@@ -70,7 +70,7 @@ def test_customers(admin):
     h = csrf_headers(admin)
     s1 = admin.post("/api/services", json=SERVICE, headers=h).json()["id"]
     s2 = admin.post("/api/services", json={**SERVICE, "name": "Shop"}, headers=h).json()["id"]
-    r = admin.post("/api/customers", json={"name": "ACME", "email": "a@example.com", "service_ids": [s1]}, headers=h)
+    r = admin.post("/api/customers", json={"name": "ACME", "contacts": [{"name": "Anna", "email": "a@example.com"}], "service_ids": [s1]}, headers=h)
     assert r.status_code == 201, r.text
     cid = r.json()["id"]
     assert r.json()["service_ids"] == [s1]

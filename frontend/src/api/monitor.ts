@@ -29,8 +29,19 @@ export interface Overview {
   notifications: boolean;
   hosts: OverviewHost[];
   jobs: { total: number; ok: number; late: number; paused: number };
+  customer_todos: CustomerTodo[];
   backup: { enabled: boolean; last_at: number | null; last_ok: boolean | null };
   sites: { domain: string; level?: "up" | "warn" | "down"; cert_expires?: number }[];
+}
+
+export interface CustomerTodo {
+  kind: "task" | "contract";
+  level: "warn" | "down";
+  customer_id: string;
+  customer: string;
+  text: string;
+  date: string;
+  days: number;
 }
 
 export interface OverviewHost {

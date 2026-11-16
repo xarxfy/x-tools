@@ -158,7 +158,38 @@
     "categoryPlaceholder": "Neue Kategorie, z. B. A-Kunde",
     "addCategory": "Hinzufügen",
     "up": "Nach oben",
-    "down": "Nach unten"
+    "down": "Nach unten",
+    "contacts": "Ansprechpartner",
+    "contactName": "Name",
+    "contactRole": "Rolle (technisch, Rechnung …)",
+    "addContact": "Ansprechpartner hinzufügen",
+    "contractTitle": "Vertrag",
+    "contractEnd": "Vertrag endet",
+    "noticeDays": "Kündigungsfrist (Tage)",
+    "noticeValue_one": "{{count}} Tag",
+    "noticeValue_other": "{{count}} Tage",
+    "noticeBy": "Kündigen bis",
+    "supportHours": "Support-Zeiten",
+    "supportHoursHint": "z. B. Mo–Fr 9–17 Uhr",
+    "responseTime": "Reaktionszeit",
+    "responseTimeHint": "z. B. 4 Stunden",
+    "ended": "beendet",
+    "today": "heute",
+    "inDays_one": "in {{count}} Tag",
+    "inDays_other": "in {{count}} Tagen",
+    "daysAgo_one": "vor {{count}} Tag",
+    "daysAgo_other": "vor {{count}} Tagen",
+    "deadlineBadge": "Frist",
+    "tasksTitle": "Aufgaben",
+    "tasksOpen_one": "{{count}} Aufgabe",
+    "tasksOpen_other": "{{count}} Aufgaben",
+    "taskPlaceholder": "Neue Aufgabe …",
+    "taskDue": "Fällig am",
+    "addTask": "Hinzufügen",
+    "serversTitle": "Server",
+    "jobsTitle": "Jobs",
+    "job": "Job",
+    "assignHint": "Ein Server oder Job gehört zu einem Kunden; hier gewählt, wird er einem anderen weggenommen."
   },
   "domains": {
     "sub_one": "{{count}} Domain",
@@ -362,7 +393,9 @@
     "setUpBackup": "Einrichten",
     "noProblems": "Gerade gibt es keine Probleme.",
     "statusDown": "Etwas ist ausgefallen",
-    "statusWarn": "Bitte ansehen"
+    "statusWarn": "Bitte ansehen",
+    "customerTodos": "Kunden: Fristen und Aufgaben",
+    "noticeBy": "kündigen bis {{date}}"
   },
   "sites": {
     "title": "Website-Prüfungen",
@@ -1245,6 +1278,10 @@
     "customers.edit": {
       "name": "Kunden bearbeiten",
       "hint": "Kunden, Kategorien, Website-Checks"
+    },
+    "customers.contracts": {
+      "name": "Vertragsdaten",
+      "hint": "Vertragsdaten der Kunden sehen und bearbeiten (Ende, Kündigungsfrist, Support-Zeiten)"
     },
     "sites.deploy": {
       "name": "Websites deployen",

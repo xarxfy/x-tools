@@ -1,7 +1,7 @@
 """Overview (current issues), notification settings and website checks."""
 
 import time
-from datetime import timezone
+from datetime import date, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -9,12 +9,13 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.agents import host_metrics
-from app.api.deps import current_user, require
+from app.api.customers import CONTRACT_WARN_DAYS, deadline_of
+from app.api.deps import current_user, permissions_of, require
 from app.core.audit import audit
 from app.collector.exchange import load_snapshot
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
-from app.models import Agent, Customer, Heartbeat, Service
+from app.models import Agent, Customer, CustomerTask, Heartbeat, Service
 from app.monitor import autobackup, maintenance, notify, sites, state, updates
 from app.monitor.jobs import job_state
 from app.monitor.issues import AGENT_STALE, ALERT_STATE, all_containers, container_state, find_issues
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/api", tags=["monitor"], dependencies=[Depends(curren
 
 
 @router.get("/overview")
-def overview(db: Session = Depends(get_db)):
+def overview(user=Depends(current_user), db: Session = Depends(get_db)):
     issues = find_issues()
     paused = maintenance.silenced_keys(issues)
     for i in issues:
@@ -51,11 +52,31 @@ def overview(db: Session = Depends(get_db)):
         "system": (snap or {}).get("system"),
         "notifications": bool(notify.active_channels(notify.load())),
         "hosts": hosts(agents, (snap or {}).get("system")),
+        "customer_todos": customer_todos(db, "customers.contracts" in permissions_of(user, db)),
         "jobs": jobs_summary(db),
         "backup": backup_summary(),
         "sites": [{"domain": d, "level": c.get("level"), "cert_expires": c.get("cert_expires")}
                   for d, c in sorted(checks.items())],
     }
+
+
+def customer_todos(db: Session, contracts: bool) -> list[dict]:
+    """Overdue or soon due tasks, and contracts whose notice deadline is near (only for roles that see contracts)."""
+    today = date.today()
+    out = []
+    for t in db.scalars(select(CustomerTask).where(CustomerTask.done.is_(False), CustomerTask.due.is_not(None))):
+        days = (t.due - today).days
+        if days <= 7:
+            out.append({"kind": "task", "level": "down" if days < 0 else "warn", "customer_id": t.customer_id,
+                        "customer": t.customer.name, "text": t.title, "date": t.due.isoformat(), "days": days})
+    if contracts:
+        for c in db.scalars(select(Customer).where(Customer.contract_end.is_not(None))):
+            dl = deadline_of(c)
+            days = (dl - today).days
+            if days <= CONTRACT_WARN_DAYS and (c.contract_end - today).days >= 0:
+                out.append({"kind": "contract", "level": "down" if days < 0 else "warn", "customer_id": c.id, "customer": c.name,
+                            "text": "", "date": dl.isoformat(), "days": days})
+    return sorted(out, key=lambda x: x["days"])
 
 
 def hosts(agents, local: dict | None) -> list[dict]:

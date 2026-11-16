@@ -35,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(services.router)
     app.include_router(customers.categories)
     app.include_router(customers.router)
+    app.include_router(customers.tasks)
     app.include_router(sites.router)
     app.include_router(jobs.router)
     app.include_router(jobs.ping_router)

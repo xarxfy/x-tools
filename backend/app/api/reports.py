@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user
+from app.api.deps import current_user, permissions_of
 from app.api.inventory import inventory
 from app.core.audit import audit
 from app.core.db import get_db
 from app.core.pdf import Document
-from app.models import Customer, CustomerCategory, Service
+from app.models import Agent, Customer, CustomerCategory, Service
 
 router = APIRouter(prefix="/api/reports", tags=["reports"], dependencies=[Depends(current_user)])
 
@@ -23,6 +23,7 @@ TEXT = {
         "ports": "Ports", "folder": "Folder", "type": "Kind", "category": "Category", "contact": "Contact",
         "email": "E-mail", "phone": "Phone", "domain_owner": "Domain owner", "agreements": "Agreements",
         "none": "Nothing to show.", "page": "Page", "customers": "Customer", "all": "All customers",
+        "support_hours": "Support hours", "response_time": "Response time", "contacts": "Contacts", "role": "Role",
         "servers_of": "Servers of this customer's services", "days": "d", "reboot": "reboot needed",
         "summary": "{servers} servers, {services} services",
         "kinds": {"linux": "Linux", "proxmox": "Proxmox", "docker": "Docker", "local": "This server"},
@@ -34,6 +35,7 @@ TEXT = {
         "ports": "Ports", "folder": "Ordner", "type": "Art", "category": "Kategorie", "contact": "Kontakt",
         "email": "E-Mail", "phone": "Telefon", "domain_owner": "Domain-Inhaber", "agreements": "Vereinbarungen",
         "none": "Nichts anzuzeigen.", "page": "Seite", "customers": "Kunde", "all": "Alle Kunden",
+        "support_hours": "Support-Zeiten", "response_time": "Reaktionszeit", "contacts": "Ansprechpartner", "role": "Rolle",
         "servers_of": "Server der Dienste dieses Kunden", "days": "T", "reboot": "Neustart nötig",
         "summary": "{servers} Server, {services} Dienste",
         "kinds": {"linux": "Linux", "proxmox": "Proxmox", "docker": "Docker", "local": "Dieser Server"},
@@ -65,7 +67,7 @@ def service_rows(items: list[Service]) -> list[list[str]]:
 
 @router.get("/pdf")
 def pdf_report(customer: str | None = Query(default=None, max_length=12), servers: bool = True, services: bool = True,
-               lang: str = Query(default="en", pattern="^(en|de)$"), db: Session = Depends(get_db)):
+               lang: str = Query(default="en", pattern="^(en|de)$"), user=Depends(current_user), db: Session = Depends(get_db)):
     if not servers and not services:
         raise HTTPException(422, "Choose at least one section")
     tx = TEXT[lang]
@@ -80,9 +82,10 @@ def pdf_report(customer: str | None = Query(default=None, max_length=12), server
         query = query.where(Service.customer_id == cust.id)
     service_list = list(db.scalars(query))
     inv = inventory(db)
-    if cust:  # only the servers the customer's services run on
+    if cust:  # the servers assigned to the customer and the ones its services run on
         hosts = {s.host.strip().lower() for s in service_list if s.host}
-        inv = [r for r in inv if r["name"].lower() in hosts or r["hostname"].lower() in hosts
+        assigned = {a.id for a in db.scalars(select(Agent).where(Agent.customer_id == cust.id))}
+        inv = [r for r in inv if r["id"] in assigned or r["name"].lower() in hosts or r["hostname"].lower() in hosts
                or any(ip.lower() in hosts for ip in r["ips"])]
 
     doc = Document(tx["customer"] if cust else tx["title"], f"X-TOOLS · {tx['created']} {stamp}", tx["page"])
@@ -91,9 +94,17 @@ def pdf_report(customer: str | None = Query(default=None, max_length=12), server
     doc.space(6)
     if cust:
         category = db.get(CustomerCategory, cust.category_id) if cust.category_id else None
-        doc.facts([(tx["category"], category.name if category else ""), (tx["contact"], cust.contact),
-                   (tx["email"], cust.email), (tx["phone"], cust.phone), (tx["domain_owner"], cust.owner),
-                   (tx["agreements"], cust.agreements)])
+        facts = [(tx["category"], category.name if category else ""), (tx["domain_owner"], cust.owner),
+                 (tx["agreements"], cust.agreements)]
+        if "customers.contracts" in permissions_of(user, db):
+            facts += [(tx["support_hours"], cust.support_hours), (tx["response_time"], cust.response_time)]
+        doc.facts(facts)
+        if cust.contacts:
+            doc.space(8)
+            doc.heading(tx["contacts"])
+            doc.space(4)
+            doc.table([tx["name"], tx["role"], tx["email"], tx["phone"]],
+                      [[p.name, p.role, p.email, p.phone] for p in cust.contacts], [1.5, 1.2, 1.8, 1.2])
     else:
         doc.paragraph(tx["summary"].format(servers=len(inv) if servers else 0, services=len(service_list) if services else 0))
     if servers:

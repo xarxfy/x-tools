@@ -5,9 +5,9 @@ the predecessor project (Server-Info) can be imported with its IDs intact.
 """
 
 import secrets
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -81,17 +81,53 @@ class Customer(Base):
 
     id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(80))
-    contact: Mapped[str] = mapped_column(String(80), default="")
-    email: Mapped[str] = mapped_column(String(120), default="")
-    phone: Mapped[str] = mapped_column(String(40), default="")
     owner: Mapped[str] = mapped_column(String(120), default="")  # who registered the domain
     agreements: Mapped[str] = mapped_column(Text, default="")
     notes: Mapped[str] = mapped_column(Text, default="")
     category_id: Mapped[str | None] = mapped_column(
         ForeignKey("customer_categories.id", ondelete="SET NULL"), nullable=True)
+    # Contract data (only shown to roles with customers.contracts)
+    contract_end: Mapped[date | None] = mapped_column(Date, nullable=True)
+    notice_days: Mapped[int | None] = mapped_column(Integer, nullable=True)  # period of notice before the end
+    support_hours: Mapped[str] = mapped_column(String(120), default="", server_default="")
+    response_time: Mapped[str] = mapped_column(String(60), default="", server_default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     services: Mapped[list["Service"]] = relationship(back_populates="customer")
+    contacts: Mapped[list["CustomerContact"]] = relationship(
+        back_populates="customer", cascade="all, delete-orphan", order_by="CustomerContact.position")
+    tasks: Mapped[list["CustomerTask"]] = relationship(back_populates="customer", cascade="all, delete-orphan")
+
+
+class CustomerContact(Base):
+    """A person at the customer (technical, billing, emergency …); `role` is free text."""
+
+    __tablename__ = "customer_contacts"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    role: Mapped[str] = mapped_column(String(60), default="", server_default="")
+    email: Mapped[str] = mapped_column(String(120), default="", server_default="")
+    phone: Mapped[str] = mapped_column(String(40), default="", server_default="")
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+    customer: Mapped["Customer"] = relationship(back_populates="contacts")
+
+
+class CustomerTask(Base):
+    """A small to-do of a customer, optionally with a due date."""
+
+    __tablename__ = "customer_tasks"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    due: Mapped[date | None] = mapped_column(Date, nullable=True)
+    done: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    customer: Mapped["Customer"] = relationship(back_populates="tasks")
 
 
 class Site(Base):
@@ -127,6 +163,7 @@ class Heartbeat(Base):
     last_ping_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_ok_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_status: Mapped[str] = mapped_column(String(10), default="")  # ok | fail | start
+    customer_id: Mapped[str | None] = mapped_column(ForeignKey("customers.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
@@ -214,6 +251,7 @@ class Agent(Base):
     group_id: Mapped[str | None] = mapped_column(ForeignKey("server_groups.id", ondelete="SET NULL"), nullable=True)
     tags: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")  # free tags of this server
     notes: Mapped[str] = mapped_column(Text, default="", server_default="")  # free text: what is this server for …
+    customer_id: Mapped[str | None] = mapped_column(ForeignKey("customers.id", ondelete="SET NULL"), nullable=True)
 
 
 class Event(Base):

@@ -66,7 +66,7 @@ def test_import_server_info(tmp_path, monkeypatch):
         assert s.scalar(select(func.count()).select_from(Service)) == 2
         assert s.get(Service, "aaaaaaaaaaaa").customer_id == "cccccccccccc"
         assert s.get(Service, "bbbbbbbbbbbb").customer_id is None
-        assert s.get(Customer, "cccccccccccc").email == "jane@example.com"
+        assert [(p.name, p.email) for p in s.get(Customer, "cccccccccccc").contacts] == [("Jane", "jane@example.com")]
         creds = security.decrypt_json(s.get(CredentialSet, "aaaaaaaaaaaa").data)
         assert [c["password"] for c in creds] == ["s3cret", "t0ken"]
         assert s.get(CredentialSet, "aaaaaaaaaaaa").count == 2
