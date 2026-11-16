@@ -7,7 +7,7 @@ GitLab (.gitlab/issue_templates) and GitHub (.github/ISSUE_TEMPLATE).
 Items may use `code`, *emphasis* and [links](url).
 """
 
-VERSION = "1.0.0-beta.1"
+VERSION = "1.0.0-beta.2"
 
 SETUP_FIELDS = [
     ("version", "X-TOOLS version (sidebar bottom) and date of `git pull`"),
@@ -32,7 +32,8 @@ SECTIONS = [
     ]),
     ("overview", "Overview", [
         "*Needs attention* lists real problems (or *All good*); every entry leads to the right place",
-        "Tiles (LXCs/VMs, containers, services, customers) show plausible numbers",
+        "The banner shows the overall state; the counters (LXCs/VMs, containers, services, customers) are plausible",
+        "*Servers* shows one row per server with load, memory, disk and pending updates; *Jobs · Backup* and *Websites* match the real state",
         "*Recent events* fills up over time",
     ]),
     ("services", "Services", [
@@ -108,6 +109,7 @@ SECTIONS = [
         "*Settings → General*: switching on shows *Customers*, switching off hides it again",
         "Add a customer, assign services; the customer page shows contact, sites and agreements",
         "Website checks show DNS/HTTPS/certificate; *Check now* updates them",
+        "*Categories*: create A-customer/B-customer, reorder them, assign customers; filter and sorting in the list work; deleting a category keeps its customers",
     ]),
     ("linux", "Linux servers (agent kind *Linux server*)", [
         "*Add server → Linux server*: the install command works on a Debian/Ubuntu server; it appears under *Servers*",
@@ -117,6 +119,16 @@ SECTIONS = [
         "With *Allow control*: restart a harmless service and read its logs; `x-tools-agent` itself cannot be stopped",
         "Reboot (with confirmation) restarts the server and it reports again afterwards",
         "With *Also report Docker*, its containers appear on the Docker page",
+        "With two or more servers there is a tab per server; services, ports, firewall and users fold open and closed (services open by themselves when one failed)",
+    ]),
+    ("admin", "Server administration (admin, agent *Allow control*, agent version 7 – use an unimportant test server)", [
+        "*Install updates* shows the log while it runs and ends with a clear result; afterwards the update count drops",
+        "Users: the list matches `/etc/passwd`; add a test SSH key and log in with it, then remove the key again",
+        "Create a test user, give and take *sudo*, lock the account (login stops working), unlock it, delete it",
+        "The only sudo user cannot be locked, demoted or deleted (a clear message appears)",
+        "Firewall: with ufw installed the rules match `ufw status numbered`; add and delete a rule for an unused port",
+        "Turning the firewall on keeps your SSH session alive; a rule that would block SSH, or deleting the last SSH rule, is refused",
+        "Every action appears in the audit log",
     ]),
     ("deploy", "Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)", [
         "Without the deployer container, *Websites* shows a hint and *Deploy* says the deployer is not running",

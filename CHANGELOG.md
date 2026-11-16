@@ -5,6 +5,8 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+## [1.0.0-beta.2] – 2026-11-16
+
 ### Added
 - Linux servers can be administered by admins (agent version 7): install updates (with log), manage local users and
   their SSH keys (add/remove keys, sudo, lock/unlock, create/delete), manage the ufw firewall (status, rules, on/off),
@@ -13,6 +15,15 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ### Changed
 - Overview page redesigned: status banner with counters, two columns (problems and events | servers with load/RAM/disk, jobs, backup, websites).
+- Servers page: one tab per server, collapsible sections (services, ports, disks, firewall, users) with a short summary,
+  services open by themselves when one failed; the search box has its own row.
+
+### Fixed
+- The agent bundle now contains every module (a missing one stopped the agent at start); a test starts the real bundle.
+
+### Notes
+- Agent protocol version: **7** (was 6). Agents of version 6 keep working but do not show the administration features;
+  create a new install command to update them.
 
 ## [1.0.0-beta.1] – 2026-11-15 – first public beta
 

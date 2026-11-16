@@ -1,6 +1,6 @@
 [project]
 name = "x-tools"
-version = "1.0.0b1"
+version = "1.0.0b2"
 description = "Self-hosted overview of your servers, services, Docker containers and the sites you host."
 license = { text = "MIT" }
 requires-python = ">=3.12"

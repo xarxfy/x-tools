@@ -35,7 +35,8 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 ## 3. Overview
 
 - [ ] *Needs attention* lists real problems (or *All good*); every entry leads to the right place
-- [ ] Tiles (LXCs/VMs, containers, services, customers) show plausible numbers
+- [ ] The banner shows the overall state; the counters (LXCs/VMs, containers, services, customers) are plausible
+- [ ] *Servers* shows one row per server with load, memory, disk and pending updates; *Jobs · Backup* and *Websites* match the real state
 - [ ] *Recent events* fills up over time
 
 ## 4. Services
@@ -121,6 +122,7 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] *Settings → General*: switching on shows *Customers*, switching off hides it again
 - [ ] Add a customer, assign services; the customer page shows contact, sites and agreements
 - [ ] Website checks show DNS/HTTPS/certificate; *Check now* updates them
+- [ ] *Categories*: create A-customer/B-customer, reorder them, assign customers; filter and sorting in the list work; deleting a category keeps its customers
 
 ## 14. Linux servers (agent kind *Linux server*)
 
@@ -131,8 +133,19 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] With *Allow control*: restart a harmless service and read its logs; `x-tools-agent` itself cannot be stopped
 - [ ] Reboot (with confirmation) restarts the server and it reports again afterwards
 - [ ] With *Also report Docker*, its containers appear on the Docker page
+- [ ] With two or more servers there is a tab per server; services, ports, firewall and users fold open and closed (services open by themselves when one failed)
 
-## 15. Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)
+## 15. Server administration (admin, agent *Allow control*, agent version 7 – use an unimportant test server)
+
+- [ ] *Install updates* shows the log while it runs and ends with a clear result; afterwards the update count drops
+- [ ] Users: the list matches `/etc/passwd`; add a test SSH key and log in with it, then remove the key again
+- [ ] Create a test user, give and take *sudo*, lock the account (login stops working), unlock it, delete it
+- [ ] The only sudo user cannot be locked, demoted or deleted (a clear message appears)
+- [ ] Firewall: with ufw installed the rules match `ufw status numbered`; add and delete a rule for an unused port
+- [ ] Turning the firewall on keeps your SSH session alive; a rule that would block SSH, or deleting the last SSH rule, is refused
+- [ ] Every action appears in the audit log
+
+## 16. Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)
 
 - [ ] Without the deployer container, *Websites* shows a hint and *Deploy* says the deployer is not running
 - [ ] With it: add a website with a public repository that has a compose file; *Deploy* runs, the log shows the steps
@@ -142,7 +155,7 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] Private repository with an access token works; the token and variables are never shown again
 - [ ] *Stop* stops the containers; deleting with *also remove containers and files* removes them
 
-## 16. Pause alerts, jobs, automatic backup, updates
+## 17. Pause alerts, jobs, automatic backup, updates
 
 - [ ] *Pause alerts* on the overview: pick a service for 30 min; its problem is marked *paused* and no message arrives
 - [ ] *End now* removes the banner; a problem that is still there is reported after the delay
@@ -152,7 +165,7 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] A backup file from the folder can be restored with the passphrase (on a test instance)
 - [ ] *Settings → About → Updates* shows the check result; *Check now* works
 
-## 17. Notifications
+## 18. Notifications
 
 - [ ] Telegram and/or ntfy: *Send test* arrives
 - [ ] With the main switch off, a clear hint is shown and only tests are sent
@@ -161,26 +174,26 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] A container stopped **through X-TOOLS** is not reported; started and stopped outside again, it is
 - [ ] *Monitoring checked … ago* is shown; open problems list whether they were notified
 
-## 18. Account and security
+## 19. Account and security
 
 - [ ] Change your password; other sessions are logged out
 - [ ] Turn on two-factor login (QR code); login asks for the code
 - [ ] A recovery code works once, then it is used up; turn two-factor login off again
 
-## 19. Users, roles, audit log
+## 20. Users, roles, audit log
 
 - [ ] **Viewer**: sees everything, no credentials, no container/Proxmox actions, no logs, only *Account* in settings
 - [ ] **Operator**: edits services and credentials, controls containers and guests; no users, agents, backups
 - [ ] Disable a user → logged out, cannot log in; reset the password → new password works
 - [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes
 
-## 20. Backup and update
+## 21. Backup and update
 
 - [ ] *Settings → Backup*: download a backup with a passphrase
 - [ ] Restore it (ideally on a test installation): data and credentials are back, everyone is logged out
 - [ ] `git pull && sudo sh deploy/setup.sh` keeps data, users and settings
 
-## 21. Look and feel
+## 22. Look and feel
 
 - [ ] Phone: menu works, no horizontal scrolling, dialogs fit on the screen
 - [ ] Dark mode looks right
