@@ -71,6 +71,18 @@ const DOCS: Doc[] = [
     <p>Note: X-TOOLS is entirely “vibe coded” (written with an AI assistant) and has had no independent security
       audit – keep backups and be careful what you give it control over.</p>
   </>, "how works parts guide cloudflare access tunnel vibe coded ai audit"),
+  doc("search", "Search, notes and group actions", <>
+    <p><strong>Search:</strong> press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘K</kbd> on a Mac) or <kbd>/</kbd> anywhere, or use
+      the search button in the sidebar. It finds servers, containers, Proxmox guests, services (also by port, domain
+      or a word in their notes), domains, customers, websites, jobs and tags. Arrow keys and Enter open a result.</p>
+    <p><strong>Notes:</strong> every server has a free-text note on its page (what is it for, who is responsible,
+      links become clickable); services and customers have notes, too. Notes are searchable.</p>
+    <p><strong>Group actions</strong> (<Link to="/servers">Servers</Link>, for people who may manage servers): the
+      button <em>Group actions</em> runs one action on several servers – choose them by group, tag or one by one,
+      review, run, and see the result per server: install updates, add or remove an SSH key, add a firewall rule,
+      restart a service. The tab <em>SSH keys</em> shows which key has access to which server and user and removes
+      an old key everywhere with one click.</p>
+  </>, "search find ctrl k notes group actions bulk ssh keys everywhere"),
   doc("jobs", "Jobs and maintenance", <>
     <p>The <Link to="/monitoring">Monitoring → Jobs</Link> page monitors things that should happen regularly (backups, cron jobs).
       Each job has a secret address; the job calls it when it has run

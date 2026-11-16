@@ -1314,7 +1314,8 @@
     "historyTab": "History",
     "maintenanceTab": "Maintenance",
     "noWindows": "No maintenance windows. Pausing alerts silences them for a while (e.g. during work on a server).",
-    "days": "{{count}} days"
+    "days": "{{count}} days",
+    "serversTab": "Servers"
   },
   "search": {
     "title": "Search",
@@ -1332,5 +1333,46 @@
       "job": "Jobs",
       "tag": "Tags"
     }
+  },
+  "bulk": {
+    "button": "Group actions",
+    "title": "Action on several servers",
+    "action": "Action",
+    "kinds": {
+      "update": "Install updates",
+      "key_add": "Add an SSH key",
+      "key_remove": "Remove an SSH key",
+      "firewall": "Add a firewall rule",
+      "restart": "Restart a service"
+    },
+    "user": "User on the servers",
+    "fingerprint": "Key fingerprint",
+    "service": "Service name",
+    "servers": "Servers",
+    "all": "All",
+    "none": "None",
+    "noUpdates": "no updates pending (skipped)",
+    "noServers": "No server with control switched on. Servers need an agent with “Allow control”.",
+    "noControl": "Servers without “Allow control” are left out.",
+    "review": "Review",
+    "back": "Back",
+    "run": "Run on {{count}} servers",
+    "confirm": {
+      "update": "Install updates on {{count}} servers, one after the other?",
+      "key_add": "Add the SSH key on {{count}} servers? The user has to exist there.",
+      "key_remove": "Remove the SSH key on {{count}} servers?",
+      "firewall": "Add the firewall rule on {{count}} servers? Rules that would block SSH are refused.",
+      "restart": "Restart the service on {{count}} servers?"
+    },
+    "ok": "done",
+    "waiting": "waiting",
+    "keysTab": "SSH keys",
+    "keysIntro": "Which SSH key has access to which server and user (from the last reports). Remove an old laptop or a former colleague everywhere with one click.",
+    "addKey": "Add a key to servers",
+    "noKeys": "No SSH keys reported yet (only servers with an agent of version 7 and control report them).",
+    "onServers": "{{count}} servers",
+    "removeEverywhere": "Remove everywhere",
+    "confirmRemove": "Remove this key from {{count}} servers (all users listed)?",
+    "key": "Public SSH key"
   }
 }

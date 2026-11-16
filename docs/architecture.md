@@ -30,6 +30,8 @@
 - Roles with free permissions (built in: viewer, operator, administrator; your own on top) are enforced by the API, not
   only hidden in the UI. Nobody can hand out permissions they do not have; the last user manager cannot be removed. Logins, viewed and changed
   credentials, container actions and all changes land in the audit log (user, IP, one year).
+- The public heartbeat addresses throttle clients that use unknown addresses. A test goes through every API route:
+  not logged in → 401, a role without permissions → 403 (`tests/test_permission_matrix.py`).
 - Credentials, notification tokens, the Cloudflare token and the Proxmox/Cloudflare tokens of agent install commands
   are encrypted with the instance's secret key; secrets are never sent back to the browser after saving. Backups
   from the UI are encrypted with a passphrase (scrypt + Fernet).

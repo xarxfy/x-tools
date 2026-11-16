@@ -293,3 +293,24 @@ def test_notes(admin):
     long = "n" * 2000
     s = admin.post("/api/services", json={"name": "Wiki", "notes": long}, headers=h)
     assert s.status_code == 201 and s.json()["notes"] == long
+
+
+def test_key_inventory(admin):
+    h = csrf_headers(admin)
+    fp = "SHA256:" + "A" * 43
+    def report(user, comment):
+        r = {**REPORT, "linux": {**REPORT["linux"], "users": [{"name": user, "uid": 1000, "keys": [
+            {"type": "ssh-ed25519", "fingerprint": fp, "comment": comment, "options": False}]}]}}
+        return r
+    for name, user, comment in (("Inv1", "marc", "laptop"), ("Inv2", "deploy", "marc@laptop")):
+        ag = admin.post("/api/agents", json={"name": name, "kind": "linux", "control": True}, headers=h).json()
+        assert TestClient(admin.app).post("/api/agent/report", json=report(user, comment), headers={"X-Agent-Key": ag["key"]}).status_code == 200
+    keys = admin.get("/api/agents/keys").json()
+    assert len(keys) == 1 and keys[0]["fingerprint"] == fp and keys[0]["comments"] == ["laptop", "marc@laptop"]
+    assert [(i["agent"], i["user"]) for i in keys[0]["installs"]] == [("Inv1", "marc"), ("Inv2", "deploy")]
+    # needs the permission to manage servers
+    rid = admin.post("/api/roles", json={"name": "Ops", "permissions": ["servers.control"]}, headers=h).json()["id"]
+    admin.post("/api/users", json={"username": "opsuser", "role": rid, "password": "user password 1"}, headers=h)
+    c = TestClient(admin.app)
+    c.post("/api/auth/login", json={"username": "opsuser", "password": "user password 1"})
+    assert c.get("/api/agents/keys").status_code == 403

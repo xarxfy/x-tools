@@ -3,15 +3,16 @@
 import secrets
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_user, require
+from app.api.deps import client_ip, current_user, permissions_of, require
 from app.core.audit import audit
 from app.core.config import get_settings
 from app.core.db import get_db
+from app.core.security import login_throttle
 from app.models import Heartbeat
 from app.monitor.jobs import job_state, utc
 from app.schemas import strip
@@ -46,7 +47,7 @@ def get_job(db: Session, jid: str) -> Heartbeat:
 
 @router.get("")
 def list_jobs(user=Depends(current_user), db: Session = Depends(get_db)):
-    can = user.role in ("operator", "admin")
+    can = "jobs.edit" in permissions_of(user, db)
     return [out(h, can) for h in db.scalars(select(Heartbeat).order_by(Heartbeat.name))]
 
 
@@ -91,9 +92,15 @@ def delete_job(jid: str, db: Session = Depends(get_db)):
 # --- the ping (no login: the address itself is the secret) -----------------------------------------
 
 
-def record(token: str, status: str, db: Session) -> dict:
+def record(token: str, status: str, db: Session, request: Request) -> dict:
     h = db.scalar(select(Heartbeat).where(Heartbeat.token == token)) if 20 <= len(token) <= 48 else None
     if h is None:
+        # Unknown addresses are throttled per client (a wrong token in a cron job, or someone probing); known ones never are.
+        ip = client_ip(request)
+        wait = login_throttle.retry_after("\0heartbeat", ip)
+        if wait:
+            raise HTTPException(429, f"Too many unknown addresses. Try again in {wait} s.", headers={"Retry-After": str(wait)})
+        login_throttle.failed("\0heartbeat", ip)
         raise HTTPException(404, "Unknown job")
     now = datetime.now(timezone.utc)
     h.last_ping_at, h.last_status = now, status
@@ -104,18 +111,18 @@ def record(token: str, status: str, db: Session) -> dict:
 
 
 @ping_router.api_route("/{token}", methods=["GET", "POST", "HEAD"])
-def ping_ok(token: str, db: Session = Depends(get_db)):
-    return record(token, "ok", db)
+def ping_ok(token: str, request: Request, db: Session = Depends(get_db)):
+    return record(token, "ok", db, request)
 
 
 @ping_router.api_route("/{token}/start", methods=["GET", "POST", "HEAD"])
-def ping_start(token: str, db: Session = Depends(get_db)):
-    return record(token, "start", db)
+def ping_start(token: str, request: Request, db: Session = Depends(get_db)):
+    return record(token, "start", db, request)
 
 
 @ping_router.api_route("/{token}/fail", methods=["GET", "POST", "HEAD"])
-def ping_fail(token: str, db: Session = Depends(get_db)):
-    return record(token, "fail", db)
+def ping_fail(token: str, request: Request, db: Session = Depends(get_db)):
+    return record(token, "fail", db, request)
 
 
 def base_url() -> str:

@@ -8,10 +8,11 @@ import {
 import { useCan } from "../api/users";
 import { Icon } from "../components/Icon";
 import { PauseDialog } from "../components/Maintenance";
-import { Dialog, Dot, Empty, Loading, PageHead, SearchField, ConfirmDelete, matches } from "../components/ui";
+import { Dialog, Dot, Empty, Hub, Loading, PageHead, SearchField, ConfirmDelete, matches } from "../components/ui";
 import { level } from "../components/format";
 import { HostHead, Pending, ServerRedirect, SetupHint, agentState, reported } from "./FleetPages";
 import { LinuxTab, type ServerTab } from "./LinuxTab";
+import { GroupActionsDialog, SshKeysTab } from "./GroupActions";
 import { fmtDuration } from "../components/format";
 import { AddAgentButton, AgentManageBar } from "./AgentManage";
 import { NoteText } from "../components/NoteText";
@@ -146,7 +147,7 @@ export function GroupsDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function ServersPage() {
+function ServersList() {
   const { t } = useTranslation();
   const agents = useAgents();
   const groups = useServerGroups();
@@ -158,6 +159,7 @@ export function ServersPage() {
   const [tag, setTag] = useState(params.get("tag") ?? "");
   useEffect(() => { const x = params.get("tag"); if (x !== null) setTag(x); }, [params]); // from the global search
   const [managing, setManaging] = useState(false);
+  const [acting, setActing] = useState(false);
   const [pause, setPause] = useState<{ scope: string; target: string } | null>(null);
   if (hash.startsWith("#agent-")) return <Navigate to={`/servers/${hash.slice(7)}`} replace />; // old links
   if (!agents.data) return <Loading error={agents.error} />;
@@ -182,6 +184,9 @@ export function ServersPage() {
       <PageHead title={t("nav.servers")} sub={live.length ? t("fleet.linuxSub", { count: live.length }) : undefined}>
         {live.length > 0 && <SearchField value={query} onChange={setQuery} />}
         {edit && live.length > 0 && <button type="button" className="btn" onClick={() => setManaging(true)}>{t("servers.list.manageGroups")}</button>}
+        {live.length > 0 && (can("servers.manage") || can("servers.control")) && (
+          <button type="button" className="btn" onClick={() => setActing(true)}>{t("bulk.button")}</button>
+        )}
         <AddAgentButton kind="linux" />
       </PageHead>
       {!live.length && <SetupHint kind="linux" />}
@@ -213,6 +218,7 @@ export function ServersPage() {
         </section>
       ))}
       {managing && <GroupsDialog onClose={() => setManaging(false)} />}
+      {acting && <GroupActionsDialog servers={live} groups={groupList} initial={{ selected: shown.map((a) => a.id) }} onClose={() => setActing(false)} />}
       {pause && <PauseDialog initial={pause} onClose={() => setPause(null)} />}
     </>
   );
@@ -365,4 +371,22 @@ export function ServerRoute() {
     return <div className="center-state"><div><h1>{t("servers.page.notFound")}</h1><Link to="/servers">{t("servers.back")}</Link></div></div>;
   }
   return <ServerRedirect />;
+}
+
+/** The Servers page: the list, and (for people who may manage servers) the overview of SSH keys. */
+export function ServersPage() {
+  const { t } = useTranslation();
+  const can = useCan();
+  const agents = useAgents();
+  const groups = useServerGroups();
+  const [params, setParams] = useSearchParams();
+  const keys = can("servers.manage") ? ["servers", "keys"] : ["servers"];
+  const view = keys.find((k) => k === params.get("view")) ?? "servers";
+  const setView = (k: string) => setParams((p) => { const n = new URLSearchParams(p); if (k === "servers") n.delete("view"); else n.set("view", k); return n; }, { replace: true });
+  return (
+    <Hub title={t("nav.servers")} tab={view} onTab={setView}
+         tabs={keys.map((k) => ({ key: k, label: t(k === "servers" ? "hub.serversTab" : "bulk.keysTab") }))}>
+      {view === "keys" ? <SshKeysTab servers={(agents.data ?? []).filter(isLinux)} groups={groups.data ?? []} /> : <ServersList />}
+    </Hub>
+  );
 }

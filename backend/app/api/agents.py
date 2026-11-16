@@ -82,6 +82,25 @@ def list_agents(db: Session = Depends(get_db)):
     return [summary(a) for a in db.scalars(select(Agent).order_by(Agent.name))]
 
 
+@router.get("/keys", dependencies=[Depends(require("servers.manage"))])
+def key_inventory(db: Session = Depends(get_db)):
+    """Which SSH key (fingerprint) has access to which server and user – from the reports of the Linux agents."""
+    keys: dict[str, dict] = {}
+    for a in db.scalars(select(Agent).where(Agent.disabled.is_(False)).order_by(Agent.name)):
+        report = a.last_report or {}
+        for u in (report.get("linux") or {}).get("users") or []:
+            for k in u.get("keys") or []:
+                entry = keys.setdefault(k.get("fingerprint", ""), {"fingerprint": k.get("fingerprint", ""),
+                                                                   "type": k.get("type", ""), "comments": [],
+                                                                   "installs": []})
+                comment = k.get("comment", "")
+                if comment and comment not in entry["comments"]:
+                    entry["comments"].append(comment)
+                entry["installs"].append({"agent_id": a.id, "agent": a.name, "user": u.get("name", ""),
+                                          "control": bool(report.get("control")), "options": bool(k.get("options"))})
+    return sorted((k for k in keys.values() if k["fingerprint"]), key=lambda k: (-len(k["installs"]), k["fingerprint"]))
+
+
 @router.get("/{aid}")
 def read_agent(aid: str, db: Session = Depends(get_db)):
     agent = get_agent(db, aid)

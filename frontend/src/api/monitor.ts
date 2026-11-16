@@ -511,3 +511,22 @@ export function useSaveAgentMeta(agentId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["agents"] }),
   });
 }
+
+// --- SSH key inventory (from the reports of the Linux agents) ---
+export interface KeyInstall {
+  agent_id: string;
+  agent: string;
+  user: string;
+  control: boolean;
+  options: boolean;
+}
+
+export interface KeyEntry {
+  fingerprint: string;
+  type: string;
+  comments: string[];
+  installs: KeyInstall[];
+}
+
+export const useKeyInventory = (enabled = true) =>
+  useQuery({ queryKey: ["agents", "keys"], queryFn: () => api<KeyEntry[]>("/agents/keys"), enabled, refetchInterval: 60_000 });

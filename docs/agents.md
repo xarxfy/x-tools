@@ -57,6 +57,17 @@ The *Servers* page is a list of your Linux servers. Group them and tag them howe
   its log on its own page).
 - Click a server to open its page with the tabs **Overview**, **Services**, **Network** (ports, firewall) and **Users**.
 
+### Notes, group actions and SSH keys
+
+- **Notes**: every server has a free-text note on its page (what it is for, who is responsible; `https://…` links are
+  clickable). They are found by the global search.
+- **Group actions** (*Servers → Group actions*, permission *Manage servers*; restarting a service needs *Control
+  servers*): one action on several servers – choose them by group, tag or one by one: install updates, add or remove an
+  SSH key (the user must exist on the server), add a firewall rule, restart a service. You review the list first, the
+  actions run one after the other and each server shows its own result. Servers without *Allow control* are left out.
+- **SSH keys** (*Servers → SSH keys*): which key (fingerprint, comment) has access to which server and user, taken from
+  the last reports. *Remove everywhere* removes a key from all servers and users in one go.
+
 ### Administering a Linux server (admins only)
 
 With control switched on, users with the role **admin** get three more things on the *Servers* page (agent version 7

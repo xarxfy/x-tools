@@ -92,3 +92,17 @@ button.tag {
   align-items: center;
   margin-bottom: 6px;
 }
+.bulk-quick {
+  margin: 6px 0 8px;
+}
+.bulk-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 4px 12px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px 4px;
+}
+.bulk-results li {
+  margin: 4px 0;
+}

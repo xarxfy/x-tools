@@ -1314,7 +1314,8 @@
     "historyTab": "Verlauf",
     "maintenanceTab": "Wartung",
     "noWindows": "Keine Wartungsfenster. „Meldungen pausieren“ schaltet Alarme für eine Weile stumm (z. B. bei Arbeiten an einem Server).",
-    "days": "{{count}} Tage"
+    "days": "{{count}} Tage",
+    "serversTab": "Server"
   },
   "search": {
     "title": "Suche",
@@ -1332,5 +1333,46 @@
       "job": "Jobs",
       "tag": "Tags"
     }
+  },
+  "bulk": {
+    "button": "Gruppenaktionen",
+    "title": "Aktion auf mehreren Servern",
+    "action": "Aktion",
+    "kinds": {
+      "update": "Updates installieren",
+      "key_add": "SSH-Schlüssel hinzufügen",
+      "key_remove": "SSH-Schlüssel entfernen",
+      "firewall": "Firewall-Regel hinzufügen",
+      "restart": "Dienst neu starten"
+    },
+    "user": "Benutzer auf den Servern",
+    "fingerprint": "Fingerprint des Schlüssels",
+    "service": "Name des Dienstes",
+    "servers": "Server",
+    "all": "Alle",
+    "none": "Keine",
+    "noUpdates": "keine Updates offen (wird übersprungen)",
+    "noServers": "Kein Server mit eingeschalteter Steuerung. Die Server brauchen einen Agent mit „Allow control“.",
+    "noControl": "Server ohne „Allow control“ sind ausgelassen.",
+    "review": "Prüfen",
+    "back": "Zurück",
+    "run": "Auf {{count}} Servern ausführen",
+    "confirm": {
+      "update": "Updates auf {{count}} Servern nacheinander installieren?",
+      "key_add": "SSH-Schlüssel auf {{count}} Servern hinzufügen? Der Benutzer muss dort existieren.",
+      "key_remove": "SSH-Schlüssel auf {{count}} Servern entfernen?",
+      "firewall": "Firewall-Regel auf {{count}} Servern hinzufügen? Regeln, die SSH blockieren würden, werden abgelehnt.",
+      "restart": "Dienst auf {{count}} Servern neu starten?"
+    },
+    "ok": "erledigt",
+    "waiting": "wartet",
+    "keysTab": "SSH-Schlüssel",
+    "keysIntro": "Welcher SSH-Schlüssel hat Zugang zu welchem Server und Benutzer (nach den letzten Reports). Einen alten Laptop oder einen ehemaligen Kollegen entfernst du mit einem Klick überall.",
+    "addKey": "Schlüssel auf Servern hinzufügen",
+    "noKeys": "Noch keine SSH-Schlüssel gemeldet (nur Server mit Agent ab Version 7 und Steuerung melden sie).",
+    "onServers": "{{count}} Server",
+    "removeEverywhere": "Überall entfernen",
+    "confirmRemove": "Diesen Schlüssel auf {{count}} Servern entfernen (alle aufgeführten Benutzer)?",
+    "key": "Öffentlicher SSH-Schlüssel"
   }
 }

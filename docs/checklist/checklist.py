@@ -37,6 +37,13 @@ SECTIONS = [
         "On *Servers*, *Proxmox* and *Docker* an operator can add a host of that kind; on a host's page: rename, install command, disable, delete",
         "Old links (`/settings?tab=agents`, `/jobs`, `/credentials`, `/cloudflare`) lead to the new places",
     ]),
+    ("search", "Search, notes, group actions", [
+        "`Ctrl/Cmd+K` (or `/`) opens the search; it finds a server, a service by port/domain/note, a customer, a container; Enter opens it",
+        "A note on a server (with a `https://` link) can be saved, shows on its page and is found by the search",
+        "*Servers → Group actions*: pick a group, review, run *Add a firewall rule* (or *Install updates*) on two test servers – each shows its own result",
+        "*Servers → SSH keys* lists the keys with the servers and users; *Remove everywhere* works (test with a test key)",
+        "A role without *Manage servers* sees neither *SSH keys* nor the admin actions in *Group actions*",
+    ]),
     ("overview", "Overview", [
         "*Needs attention* lists real problems (or *All good*); every entry leads to the right place",
         "The banner shows the overall state; the counters (LXCs/VMs, containers, services, customers) are plausible",

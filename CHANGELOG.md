@@ -5,9 +5,20 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Security
+- Test that goes through every API route: not logged in → 401, a role without permissions → 403.
+- Fixed: the secret heartbeat address of a job was shown by the name of the role (operator/admin) instead of the
+  permission *Edit jobs*.
+- Heartbeat addresses: clients that call unknown addresses are throttled (known addresses are never blocked).
+- Updated React Router (open-redirect advisories); `npm audit` shows two moderate findings that need the breaking
+  major version 7 (X-TOOLS only navigates to its own paths).
+
 ### Added
 - **Global search** (`Ctrl/Cmd+K` or `/`, or the *Search* button in the sidebar): servers, containers, Proxmox
   guests, services (names, ports, domains, notes), domains, customers, websites, jobs and tags; arrow keys and Enter.
+- **Group actions** on the Servers page: one action on several servers (by group, tag or selection) – install
+  updates, add/remove an SSH key, add a firewall rule, restart a service – with a review step and a result per server.
+- **SSH keys** tab: which key has access to which server and user; remove a key everywhere with one click.
 - **Notes** on servers (free text with clickable links, on the server's page) and longer notes on services
   (up to 5000 characters, first line shown in the list); notes are searchable.
 
