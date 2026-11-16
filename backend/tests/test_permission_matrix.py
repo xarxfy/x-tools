@@ -11,7 +11,7 @@ PUBLIC = re.compile(r"^/api/(health|status|setup|auth/login|auth/login/2fa|heart
 
 # What a role WITHOUT any permission (viewer) may do: reading overviews, and managing its own account.
 VIEWER_OK = re.compile("|".join([
-    r"^/api/auth/.*", r"^/api/account.*", r"^/api/search$", r"^/api/inventory$", r"^/api/network$", r"^/api/overview$", r"^/api/features$", r"^/api/sitechecks$",
+    r"^/api/auth/.*", r"^/api/account.*", r"^/api/search$", r"^/api/inventory$", r"^/api/reports/pdf$", r"^/api/network$", r"^/api/overview$", r"^/api/features$", r"^/api/sitechecks$",
     r"^/api/services(/ports)?$", r"^/api/customers(/[^/]+)?$", r"^/api/customer-categories$", r"^/api/docker$",
     r"^/api/agents$", r"^/api/agents/(?!keys$)[^/]+$", r"^/api/server-groups$", r"^/api/maintenance$", r"^/api/jobs$",
     r"^/api/history/.*", r"^/api/cloudflare$", r"^/api/sites$", r"^/api/sites/[^/]+/log$", r"^/api/services/uptime$",

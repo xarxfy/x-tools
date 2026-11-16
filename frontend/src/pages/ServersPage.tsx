@@ -8,6 +8,7 @@ import {
 import { useCan } from "../api/users";
 import { Icon } from "../components/Icon";
 import { PauseDialog } from "../components/Maintenance";
+import { ReportDialog } from "../components/ReportDialog";
 import { Dialog, Dot, Empty, Hub, Loading, PageHead, SearchField, ConfirmDelete, matches } from "../components/ui";
 import { level } from "../components/format";
 import { HostHead, Pending, ServerRedirect, SetupHint, agentState, reported } from "./FleetPages";
@@ -160,6 +161,7 @@ function ServersList() {
   const [tag, setTag] = useState(params.get("tag") ?? "");
   useEffect(() => { const x = params.get("tag"); if (x !== null) setTag(x); }, [params]); // from the global search
   const [managing, setManaging] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [acting, setActing] = useState(false);
   const [pause, setPause] = useState<{ scope: string; target: string } | null>(null);
   if (hash.startsWith("#agent-")) return <Navigate to={`/servers/${hash.slice(7)}`} replace />; // old links
@@ -188,8 +190,10 @@ function ServersList() {
         {live.length > 0 && (can("servers.manage") || can("servers.control")) && (
           <button type="button" className="btn" onClick={() => setActing(true)}>{t("bulk.button")}</button>
         )}
+        <button type="button" className="btn" onClick={() => setReporting(true)}>{t("report.button")}</button>
         <AddAgentButton kind="linux" />
       </PageHead>
+      {reporting && <ReportDialog onClose={() => setReporting(false)} />}
       {!live.length && <SetupHint kind="linux" />}
       <Pending agents={pending} />
       {tags.length > 0 && (

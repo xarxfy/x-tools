@@ -1429,5 +1429,15 @@
     "linux": "Linux",
     "proxmox": "Proxmox",
     "docker": "Docker"
+  },
+  "report": {
+    "title": "PDF-Bericht",
+    "button": "PDF-Bericht",
+    "create": "PDF erstellen",
+    "hint": "Ein Bericht über deine Server und Dienste zum Aufbewahren oder Weitergeben. Zugangsdaten und Notizen sind nie enthalten.",
+    "scope": "Für",
+    "allCustomers": "Alles (alle Kunden)",
+    "servers": "Server (System, IPs, Updates, Laufzeit)",
+    "services": "Dienste und Domains"
   }
 }

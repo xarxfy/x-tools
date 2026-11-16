@@ -1429,5 +1429,15 @@
     "linux": "Linux",
     "proxmox": "Proxmox",
     "docker": "Docker"
+  },
+  "report": {
+    "title": "PDF report",
+    "button": "PDF report",
+    "create": "Create PDF",
+    "hint": "A report of your servers and services to keep or hand over. Credentials and notes are never included.",
+    "scope": "For",
+    "allCustomers": "Everything (all customers)",
+    "servers": "Servers (system, IPs, updates, uptime)",
+    "services": "Services and domains"
   }
 }

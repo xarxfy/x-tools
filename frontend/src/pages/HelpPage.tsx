@@ -92,7 +92,9 @@ const DOCS: Doc[] = [
       server with system, kernel, IPs, agent version, updates and uptime (and warns about systems out of support); the
       network tab lists all IP addresses of servers, Proxmox guests and your own entries for devices without agent, and
       flags an address that is used twice. Both can be exported as CSV.</p>
-  </>, "search find ip addresses inventory network csv ctrl k notes group actions bulk ssh keys everywhere"),
+    <p><strong>PDF report</strong> (button on <Link to="/servers">Servers</Link> and on every customer): servers and services
+      as a PDF for you or to hand to a customer. Credentials and notes are never included.</p>
+  </>, "search find ip addresses inventory network csv ctrl k notes group actions bulk ssh keys everywhere pdf report export customer"),
   doc("jobs", "Jobs and maintenance", <>
     <p>The <Link to="/monitoring">Monitoring → Jobs</Link> page monitors things that should happen regularly (backups, cron jobs).
       Each job has a secret address; the job calls it when it has run

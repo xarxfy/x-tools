@@ -5,6 +5,14 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- **PDF report** (button *PDF report* on *Servers* and on a customer page): servers (system, IPs, updates, uptime) and
+  services with domains and ports, for everything or for one customer, in English or German. Credentials and notes
+  are never included. No extra dependency.
+
+### Changed
+- Tables no longer scroll sideways; on phones every row becomes a card, and tab bars wrap onto a second line.
+
 ## [1.0.0-beta.4] – 2026-11-16
 
 ### Added

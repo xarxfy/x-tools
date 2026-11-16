@@ -5,6 +5,7 @@ import {
   useCategories, useCategoryActions, useCustomers, useDeleteCustomer, usePortStatus, useSaveCustomer, useServices,
   type Customer, type CustomerInput,
 } from "../api/data";
+import { ReportDialog } from "../components/ReportDialog";
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { CredentialsDialog } from "./CredentialsPage";
@@ -113,6 +114,7 @@ export function CustomerPage() {
   const services = useServices();
   const ports = usePortStatus();
   const [editing, setEditing] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [keys, setKeys] = useState<Service | null>(null);
   const checks = useSiteChecks();
@@ -149,6 +151,7 @@ export function CustomerPage() {
         <Link to="/customers">‹ {t("nav.customers")}</Link>
       </p>
       <PageHead title={customer.name} sub={categories.find((c) => c.id === customer.category_id)?.name}>
+        <button type="button" className="btn" onClick={() => setReporting(true)}>{t("report.button")}</button>
         {edit && (
           <button type="button" className="btn" onClick={() => setEditing(true)}>
             <Icon name="edit" size={16} />
@@ -157,6 +160,7 @@ export function CustomerPage() {
         )}
       </PageHead>
 
+      {reporting && <ReportDialog customerId={customer.id} onClose={() => setReporting(false)} />}
       <h2 className="section-title">{t("customers.contactTitle")}</h2>
       <div className="card card-pad">
         {contact.length ? (
