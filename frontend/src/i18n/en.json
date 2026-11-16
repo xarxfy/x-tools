@@ -923,7 +923,10 @@
       "stop": "Stop {{name}}?",
       "restart": "Restart {{name}}?",
       "reboot": "Reboot {{name}} now?"
-    }
+    },
+    "summary": "{{running}} of {{total}} running",
+    "portCount_one": "{{count}} port",
+    "portCount_other": "{{count}} ports"
   },
   "maintenance": {
     "pause": "Pause alerts",
@@ -1141,6 +1144,10 @@
     "enableFirewall": "Turn on",
     "disableFirewall": "Turn off",
     "confirmEnable": "Turn the firewall on? SSH (port {{ports}}) is allowed first.",
-    "confirmDisable": "Turn the firewall off?"
+    "confirmDisable": "Turn the firewall off?",
+    "userCount_one": "{{count}} user",
+    "userCount_other": "{{count}} users",
+    "ruleCount_one": "{{count}} rule",
+    "ruleCount_other": "{{count}} rules"
   }
 }

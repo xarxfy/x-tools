@@ -167,3 +167,25 @@ export function matches(query: string, ...values: (string | null | undefined)[])
   const q = query.trim().toLowerCase();
   return !q || values.some((v) => v && v.toLowerCase().includes(q));
 }
+
+/** A section that can be folded: title and a short summary stay visible, the content only when opened. */
+export function Collapsible({ title, summary, tools, open: initial = false, children }: {
+  title: string; summary?: ReactNode; tools?: ReactNode; open?: boolean; children: ReactNode;
+}) {
+  const [open, setOpen] = useState(initial);
+  return (
+    <section className={`collapsible${open ? " is-open" : ""}`}>
+      <button type="button" className="collapsible-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <span className="collapsible-chevron"><Icon name="chevron" size={16} /></span>
+        <span className="collapsible-title">{title}</span>
+        <span className="collapsible-summary">{summary}</span>
+      </button>
+      {open && (
+        <div className="collapsible-body">
+          {tools && <div className="collapsible-tools">{tools}</div>}
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}

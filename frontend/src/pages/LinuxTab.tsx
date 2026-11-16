@@ -5,7 +5,7 @@ import { agentAction } from "../api/docker";
 import type { AgentSummary, LinuxInfo, LinuxService } from "../api/monitor";
 import { useCan } from "../api/users";
 import { fmtBytes, level, pct } from "../components/format";
-import { Dialog, Dot, Empty, SearchField, matches } from "../components/ui";
+import { Collapsible, Dialog, Dot, Empty, SearchField, matches } from "../components/ui";
 import { FirewallSection, UpdateControl, UsersSection } from "./LinuxAdmin";
 
 const PROTECTED = new Set(["x-tools-agent.service"]);
@@ -94,6 +94,7 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
 
   const services = (info.services ?? []).filter((s) => (!onlyFailed || s.active === "failed") && matches(query, s.name, s.description));
   const failed = (info.services ?? []).filter((s) => s.active === "failed").length;
+  const running = (info.services ?? []).filter((s) => s.active === "active").length;
   const ports = info.ports ?? [];
 
   const openLogs = (name: string) => {
@@ -123,60 +124,64 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
         {control && <RebootButton agentId={agent.id} hostname={agent.hostname || agent.name} />}
       </div>
 
-      <div className="section-row">
-        <h2 className="section-title">{t("linux.services")}{failed > 0 && <span className="badge badge-down">{t("linux.failed", { count: failed })}</span>}</h2>
-        <div className="section-tools">
-          {failed > 0 && (
-            <label className="inline-check small-note">
-              <input type="checkbox" checked={onlyFailed} onChange={(e) => setOnlyFailed(e.target.checked)} />
-              {t("linux.onlyFailed")}
-            </label>
-          )}
-          <SearchField value={query} onChange={setQuery} />
-        </div>
-      </div>
-      {info.services == null ? (
-        <Empty>{t("linux.noSystemd")}</Empty>
-      ) : services.length === 0 ? (
-        <Empty>{t("common.noMatch")}</Empty>
-      ) : (
-        <div className="card list">
-          {services.map((s) => (
-            <div key={s.name} className="list-row static-row">
-              <Dot state={serviceState(s)} />
-              <div className="list-main">
-                <div className="list-title">{s.name.replace(/\.service$/, "")}<span className="muted small-note"> {s.sub}</span></div>
-                {s.description && <div className="list-sub">{s.description}</div>}
+      <Collapsible title={t("linux.services")} open={failed > 0}
+                   summary={<>
+                     <span>{t("linux.summary", { running: running, total: (info.services ?? []).length })}</span>
+                     {failed > 0 && <span className="badge badge-down">{t("linux.failed", { count: failed })}</span>}
+                   </>}
+                   tools={<>
+                     {failed > 0 && (
+                       <label className="inline-check small-note">
+                         <input type="checkbox" checked={onlyFailed} onChange={(e) => setOnlyFailed(e.target.checked)} />
+                         {t("linux.onlyFailed")}
+                       </label>
+                     )}
+                     <SearchField value={query} onChange={setQuery} />
+                   </>}>
+        {info.services == null ? (
+          <Empty>{t("linux.noSystemd")}</Empty>
+        ) : services.length === 0 ? (
+          <Empty>{t("common.noMatch")}</Empty>
+        ) : (
+          <div className="card list">
+            {services.map((s) => (
+              <div key={s.name} className="list-row static-row">
+                <Dot state={serviceState(s)} />
+                <div className="list-main">
+                  <div className="list-title">{s.name.replace(/\.service$/, "")}<span className="muted small-note"> {s.sub}</span></div>
+                  {s.description && <div className="list-sub">{s.description}</div>}
+                </div>
+                {control ? <ServiceActions agentId={agent.id} service={s} onLogs={() => openLogs(s.name)} />
+                  : canOperate && <button type="button" className="btn btn-small btn-ghost" onClick={() => openLogs(s.name)}>{t("docker.logs")}</button>}
               </div>
-              {control ? <ServiceActions agentId={agent.id} service={s} onLogs={() => openLogs(s.name)} />
-                : canOperate && <button type="button" className="btn btn-small btn-ghost" onClick={() => openLogs(s.name)}>{t("docker.logs")}</button>}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </Collapsible>
 
-      <h2 className="section-title">{t("linux.ports")}</h2>
-      {ports.length === 0 ? <Empty>{t("linux.noPorts")}</Empty> : (
-        <div className="card list">
-          {(allPorts ? ports : ports.slice(0, 10)).map((p) => (
-            <div key={`${p.proto}${p.port}${p.address}`} className="list-row static-row">
-              <div className="list-main">
-                <div className="list-title"><span className="mono">{p.port}</span> <span className="badge">{p.proto.toUpperCase()}</span></div>
-                <div className="list-sub">{[p.address, p.process].filter(Boolean).join(" · ")}</div>
+      <Collapsible title={t("linux.ports")} summary={<span>{t("linux.portCount", { count: ports.length })}</span>}>
+        {ports.length === 0 ? <Empty>{t("linux.noPorts")}</Empty> : (
+          <div className="card list">
+            {(allPorts ? ports : ports.slice(0, 10)).map((p) => (
+              <div key={`${p.proto}${p.port}${p.address}`} className="list-row static-row">
+                <div className="list-main">
+                  <div className="list-title"><span className="mono">{p.port}</span> <span className="badge">{p.proto.toUpperCase()}</span></div>
+                  <div className="list-sub">{[p.address, p.process].filter(Boolean).join(" · ")}</div>
+                </div>
               </div>
-            </div>
-          ))}
-          {ports.length > 10 && (
-            <button type="button" className="btn btn-ghost btn-small list-more" onClick={() => setAllPorts((v) => !v)}>
-              {allPorts ? t("linux.less") : t("linux.more", { count: ports.length - 10 })}
-            </button>
-          )}
-        </div>
-      )}
+            ))}
+            {ports.length > 10 && (
+              <button type="button" className="btn btn-ghost btn-small list-more" onClick={() => setAllPorts((v) => !v)}>
+                {allPorts ? t("linux.less") : t("linux.more", { count: ports.length - 10 })}
+              </button>
+            )}
+          </div>
+        )}
+      </Collapsible>
 
       {(info.disks?.length ?? 0) > 0 && (
-        <>
-          <h2 className="section-title">{t("linux.disks")}</h2>
+        <Collapsible title={t("linux.disks")} open
+                     summary={<span>{info.disks!.map((d) => `${d.mount} ${pct(d.used, d.total).toFixed(0)} %`).join(" · ")}</span>}>
           <div className="card list">
             {info.disks!.map((d) => {
               const p = pct(d.used, d.total);
@@ -194,7 +199,7 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
               );
             })}
           </div>
-        </>
+        </Collapsible>
       )}
 
       <FirewallSection agent={agent} info={info} canManage={canManage} />

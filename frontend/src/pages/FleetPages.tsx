@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { agentControl, localControl, useDocker, type SystemInfo } from "../api/docker";
@@ -94,17 +94,35 @@ function Pending({ agents }: { agents: AgentSummary[] }) {
 export function ServersPage() {
   const { t } = useTranslation();
   const agents = useAgents();
-  useScrollToHash(!!agents.data);
+  const { hash } = useLocation();
+  const navigate = useNavigate();
+  const [picked, setPicked] = useState<string | null>(null);
   if (!agents.data) return <Loading error={agents.error} />;
   const all = agents.data.filter((a) => !a.disabled && (a.kind === "linux" || a.has_linux));
   const live = all.filter((a) => a.has_linux);
   const pending = all.filter((a) => !a.has_linux);
+  const fromHash = live.find((a) => hash === `#agent-${a.id}`);
+  const current = live.find((a) => a.id === picked) ?? fromHash ?? live[0];
+  const pick = (id: string) => {
+    setPicked(id);
+    navigate(`#agent-${id}`, { replace: true });
+  };
   return (
     <>
       <PageHead title={t("nav.servers")} sub={live.length ? t("fleet.linuxSub", { count: live.length }) : undefined} />
       {!live.length && <SetupHint kind="linux" />}
       <Pending agents={pending} />
-      {live.map((a) => <LinuxHost key={a.id} agent={a} />)}
+      {live.length > 1 && (
+        <div className="tabs server-tabs" role="tablist">
+          {live.map((a) => (
+            <button key={a.id} type="button" role="tab" aria-selected={a.id === current?.id}
+                    className={a.id === current?.id ? "active" : ""} onClick={() => pick(a.id)}>
+              <Dot state={agentState(a)} />{a.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {current && <LinuxHost key={current.id} agent={current} />}
     </>
   );
 }

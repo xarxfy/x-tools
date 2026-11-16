@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { manageAgent, type AgentSummary, type Firewall, type LinuxInfo, type LinuxUser, type UfwRule } from "../api/monitor";
 import { ago } from "../components/format";
-import { Dialog, Dot, Empty } from "../components/ui";
+import { Collapsible, Dialog, Dot, Empty } from "../components/ui";
 import "./LinuxAdmin.css";
 
 /** Runs one administration action; the report of the server (with the new state) arrives a few seconds later. */
@@ -202,28 +202,27 @@ export function UsersSection({ agent, info, canManage }: { agent: AgentSummary; 
   const state = (u: LinuxUser): "up" | "down" | "off" => (u.locked ? "down" : u.login ? "up" : "off");
   return (
     <>
-      <div className="section-row">
-        <h2 className="section-title">{t("admin.users")}</h2>
-        {canManage && <button type="button" className="btn btn-ghost btn-small" onClick={() => setAdding(true)}>{t("admin.addUser")}</button>}
-      </div>
-      <div className="card list">
-        {users.map((u) => (
-          <div key={u.name} className="list-row static-row">
-            <Dot state={state(u)} />
-            <div className="list-main">
-              <div className="list-title">
-                {u.name}
-                {u.sudo && <span className="badge user-badge">sudo</span>}
-                {u.locked && <span className="badge badge-down user-badge">{t("admin.locked")}</span>}
+      <Collapsible title={t("admin.users")} summary={<span>{t("admin.userCount", { count: users.length })}</span>}
+                   tools={canManage && <button type="button" className="btn btn-ghost btn-small" onClick={() => setAdding(true)}>{t("admin.addUser")}</button>}>
+        <div className="card list">
+          {users.map((u) => (
+            <div key={u.name} className="list-row static-row">
+              <Dot state={state(u)} />
+              <div className="list-main">
+                <div className="list-title">
+                  {u.name}
+                  {u.sudo && <span className="badge user-badge">sudo</span>}
+                  {u.locked && <span className="badge badge-down user-badge">{t("admin.locked")}</span>}
+                </div>
+                <div className="list-sub">
+                  {[t("admin.keyCount", { count: u.keys.length }), u.last_login ? t("admin.lastLogin", { when: ago(u.last_login) }) : t("admin.neverLoggedIn")].join(" · ")}
+                </div>
               </div>
-              <div className="list-sub">
-                {[t("admin.keyCount", { count: u.keys.length }), u.last_login ? t("admin.lastLogin", { when: ago(u.last_login) }) : t("admin.neverLoggedIn")].join(" · ")}
-              </div>
+              {canManage && <button type="button" className="btn btn-small btn-ghost" onClick={() => setEdit(u.name)}>{t("admin.manage")}</button>}
             </div>
-            {canManage && <button type="button" className="btn btn-small btn-ghost" onClick={() => setEdit(u.name)}>{t("admin.manage")}</button>}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </Collapsible>
       {edit && <UserDialog agent={agent} info={info} name={edit} onClose={() => setEdit(null)} />}
       {adding && <AddUserDialog agent={agent} onClose={() => setAdding(false)} />}
     </>
@@ -323,28 +322,29 @@ export function FirewallSection({ agent, info, canManage }: { agent: AgentSummar
   const [adding, setAdding] = useState(false);
   const fw = info.firewall;
   if (!fw) return null;
+  const ok = fw.installed && !fw.error;
   return (
     <>
-      <div className="section-row">
-        <h2 className="section-title">
-          {t("admin.firewall")}
-          {fw.installed && !fw.error && <span className={`badge ${fw.active ? "" : "badge-warn"}`}>{fw.active ? t("admin.fwActive") : t("admin.fwInactive")}</span>}
-        </h2>
-        <div className="section-tools">
-          {canManage && fw.installed && !fw.error && <FirewallSwitch agent={agent} fw={fw} />}
-          {canManage && fw.installed && !fw.error && <button type="button" className="btn btn-ghost btn-small" onClick={() => setAdding(true)}>{t("admin.addRule")}</button>}
-        </div>
-      </div>
-      {!fw.installed ? <Empty>{t("admin.noUfw")}</Empty> : fw.error ? <Empty>{fw.error}</Empty> : (
-        <>
-          {fw.default && <p className="hint fw-default">{t("admin.defaultPolicy")}: {fw.default}</p>}
-          {!fw.rules?.length ? <Empty>{fw.active ? t("admin.noRules") : t("admin.noRulesInactive")}</Empty> : (
-            <div className="card list">
-              {fw.rules.map((r) => <RuleRow key={`${r.number}${r.to}${r.from}`} agent={agent} rule={r} canManage={canManage} />)}
-            </div>
-          )}
-        </>
-      )}
+      <Collapsible title={t("admin.firewall")}
+                   summary={ok ? <>
+                     <span className={`badge ${fw.active ? "" : "badge-warn"}`}>{fw.active ? t("admin.fwActive") : t("admin.fwInactive")}</span>
+                     <span>{t("admin.ruleCount", { count: fw.rules?.length ?? 0 })}</span>
+                   </> : <span>{fw.installed ? "" : t("admin.noUfw")}</span>}
+                   tools={canManage && ok && <>
+                     <FirewallSwitch agent={agent} fw={fw} />
+                     <button type="button" className="btn btn-ghost btn-small" onClick={() => setAdding(true)}>{t("admin.addRule")}</button>
+                   </>}>
+        {!fw.installed ? <Empty>{t("admin.noUfw")}</Empty> : fw.error ? <Empty>{fw.error}</Empty> : (
+          <>
+            {fw.default && <p className="hint fw-default">{t("admin.defaultPolicy")}: {fw.default}</p>}
+            {!fw.rules?.length ? <Empty>{fw.active ? t("admin.noRules") : t("admin.noRulesInactive")}</Empty> : (
+              <div className="card list">
+                {fw.rules.map((r) => <RuleRow key={`${r.number}${r.to}${r.from}`} agent={agent} rule={r} canManage={canManage} />)}
+              </div>
+            )}
+          </>
+        )}
+      </Collapsible>
       {adding && <RuleForm agent={agent} onDone={() => setAdding(false)} />}
     </>
   );

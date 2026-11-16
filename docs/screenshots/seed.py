@@ -158,6 +158,12 @@ linux_report = {"version": "7", "hostname": "web-01", "control": True,
                              "log": "$ apt-get update\nGet:1 http://deb.debian.org/debian trixie InRelease\nReading package lists...\n$ apt-get -y upgrade\n5 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n"}},
     "docker": None, "proxmox": None}
 linux_id = agent("web-01", "linux", linux_report)
+db_report = json.loads(json.dumps(linux_report))
+db_report["hostname"] = "db-01"
+db_report["system"].update(hostname="db-01", load=[0.9, 0.7, 0.6], mem_used=3.1 * GB, disk_used=22 * GB)
+db_report["linux"].update(updates=[], reboot_required=False, firewall={"installed": False}, update_job=None,
+                          services=[svc("postgresql@16-main", "PostgreSQL Cluster 16-main"), svc("ssh", "OpenBSD Secure Shell server")])
+agent("db-01", "linux", db_report)
 
 def guest(vmid, name, typ, status, cpu, maxcpu, mem, maxmem, up):
     return {"vmid": vmid, "name": name, "type": typ, "status": status, "node": "pve", "cpu": cpu, "maxcpu": maxcpu,
