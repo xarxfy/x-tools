@@ -1,10 +1,14 @@
 import "./Customers.css";
 import { useState } from "react";
+import { useCan } from "../api/users";
+import { useJournal, useTicketActions, useTickets, type Ticket } from "../api/tickets";
+import { ago } from "../components/format";
+import { EntryText, PriorityBadge, StatusBadge, TicketDialog } from "./TicketParts";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Icon } from "../components/Icon";
 import { Dot } from "../components/ui";
-import { useCustomerTasks, type Contact, type Contract, type Customer, type CustomerInput } from "../api/data";
+import type { Contact, Contract, Customer, CustomerInput } from "../api/data";
 import { useAgents } from "../api/monitor";
 import { useJobs } from "../api/ops";
 
@@ -29,9 +33,6 @@ export function contractLevel(c: { contract: Contract | null }): "up" | "warn" |
   return d < 0 ? "down" : d <= WARN_DAYS ? "warn" : "up";
 }
 
-export function openTasks(c: Customer) {
-  return c.tasks.filter((t) => !t.done);
-}
 
 // --- in the edit dialog ------------------------------------------------------------------------
 
@@ -226,50 +227,164 @@ export function AssignedCard({ customer }: { customer: Customer }) {
   );
 }
 
-export function TasksCard({ customer, edit }: { customer: Customer; edit: boolean }) {
+export function TagsEditor({ form, setForm }: { form: CustomerInput; setForm: (f: (x: CustomerInput) => CustomerInput) => void }) {
   const { t } = useTranslation();
-  const rel = useRelDays();
-  const { add, update, remove } = useCustomerTasks();
-  const [title, setTitle] = useState("");
-  const [due, setDue] = useState("");
-  if (!edit && !customer.tasks.length) return null;
-  const error = add.error ?? update.error ?? remove.error;
+  const [text, setText] = useState("");
+  const add = () => {
+    const tag = text.split(/\s+/).filter(Boolean).join(" ").slice(0, 30);
+    if (tag && !form.tags.some((x) => x.toLowerCase() === tag.toLowerCase())) setForm((f) => ({ ...f, tags: [...f.tags, tag] }));
+    setText("");
+  };
+  return (
+    <div className="field">
+      {t("customers.tags")}
+      <div className="chips">
+        {form.tags.map((x) => (
+          <span key={x} className="chip">#{x}
+            <button type="button" className="btn btn-ghost btn-small" aria-label={t("common.delete")} onClick={() => setForm((f) => ({ ...f, tags: f.tags.filter((y) => y !== x) }))}>×</button>
+          </span>
+        ))}
+      </div>
+      <input className="input" maxLength={30} placeholder={t("customers.tagPlaceholder")} value={text} onChange={(e) => setText(e.target.value)}
+             onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(); } }} onBlur={add} />
+    </div>
+  );
+}
+
+export function LinksEditor({ form, setForm }: { form: CustomerInput; setForm: (f: (x: CustomerInput) => CustomerInput) => void }) {
+  const { t } = useTranslation();
+  const set = (i: number, key: "title" | "url", v: string) =>
+    setForm((f) => ({ ...f, links: f.links.map((l, j) => (j === i ? { ...l, [key]: v } : l)) }));
+  return (
+    <div className="field">
+      {t("customers.links")}
+      <span className="hint">{t("customers.linksHint")}</span>
+      {form.links.map((l, i) => (
+        <div key={i} className="link-edit">
+          <input className="input" required maxLength={80} placeholder={t("customers.linkTitle")} value={l.title} onChange={(e) => set(i, "title", e.target.value)} />
+          <input className="input" required type="url" maxLength={500} placeholder="https://…" value={l.url} onChange={(e) => set(i, "url", e.target.value)} />
+          <button type="button" className="btn btn-ghost btn-small" aria-label={t("common.delete")}
+                  onClick={() => setForm((f) => ({ ...f, links: f.links.filter((_, j) => j !== i) }))}><Icon name="close" size={14} /></button>
+        </div>
+      ))}
+      <div>
+        <button type="button" className="btn btn-small" disabled={form.links.length >= 30}
+                onClick={() => setForm((f) => ({ ...f, links: [...f.links, { title: "", url: "" }] }))}>
+          <Icon name="plus" size={14} /> {t("customers.addLink")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function LinksCard({ customer }: { customer: Customer }) {
+  const { t } = useTranslation();
+  if (!customer.links.length) return null;
   return (
     <>
-      <h2 className="section-title">{t("customers.tasksTitle")}</h2>
-      <div className="card">
-        {customer.tasks.length > 0 && (
-          <ul className="task-list">
-            {customer.tasks.map((k) => {
-              const late = !k.done && k.due && daysFrom(k.due) < 0;
-              return (
-                <li key={k.id} className={k.done ? "is-done" : undefined}>
-                  <input type="checkbox" checked={k.done} disabled={!edit} aria-label={k.title}
-                         onChange={(e) => update.mutate({ ...k, done: e.target.checked })} />
-                  <span className="task-title">{k.title}</span>
-                  {k.due && <span className={`badge${late ? " badge-warn" : ""}`}>{fmtDate(k.due)}{!k.done && ` · ${rel(daysFrom(k.due))}`}</span>}
-                  {edit && (
-                    <button type="button" className="btn btn-ghost btn-small" aria-label={t("common.delete")} onClick={() => remove.mutate(k.id)}>
-                      <Icon name="close" size={14} />
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {edit && (
-          <form className="task-add card-pad" onSubmit={(e) => {
-            e.preventDefault();
-            if (title.trim()) add.mutate({ customer: customer.id, title: title.trim(), due: due || null }, { onSuccess: () => { setTitle(""); setDue(""); } });
-          }}>
-            <input className="input" maxLength={200} placeholder={t("customers.taskPlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} />
-            <input className="input task-due" type="date" aria-label={t("customers.taskDue")} value={due} onChange={(e) => setDue(e.target.value)} />
-            <button type="submit" className="btn btn-small" disabled={!title.trim() || add.isPending}>{t("customers.addTask")}</button>
-          </form>
-        )}
-        {error && <p className="error-text card-pad">{error.message}</p>}
+      <h2 className="section-title">{t("customers.links")}</h2>
+      <div className="card list">
+        {customer.links.map((l, i) => (
+          <a key={i} className="list-row" href={l.url} target="_blank" rel="noreferrer noopener">
+            <span className="list-main"><span className="list-title">{l.title}</span><span className="list-sub">{l.url}</span></span>
+            <Icon name="external" size={14} />
+          </a>
+        ))}
       </div>
+    </>
+  );
+}
+
+function TicketRow({ t: tk, onOpen }: { t: Ticket; onOpen: () => void }) {
+  return (
+    <button type="button" className="list-row ticket-row" onClick={onOpen}>
+      <span className="list-main">
+        <span className="list-title">#{tk.number} {tk.title}</span>
+        <span className="list-sub">{[tk.assignee, tk.due && new Date(`${tk.due}T00:00:00`).toLocaleDateString()].filter(Boolean).join(" · ")}</span>
+      </span>
+      <span className="list-side"><PriorityBadge priority={tk.priority} /><StatusBadge status={tk.status} /></span>
+    </button>
+  );
+}
+
+/** The open tickets on the first tab (the most urgent few). */
+export function OpenTickets({ customer, onAll }: { customer: Customer; onAll: () => void }) {
+  const { t } = useTranslation();
+  const tickets = useTickets("open", customer.id);
+  const [open, setOpen] = useState<Ticket | null>(null);
+  if (!tickets.data?.length) return null;
+  return (
+    <>
+      <div className="section-row">
+        <h2 className="section-title">{t("customers.tabs.tickets")}</h2>
+        <button type="button" className="btn btn-ghost btn-small" onClick={onAll}>{t("customers.allTickets")}</button>
+      </div>
+      <div className="card list">{tickets.data.slice(0, 5).map((tk) => <TicketRow key={tk.id} t={tk} onOpen={() => setOpen(tk)} />)}</div>
+      {open && <TicketDialog ticket={open} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
+export function CustomerTickets({ customer }: { customer: Customer }) {
+  const { t } = useTranslation();
+  const can = useCan()("tickets.edit");
+  const [filter, setFilter] = useState<"open" | "all">("open");
+  const tickets = useTickets(filter, customer.id);
+  const [open, setOpen] = useState<Ticket | null>(null);
+  const [adding, setAdding] = useState(false);
+  return (
+    <>
+      <div className="filters">
+        <select className="input" value={filter} onChange={(e) => setFilter(e.target.value as "open" | "all")} aria-label={t("tickets.filter")}>
+          <option value="open">{t("tickets.filterOpen")}</option>
+          <option value="all">{t("tickets.filterAll")}</option>
+        </select>
+        <span className="spacer" />
+        {can && <button type="button" className="btn btn-primary btn-small" onClick={() => setAdding(true)}><Icon name="plus" size={14} /> {t("tickets.add")}</button>}
+      </div>
+      {!tickets.data?.length ? <div className="card card-pad muted">{t("tickets.none")}</div>
+        : <div className="card list">{tickets.data.map((tk) => <TicketRow key={tk.id} t={tk} onOpen={() => setOpen(tk)} />)}</div>}
+      {open && <TicketDialog ticket={open} onClose={() => setOpen(null)} />}
+      {adding && <TicketDialog ticket={null} customerId={customer.id} customerName={customer.name} onClose={() => setAdding(false)} />}
+    </>
+  );
+}
+
+/** Timeline of a customer: ticket comments, changes and free notes. */
+export function CustomerJournal({ customer }: { customer: Customer }) {
+  const { t } = useTranslation();
+  const edit = useCan()("customers.edit");
+  const [q, setQ] = useState("");
+  const [text, setText] = useState("");
+  const journal = useJournal(customer.id, q);
+  const { note, removeEntry } = useTicketActions();
+  return (
+    <>
+      {edit && (
+        <form className="timeline-add" onSubmit={(e) => { e.preventDefault(); if (text.trim()) note.mutate({ customer: customer.id, text: text.trim() }, { onSuccess: () => setText("") }); }}>
+          <textarea className="input" rows={2} maxLength={10000} placeholder={t("customers.notePlaceholder")} value={text} onChange={(e) => setText(e.target.value)} />
+          <button type="submit" className="btn btn-primary btn-small" disabled={!text.trim() || note.isPending}>{t("customers.addNote")}</button>
+        </form>
+      )}
+      <div className="filters">
+        <input className="input" type="search" placeholder={t("customers.searchHistory")} value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+      {!journal.data?.length ? <div className="card card-pad muted">{t("customers.noHistory")}</div> : (
+        <div className="card">
+          <ul className="entry-list timeline">
+            {journal.data.map((e) => (
+              <li key={e.id} className={`entry entry-${e.kind}`}>
+                <div className="entry-meta">
+                  <b>{e.author}</b> · {ago(Date.parse(e.created_at) / 1000)}
+                  {e.ticket !== null && <> · <Link to={`/tickets?open=${e.ticket_id}`}>#{e.ticket} {e.ticket_title}</Link></>}
+                  {edit && e.kind === "note" && <button type="button" className="btn btn-ghost btn-small" aria-label={t("common.delete")} onClick={() => removeEntry.mutate(e.id)}><Icon name="close" size={12} /></button>}
+                </div>
+                <div className="entry-text"><EntryText e={e} /></div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </>
   );
 }

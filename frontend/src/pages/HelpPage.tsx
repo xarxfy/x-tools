@@ -104,16 +104,20 @@ const DOCS: Doc[] = [
       while. Problems stay visible but nothing is sent, and no “back to normal” follows.</p>
   </>, "jobs heartbeat cron backup monitor maintenance pause silence alerts"),
   doc("customers", "Customers", <>
-    <p>Customers bundle contact people, agreements and the services, servers and jobs you run for them. A service,
-      server or job belongs to at most one customer. Customers get a free category (A-customer, B-customer …).</p>
-    <p><strong>Contact people</strong> – as many as you need, each with a role (technical, billing …).
-      <strong>Contract</strong> – end of the contract, period of notice, support hours and response time. The overview
-      warns 60 days before the last day to give notice. Contract data is only visible to roles with the permission
-      <em>Contract data</em>. <strong>Tasks</strong> – small to-dos with an optional due date; overdue and soon due tasks
-      show on the overview.</p>
+    <p>A small CRM: the list shows every customer in a table (category, contact, services, servers, status, contract
+      end, open tickets) and can be filtered by category and <strong>tags</strong> (free words like Hosting or Shop).
+      A service, server or job belongs to at most one customer.</p>
+    <p>A customer page has tabs: <em>Overview</em> (contact people with roles, contract, links, agreements),
+      <em>Services and websites</em>, <em>Servers and jobs</em>, <em>Tickets</em> and <em>History</em>.
+      <strong>Contract</strong> – end, period of notice, support hours, response time; the overview warns 60 days before the
+      last day to give notice. It is only visible to roles with the permission <em>Contract data</em>.</p>
+    <p><strong>Tickets</strong> (also in the menu <em>Tickets</em>, for all customers): status, priority, assignee, due
+      date, a related service or server, a description and comments. Every change is logged. The <strong>history</strong>
+      of a customer shows all comments and changes plus free notes (phone calls, agreements) and can be searched.
+      Overdue, soon due and urgent tickets show on the overview.</p>
     <p>The area is optional: switch it on or off under <Link to="/settings">Settings → General</Link>. When it is
       off, the menu entry and the website checks disappear; stored customers are kept.</p>
-  </>, "customers contact contacts contract notice deadline support tasks todo agreements", [
+  </>, "customers crm contact contacts contract notice deadline support tickets ticket history journal tags links agreements", [
     doc("customers-deploy", "Deploying websites", <>
       <p>On a customer page, <em>Websites → Add website</em> rolls out a website from a git repository: X-TOOLS
         clones it, writes the variables you entered to <code>.env</code> and starts it with docker compose (or serves

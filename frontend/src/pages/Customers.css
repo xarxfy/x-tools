@@ -54,3 +54,24 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+.customer-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: center;
+  margin: -4px 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.timeline {
+  max-height: none;
+  padding: 12px;
+}
+.ticket-row {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+}

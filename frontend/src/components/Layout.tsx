@@ -28,6 +28,7 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
       { to: "/services", key: "services", icon: "services" },
       { to: "/domains", key: "domains", icon: "domains" },
       { to: "/customers", key: "customers", icon: "customers" },
+      { to: "/tickets", key: "tickets", icon: "tickets" },
     ],
   },
 ];
@@ -48,7 +49,7 @@ export function Layout() {
   const can = useCan();
   const update = useUpdateInfo(can("admin.settings"));
   const adminArea = ADMIN_PERMISSIONS.some((p) => can(p));
-  const visible = (item: NavItem) => item.key !== "customers" || features.data?.customers;
+  const visible = (item: NavItem) => (item.key !== "customers" && item.key !== "tickets") || features.data?.customers;
 
   // Ctrl/Cmd+K, or "/" outside of input fields, opens the search
   useEffect(() => {

@@ -15,7 +15,7 @@ from app.core.audit import audit
 from app.collector.exchange import load_snapshot
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
-from app.models import Agent, Customer, CustomerTask, Heartbeat, Service
+from app.models import Agent, Customer, Heartbeat, Service, Ticket
 from app.monitor import autobackup, maintenance, notify, sites, state, updates
 from app.monitor.jobs import job_state
 from app.monitor.issues import AGENT_STALE, ALERT_STATE, all_containers, container_state, find_issues
@@ -61,14 +61,15 @@ def overview(user=Depends(current_user), db: Session = Depends(get_db)):
 
 
 def customer_todos(db: Session, contracts: bool) -> list[dict]:
-    """Overdue or soon due tasks, and contracts whose notice deadline is near (only for roles that see contracts)."""
+    """Open tickets that are overdue, due within a week or urgent, and contracts whose notice deadline is near."""
     today = date.today()
     out = []
-    for t in db.scalars(select(CustomerTask).where(CustomerTask.done.is_(False), CustomerTask.due.is_not(None))):
-        days = (t.due - today).days
-        if days <= 7:
-            out.append({"kind": "task", "level": "down" if days < 0 else "warn", "customer_id": t.customer_id,
-                        "customer": t.customer.name, "text": t.title, "date": t.due.isoformat(), "days": days})
+    for t in db.scalars(select(Ticket).where(Ticket.status != "done")):
+        days = (t.due - today).days if t.due else None
+        if (days is not None and days <= 7) or t.priority == "urgent":
+            out.append({"kind": "ticket", "level": "down" if days is not None and days < 0 else "warn", "customer_id": t.customer_id,
+                        "customer": t.customer.name, "text": f"#{t.number} {t.title}", "date": t.due.isoformat() if t.due else "",
+                        "days": days if days is not None else 0, "urgent": t.priority == "urgent", "ticket_id": t.id})
     if contracts:
         for c in db.scalars(select(Customer).where(Customer.contract_end.is_not(None))):
             dl = deadline_of(c)
@@ -76,7 +77,7 @@ def customer_todos(db: Session, contracts: bool) -> list[dict]:
             if days <= CONTRACT_WARN_DAYS and (c.contract_end - today).days >= 0:
                 out.append({"kind": "contract", "level": "down" if days < 0 else "warn", "customer_id": c.id, "customer": c.name,
                             "text": "", "date": dl.isoformat(), "days": days})
-    return sorted(out, key=lambda x: x["days"])
+    return sorted(out, key=lambda x: (x["days"] if x["date"] else -1))
 
 
 def hosts(agents, local: dict | None) -> list[dict]:

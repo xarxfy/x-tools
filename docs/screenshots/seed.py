@@ -65,13 +65,19 @@ import datetime as _dt
 _today = _dt.date.today()
 acme = call("/api/customers", {
     "name": "ACME Shop GmbH", "agreements": "Hosting incl. updates, 99.5 % availability, monthly invoice",
-    "category_id": cat_a, "service_ids": [shop, blog],
+    "category_id": cat_a, "service_ids": [shop, blog], "tags": ["Hosting", "Shop"],
+    "links": [{"title": "Contract (PDF)", "url": "https://files.example.org/acme/contract.pdf"},
+              {"title": "Documentation", "url": "https://wiki.example.org/acme"}],
     "contacts": [{"name": "Anna Meyer", "role": "Technical", "email": "anna@acme-example.com", "phone": "+49 30 1234567"},
                  {"name": "Jonas Weber", "role": "Billing", "email": "billing@acme-example.com", "phone": ""}],
     "contract": {"contract_end": (_today + _dt.timedelta(days=75)).isoformat(), "notice_days": 30,
                  "support_hours": "Mon-Fri 9-17", "response_time": "4 hours"}})
-call(f"/api/customers/{acme['id']}/tasks", {"title": "Renew the shop certificate", "due": (_today + _dt.timedelta(days=5)).isoformat()})
-call(f"/api/customers/{acme['id']}/tasks", {"title": "Agree on a maintenance window", "due": None})
+_t1 = call(f"/api/customers/{acme['id']}/tickets", {"title": "Renew the shop certificate", "priority": "high", "status": "progress",
+                                                   "due": (_today + _dt.timedelta(days=5)).isoformat(), "description": "Certificate of shop.acme-example.com expires soon."})
+call(f"/api/tickets/{_t1['id']}/comments", {"text": "Checked with the customer: renewal via Cloudflare is fine."})
+call(f"/api/customers/{acme['id']}/tickets", {"title": "Agree on a maintenance window", "priority": "normal"})
+call(f"/api/customers/{acme['id']}/tickets", {"title": "Staging site returns 502", "priority": "urgent"})
+call(f"/api/customers/{acme['id']}/journal", {"text": "Phone call with Anna: shop moves to the new server in January."})
 call("/api/customers", {"name": "Bakery Smith", "category_id": cat_b, "service_ids": [bakery],
                         "contacts": [{"name": "Tom Smith", "role": "", "email": "tom@smith-bakery.example", "phone": ""}]})
 

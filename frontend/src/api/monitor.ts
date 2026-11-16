@@ -35,7 +35,8 @@ export interface Overview {
 }
 
 export interface CustomerTodo {
-  kind: "task" | "contract";
+  kind: "ticket" | "contract";
+  ticket_id?: string;
   level: "warn" | "down";
   customer_id: string;
   customer: string;

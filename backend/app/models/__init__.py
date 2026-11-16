@@ -96,7 +96,10 @@ class Customer(Base):
     services: Mapped[list["Service"]] = relationship(back_populates="customer")
     contacts: Mapped[list["CustomerContact"]] = relationship(
         back_populates="customer", cascade="all, delete-orphan", order_by="CustomerContact.position")
-    tasks: Mapped[list["CustomerTask"]] = relationship(back_populates="customer", cascade="all, delete-orphan")
+    tickets: Mapped[list["Ticket"]] = relationship(back_populates="customer", cascade="all, delete-orphan")
+    links: Mapped[list["CustomerLink"]] = relationship(
+        cascade="all, delete-orphan", order_by="CustomerLink.position")
+    tags: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")  # free tags (Hosting, Shop …)
 
 
 class CustomerContact(Base):
@@ -115,19 +118,60 @@ class CustomerContact(Base):
     customer: Mapped["Customer"] = relationship(back_populates="contacts")
 
 
-class CustomerTask(Base):
-    """A small to-do of a customer, optionally with a due date."""
+class Ticket(Base):
+    """A small ticket of a customer: something to do or to look into (status, priority, who, what it is about)."""
 
-    __tablename__ = "customer_tasks"
+    __tablename__ = "tickets"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    number: Mapped[int] = mapped_column(Integer, unique=True)  # shown as #12, counted up for the whole installation
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default="", server_default="")
+    status: Mapped[str] = mapped_column(String(10), default="open", server_default="open")  # open|progress|waiting|done
+    priority: Mapped[str] = mapped_column(String(10), default="normal", server_default="normal")  # low|normal|high|urgent
+    due: Mapped[date | None] = mapped_column(Date, nullable=True)
+    assignee_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id", ondelete="SET NULL"), nullable=True)
+    agent_id: Mapped[str | None] = mapped_column(ForeignKey("agents.id", ondelete="SET NULL"), nullable=True)
+    created_by: Mapped[str] = mapped_column(String(64), default="", server_default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    customer: Mapped["Customer"] = relationship(back_populates="tickets")
+    assignee: Mapped["User | None"] = relationship()
+    entries: Mapped[list["JournalEntry"]] = relationship(
+        back_populates="ticket", cascade="all, delete-orphan", order_by="JournalEntry.created_at")
+
+
+class JournalEntry(Base):
+    """The history of a customer: comments on tickets, status changes (kind "event") and free notes (no ticket)."""
+
+    __tablename__ = "journal"
 
     id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
     customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), index=True)
-    title: Mapped[str] = mapped_column(String(200))
-    due: Mapped[date | None] = mapped_column(Date, nullable=True)
-    done: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    ticket_id: Mapped[str | None] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), nullable=True, index=True)
+    kind: Mapped[str] = mapped_column(String(10), default="note")  # note | event
+    text: Mapped[str] = mapped_column(Text)
+    author: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 
-    customer: Mapped["Customer"] = relationship(back_populates="tasks")
+    ticket: Mapped["Ticket | None"] = relationship(back_populates="entries")
+
+
+class CustomerLink(Base):
+    """A link of a customer (contract, documentation, password manager …). Only http(s) addresses."""
+
+    __tablename__ = "customer_links"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(80))
+    url: Mapped[str] = mapped_column(String(500))
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
 
 
 class Site(Base):

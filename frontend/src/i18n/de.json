@@ -25,7 +25,8 @@
     "monitoring": "Überwachung",
     "infrastructure": "Infrastruktur",
     "manage": "Verwalten",
-    "account": "Konto"
+    "account": "Konto",
+    "tickets": "Tickets"
   },
   "auth": {
     "username": "Benutzername",
@@ -189,7 +190,33 @@
     "serversTitle": "Server",
     "jobsTitle": "Jobs",
     "job": "Job",
-    "assignHint": "Ein Server oder Job gehört zu einem Kunden; hier gewählt, wird er einem anderen weggenommen."
+    "assignHint": "Ein Server oder Job gehört zu einem Kunden; hier gewählt, wird er einem anderen weggenommen.",
+    "tags": "Tags",
+    "tagPlaceholder": "Tag eingeben, Enter drücken",
+    "links": "Links",
+    "linksHint": "Vertrag, Doku, Passwort-Manager … (nur Web-Adressen)",
+    "linkTitle": "Titel",
+    "addLink": "Link hinzufügen",
+    "status": "Status",
+    "ticketsCol": "Offene Tickets",
+    "siteState": {
+      "up": "Websites erreichbar",
+      "warn": "Websites: Warnung",
+      "down": "Website nicht erreichbar"
+    },
+    "tabs": {
+      "overview": "Übersicht",
+      "services": "Dienste und Websites",
+      "servers": "Server und Jobs",
+      "tickets": "Tickets",
+      "history": "Verlauf"
+    },
+    "noServers": "Noch keine Server oder Jobs zugeordnet. Du weist sie beim Bearbeiten des Kunden zu.",
+    "allTickets": "Alle Tickets",
+    "notePlaceholder": "Notiz: Telefonat, Änderung, Absprache …",
+    "addNote": "Notiz hinzufügen",
+    "searchHistory": "Verlauf durchsuchen …",
+    "noHistory": "Noch nichts vorhanden."
   },
   "domains": {
     "sub_one": "{{count}} Domain",
@@ -1283,6 +1310,10 @@
       "name": "Vertragsdaten",
       "hint": "Vertragsdaten der Kunden sehen und bearbeiten (Ende, Kündigungsfrist, Support-Zeiten)"
     },
+    "tickets.edit": {
+      "name": "Tickets bearbeiten",
+      "hint": "Tickets anlegen, bearbeiten und kommentieren"
+    },
     "sites.deploy": {
       "name": "Websites deployen",
       "hint": "Kunden-Websites aus Git ausrollen"
@@ -1476,5 +1507,53 @@
     "allCustomers": "Alles (alle Kunden)",
     "servers": "Server (System, IPs, Updates, Laufzeit)",
     "services": "Dienste und Domains"
+  },
+  "tickets": {
+    "sub_one": "{{count}} Ticket",
+    "sub_other": "{{count}} Tickets",
+    "title": "Titel",
+    "customer": "Kunde",
+    "statusLabel": "Status",
+    "priorityLabel": "Priorität",
+    "assignee": "Zuständig",
+    "unassigned": "Niemand",
+    "due": "Fällig",
+    "updated": "Aktualisiert",
+    "overdue": "überfällig",
+    "status": {
+      "open": "Offen",
+      "progress": "In Arbeit",
+      "waiting": "Wartet",
+      "done": "Erledigt"
+    },
+    "priority": {
+      "low": "Niedrig",
+      "normal": "Normal",
+      "high": "Hoch",
+      "urgent": "Dringend"
+    },
+    "filter": "Anzeigen",
+    "filterOpen": "Offene Tickets",
+    "filterDone": "Erledigt",
+    "filterAll": "Alle Tickets",
+    "anyone": "Alle",
+    "mine": "Mir zugewiesen",
+    "anyPriority": "Jede Priorität",
+    "none": "Keine Tickets.",
+    "add": "Neues Ticket",
+    "new": "Neues Ticket für {{customer}}",
+    "service": "Dienst",
+    "server": "Server",
+    "description": "Beschreibung",
+    "history": "Verlauf",
+    "commentPlaceholder": "Kommentar schreiben …",
+    "addComment": "Kommentieren",
+    "ev": {
+      "created": "hat das Ticket angelegt",
+      "status": "hat den Status geändert: {{from}} → {{to}}",
+      "priority": "hat die Priorität geändert: {{from}} → {{to}}",
+      "assignee": "hat es {{name}} zugewiesen",
+      "unassigned": "hat die Zuständigkeit entfernt"
+    }
   }
 }

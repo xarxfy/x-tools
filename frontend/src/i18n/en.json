@@ -25,7 +25,8 @@
     "monitoring": "Monitoring",
     "infrastructure": "Infrastructure",
     "manage": "Manage",
-    "account": "Account"
+    "account": "Account",
+    "tickets": "Tickets"
   },
   "auth": {
     "username": "Username",
@@ -189,7 +190,33 @@
     "serversTitle": "Servers",
     "jobsTitle": "Jobs",
     "job": "Job",
-    "assignHint": "A server or job belongs to one customer; picking it here moves it from another."
+    "assignHint": "A server or job belongs to one customer; picking it here moves it from another.",
+    "tags": "Tags",
+    "tagPlaceholder": "Add a tag and press Enter",
+    "links": "Links",
+    "linksHint": "Contract, documentation, password manager … (only web addresses)",
+    "linkTitle": "Title",
+    "addLink": "Add link",
+    "status": "Status",
+    "ticketsCol": "Open tickets",
+    "siteState": {
+      "up": "Websites reachable",
+      "warn": "Websites: warning",
+      "down": "Website down"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "services": "Services and websites",
+      "servers": "Servers and jobs",
+      "tickets": "Tickets",
+      "history": "History"
+    },
+    "noServers": "No servers or jobs assigned yet. Assign them when you edit the customer.",
+    "allTickets": "All tickets",
+    "notePlaceholder": "Note: phone call, change, agreement …",
+    "addNote": "Add note",
+    "searchHistory": "Search the history …",
+    "noHistory": "Nothing here yet."
   },
   "domains": {
     "sub_one": "{{count}} domain",
@@ -1283,6 +1310,10 @@
       "name": "Contract data",
       "hint": "see and edit contract data of customers (end, notice, support hours)"
     },
+    "tickets.edit": {
+      "name": "Work on tickets",
+      "hint": "create and edit tickets, comment on them"
+    },
     "sites.deploy": {
       "name": "Deploy websites",
       "hint": "deploy customer websites from git"
@@ -1476,5 +1507,53 @@
     "allCustomers": "Everything (all customers)",
     "servers": "Servers (system, IPs, updates, uptime)",
     "services": "Services and domains"
+  },
+  "tickets": {
+    "sub_one": "{{count}} ticket",
+    "sub_other": "{{count}} tickets",
+    "title": "Title",
+    "customer": "Customer",
+    "statusLabel": "Status",
+    "priorityLabel": "Priority",
+    "assignee": "Assigned to",
+    "unassigned": "Nobody",
+    "due": "Due",
+    "updated": "Updated",
+    "overdue": "overdue",
+    "status": {
+      "open": "Open",
+      "progress": "In progress",
+      "waiting": "Waiting",
+      "done": "Done"
+    },
+    "priority": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "filter": "Show",
+    "filterOpen": "Open tickets",
+    "filterDone": "Done",
+    "filterAll": "All tickets",
+    "anyone": "Anyone",
+    "mine": "Assigned to me",
+    "anyPriority": "Any priority",
+    "none": "No tickets.",
+    "add": "New ticket",
+    "new": "New ticket for {{customer}}",
+    "service": "Service",
+    "server": "Server",
+    "description": "Description",
+    "history": "History",
+    "commentPlaceholder": "Write a comment …",
+    "addComment": "Comment",
+    "ev": {
+      "created": "created the ticket",
+      "status": "changed the status: {{from}} → {{to}}",
+      "priority": "changed the priority: {{from}} → {{to}}",
+      "assignee": "assigned to {{name}}",
+      "unassigned": "removed the assignee"
+    }
   }
 }

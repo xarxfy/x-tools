@@ -1,0 +1,97 @@
+.ticket-status.st-open { background: color-mix(in srgb, var(--accent, #0a84ff) 16%, transparent); }
+.ticket-status.st-progress { background: color-mix(in srgb, #ff9f0a 22%, transparent); }
+.ticket-status.st-waiting { background: color-mix(in srgb, #8e8e93 24%, transparent); }
+.ticket-status.st-done { background: color-mix(in srgb, #34c759 22%, transparent); }
+.ticket-prio.pr-urgent { background: color-mix(in srgb, #ff3b30 22%, transparent); color: var(--down, #d70015); }
+.ticket-prio.pr-high { background: color-mix(in srgb, #ff9f0a 22%, transparent); }
+.ticket-prio.pr-low { opacity: 0.7; }
+.due-late { color: var(--down, #d70015); font-weight: 600; }
+.entry-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+}
+.entry {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--inset);
+}
+.entry-event {
+  background: none;
+  padding: 2px 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.entry-meta {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.entry-text {
+  overflow-wrap: anywhere;
+}
+.entry-add {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+.entry-add .input {
+  flex: 1;
+}
+.link-edit {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 8px;
+  margin-top: 6px;
+  align-items: center;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.filters .input {
+  width: auto;
+}
+.tag-chip.active {
+  background: var(--accent, #0a84ff);
+  color: #fff;
+}
+.timeline-add {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+.timeline-add .input {
+  flex: 1;
+}
+@media (max-width: 860px) {
+  .link-edit {
+    grid-template-columns: 1fr auto;
+  }
+  .link-edit input:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+.linklike {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--link, #0a64d8);
+  cursor: pointer;
+  text-align: left;
+}
+.linklike:hover {
+  text-decoration: underline;
+}

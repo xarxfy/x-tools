@@ -16,6 +16,7 @@ import { AccountPage, MovedRedirect, SettingsRedirect } from "./pages/AccountPag
 import { DomainsHub, MonitoringHub, ServicesHub } from "./pages/Hubs";
 import { HelpPage } from "./pages/HelpPage";
 import { CustomerPage, CustomersPage } from "./pages/CustomersPage";
+import { TicketsPage } from "./pages/TicketsPage";
 import { DockerPage, ProxmoxPage, ServerRedirect } from "./pages/FleetPages";
 import { ServerRoute, ServersPage } from "./pages/ServersPage";
 import { AdminPage } from "./pages/AdminPage";
@@ -46,6 +47,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/services/new" element={<AssistantPage />} />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerPage />} />
+            <Route path="/tickets" element={<TicketsPage />} />
             <Route path="/domains" element={<DomainsHub />} />
             <Route path="/servers" element={<ServersPage />} />
             <Route path="/servers/:id" element={<ServerRoute />} />

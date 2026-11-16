@@ -8,7 +8,7 @@ from app.api.deps import current_user
 from app.api.features import load as load_features
 from app.collector.exchange import load_snapshot
 from app.core.db import get_db
-from app.models import Agent, Customer, Heartbeat, NetworkEntry, ServerGroup, Service, Site
+from app.models import Agent, Customer, Heartbeat, NetworkEntry, ServerGroup, Service, Site, Ticket
 from app.monitor.issues import all_containers
 
 router = APIRouter(prefix="/api/search", tags=["search"], dependencies=[Depends(current_user)])
@@ -79,12 +79,14 @@ def search_all(db: Session, query: str) -> list[dict]:
     if load_features().customers:
         for c in db.scalars(select(Customer)):
             add("customer", c.name, (c.contacts[0].name if c.contacts else ""), f"/customers/{c.id}",
-                *[x for p in c.contacts for x in (p.name, p.email, p.phone)], c.owner, c.notes, c.agreements)
+                *[x for p in c.contacts for x in (p.name, p.email, p.phone)], c.owner, c.notes, c.agreements, *(c.tags or []))
+        for t in db.scalars(select(Ticket)):
+            add("ticket", f"#{t.number} {t.title}", t.customer.name, f"/tickets?open={t.id}", t.number, t.description)
         for w in db.scalars(select(Site)):
             add("site", w.name, w.repo_url, f"/customers/{w.customer_id}" if w.customer_id else "/customers", w.branch)
 
     out: list[dict] = []
-    for kind in ("server", "service", "container", "guest", "network", "domain", "customer", "site", "job", "tag"):
+    for kind in ("server", "service", "container", "guest", "network", "domain", "customer", "ticket", "site", "job", "tag"):
         items = sorted(found.get(kind, []), key=lambda x: (x[0], x[1]["title"].lower()))
         out += [i for _, i in items[:PER_TYPE]]
     return out

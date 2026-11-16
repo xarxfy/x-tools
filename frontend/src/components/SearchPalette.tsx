@@ -15,7 +15,7 @@ interface Hit {
 
 const ICONS: Record<string, IconName | null> = {
   server: "servers", container: "docker", guest: "proxmox", service: "services", domain: "domains",
-  customer: "customers", site: "customers", job: "jobs", tag: null, network: "servers",
+  customer: "customers", ticket: "tickets", site: "customers", job: "jobs", tag: null, network: "servers",
 };
 
 /** Global search (Ctrl/Cmd+K or "/"): servers, containers, guests, services, domains, customers, jobs, tags. */

@@ -115,6 +115,21 @@ class ContractIn(BaseModel):
     _strip = field_validator("support_hours", "response_time", mode="before")(strip)
 
 
+class LinkIn(BaseModel):
+    title: str = Field(min_length=1, max_length=80)
+    url: str = Field(min_length=1, max_length=500)
+
+    _strip = field_validator("title", "url", mode="before")(strip)
+
+    @field_validator("url")
+    @classmethod
+    def web_address(cls, value: str) -> str:
+        # only http(s): a "javascript:" address would run in the page of whoever clicks it
+        if not re.match(r"^https?://[^\s<>\"']+$", value, re.IGNORECASE):
+            raise ValueError("The address must start with http:// or https://")
+        return value
+
+
 class CustomerIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     owner: str = Field(default="", max_length=120)
@@ -124,18 +139,12 @@ class CustomerIn(BaseModel):
     service_ids: list[str] = Field(default_factory=list, max_length=100)
     agent_ids: list[str] = Field(default_factory=list, max_length=100)
     job_ids: list[str] = Field(default_factory=list, max_length=100)
+    tags: list[str] = Field(default_factory=list, max_length=20)
+    links: list[LinkIn] | None = Field(default=None, max_length=30)  # None keeps the stored ones
     contacts: list[ContactIn] | None = Field(default=None, max_length=30)  # None keeps the stored ones
     contract: ContractIn | None = None  # None keeps it; ignored without customers.contracts
 
     _strip = field_validator("name", "owner", "agreements", "notes", mode="before")(strip)
-
-
-class TaskIn(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
-    due: date | None = None
-    done: bool = False
-
-    _strip = field_validator("title", mode="before")(strip)
 
 
 class CustomerOut(BaseModel):
@@ -149,7 +158,10 @@ class CustomerOut(BaseModel):
     agent_ids: list[str] = []
     job_ids: list[str] = []
     contacts: list[dict] = []
-    tasks: list[dict] = []
+    links: list[dict] = []
+    tags: list[str] = []
+    tickets_open: int = 0
+    tickets_overdue: int = 0
     contract: dict | None = None  # only for roles with customers.contracts
 
 

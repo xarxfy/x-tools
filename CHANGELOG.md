@@ -6,11 +6,17 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
-- **Customers, extended:** several **contact people** per customer (with a role), **contract data** (end, period of
-  notice, support hours, response time) with a warning on the overview 60 days before the last day to give notice,
-  **tasks** with a due date, and **servers and jobs** that belong to a customer (also used by the customer's PDF
-  report). Contract data needs the new permission *Contract data* (`customers.contracts`; part of the operator
-  preset, viewers do not see it).
+- **Customers as a small CRM:** the customer list is a sortable table (category, contact, services and domains,
+  servers, status, contract end, open tickets) with filters by category and free **tags**. A customer page has tabs
+  (overview, services and websites, servers and jobs, tickets, history). Several **contact people** with a role,
+  **contract data** (end, period of notice, support hours, response time; warning on the overview 60 days before the
+  last day to give notice), **links** (contract, documentation – web addresses only) and servers and jobs that belong
+  to a customer.
+- **Tickets:** per customer and in a list of all tickets (menu *Tickets*): status, priority, assignee, due date, a
+  related service or server, description and comments. Changes are logged; the **history** of a customer shows
+  comments, changes and free notes and can be searched. Overdue, soon due and urgent tickets show on the overview and
+  in the search. New permissions: *Work on tickets* (`tickets.edit`) and *Contract data* (`customers.contracts`);
+  both are part of the operator preset.
 - **PDF report** (button *PDF report* on *Servers* and on a customer page): servers (system, IPs, updates, uptime) and
   services with domains and ports, for everything or for one customer, in English or German. Credentials and notes
   are never included. No extra dependency.

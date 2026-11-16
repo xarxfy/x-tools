@@ -54,13 +54,6 @@ export interface Contract {
   deadline?: string | null;
 }
 
-export interface CustomerTask {
-  id: string;
-  title: string;
-  due: string | null;
-  done: boolean;
-}
-
 export interface CustomerInput {
   name: string;
   owner: string;
@@ -71,35 +64,16 @@ export interface CustomerInput {
   agent_ids: string[];
   job_ids: string[];
   contacts: Contact[];
+  links: { title: string; url: string }[];
+  tags: string[];
   /** null: the role may not see contract data (the server leaves it unchanged) */
   contract: Contract | null;
 }
 
 export interface Customer extends CustomerInput {
   id: string;
-  tasks: CustomerTask[];
-}
-
-export function useCustomerTasks() {
-  const qc = useQueryClient();
-  const done = () => {
-    qc.invalidateQueries({ queryKey: ["customers"] });
-    qc.invalidateQueries({ queryKey: ["overview"] });
-  };
-  const add = useMutation({
-    mutationFn: ({ customer, title, due }: { customer: string; title: string; due: string | null }) =>
-      api<CustomerTask>(`/customers/${customer}/tasks`, { method: "POST", body: { title, due } }),
-    onSuccess: done,
-  });
-  const update = useMutation({
-    mutationFn: (t: CustomerTask) => api<CustomerTask>(`/customer-tasks/${t.id}`, { method: "PUT", body: t }),
-    onSuccess: done,
-  });
-  const remove = useMutation({
-    mutationFn: (id: string) => api<void>(`/customer-tasks/${id}`, { method: "DELETE" }),
-    onSuccess: done,
-  });
-  return { add, update, remove };
+  tickets_open: number;
+  tickets_overdue: number;
 }
 
 /** Key of a port in the port status: "8080" on the X-TOOLS host, "10.0.0.5:8080" elsewhere. */

@@ -150,12 +150,12 @@ export function OverviewPage() {
               <h2 className="section-title">{t("overview.customerTodos")}</h2>
               <section className="card side-list">
                 {customer_todos.map((x, i) => (
-                  <Link key={i} to={`/customers/${x.customer_id}`} className="side-row">
+                  <Link key={i} to={x.kind === "ticket" ? `/tickets?open=${x.ticket_id}` : `/customers/${x.customer_id}`} className="side-row">
                     <Dot state={x.level} />
                     <span>
                       <b>{x.customer}</b>{" · "}
                       {x.kind === "contract" ? t("overview.noticeBy", { date: new Date(`${x.date}T00:00:00`).toLocaleDateString() }) : x.text}
-                      {" "}<span className="muted">({x.days === 0 ? t("customers.today") : x.days > 0 ? t("customers.inDays", { count: x.days }) : t("customers.daysAgo", { count: -x.days })})</span>
+                      {x.date && <>{" "}<span className="muted">({x.days === 0 ? t("customers.today") : x.days > 0 ? t("customers.inDays", { count: x.days }) : t("customers.daysAgo", { count: -x.days })})</span></>}
                     </span>
                   </Link>
                 ))}

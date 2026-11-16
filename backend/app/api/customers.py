@@ -7,11 +7,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.agents import clean_tags
 from app.api.deps import current_user, permissions_of, require
 from app.core.audit import audit
 from app.core.db import get_db
-from app.models import Agent, Customer, CustomerCategory, CustomerContact, CustomerTask, Heartbeat, Service
-from app.schemas import CategoryIn, CustomerIn, CustomerOut, TaskIn
+from app.models import Agent, Customer, CustomerCategory, CustomerContact, CustomerLink, Heartbeat, Service
+from app.schemas import CategoryIn, CustomerIn, CustomerOut
 
 router = APIRouter(prefix="/api/customers", tags=["customers"], dependencies=[Depends(current_user)])
 
@@ -30,18 +31,16 @@ def contract_out(c: Customer) -> dict:
             "deadline": dl.isoformat() if dl else None}
 
 
-def task_out(t: CustomerTask) -> dict:
-    return {"id": t.id, "title": t.title, "due": t.due.isoformat() if t.due else None, "done": t.done}
-
-
 def to_out(c: Customer, contracts: bool = False) -> CustomerOut:
-    tasks = sorted(c.tasks, key=lambda t: (t.done, t.due or date.max, t.created_at))
+    open_tickets = [t for t in c.tickets if t.status != "done"]
     return CustomerOut(
         id=c.id, name=c.name, owner=c.owner, agreements=c.agreements, notes=c.notes, category_id=c.category_id,
         service_ids=sorted(s.id for s in c.services), agent_ids=sorted(a.id for a in assigned(c, Agent)),
         job_ids=sorted(h.id for h in assigned(c, Heartbeat)),
         contacts=[{"id": p.id, "name": p.name, "role": p.role, "email": p.email, "phone": p.phone} for p in c.contacts],
-        tasks=[task_out(t) for t in tasks], contract=contract_out(c) if contracts else None)
+        links=[{"id": x.id, "title": x.title, "url": x.url} for x in c.links], tags=c.tags or [],
+        tickets_open=len(open_tickets), tickets_overdue=sum(1 for t in open_tickets if t.due and t.due < date.today()),
+        contract=contract_out(c) if contracts else None)
 
 
 def assigned(c: Customer, model) -> list:
@@ -87,6 +86,9 @@ def apply(customer: Customer, body: CustomerIn, db: Session, contracts: bool) ->
     if body.contacts is not None:
         customer.contacts = [CustomerContact(name=p.name, role=p.role, email=p.email, phone=p.phone, position=i)
                              for i, p in enumerate(body.contacts)]
+    customer.tags = clean_tags(body.tags)
+    if body.links is not None:
+        customer.links = [CustomerLink(title=x.title, url=x.url, position=i) for i, x in enumerate(body.links)]
     if contracts and body.contract is not None:
         for field in ("contract_end", "notice_days", "support_hours", "response_time"):
             setattr(customer, field, getattr(body.contract, field))
@@ -125,43 +127,6 @@ def update_customer(cid: str, body: CustomerIn, user=Depends(current_user), db: 
     db.commit()
     audit("customer.updated", customer.name)
     return to_out(customer, contracts)
-
-
-# --- tasks ----------------------------------------------------------------------------------------------
-
-tasks = APIRouter(prefix="/api", tags=["customers"], dependencies=[Depends(current_user), Depends(require("customers.edit"))])
-
-
-@tasks.post("/customers/{cid}/tasks", status_code=201)
-def create_task(cid: str, body: TaskIn, db: Session = Depends(get_db)):
-    customer = get_customer(db, cid)
-    task = CustomerTask(customer_id=customer.id, title=body.title, due=body.due, done=body.done)
-    db.add(task)
-    db.commit()
-    audit("customer.task", customer.name, body.title)
-    return task_out(task)
-
-
-def get_task(db: Session, tid: str) -> CustomerTask:
-    task = db.get(CustomerTask, tid)
-    if task is None:
-        raise HTTPException(404, "Task not found")
-    return task
-
-
-@tasks.put("/customer-tasks/{tid}")
-def update_task(tid: str, body: TaskIn, db: Session = Depends(get_db)):
-    task = get_task(db, tid)
-    task.title, task.due, task.done = body.title, body.due, body.done
-    db.commit()
-    return task_out(task)
-
-
-@tasks.delete("/customer-tasks/{tid}", status_code=204)
-def delete_task(tid: str, db: Session = Depends(get_db)):
-    db.delete(get_task(db, tid))
-    db.commit()
-    return Response(status_code=204)
 
 
 @router.delete("/{cid}", status_code=204, dependencies=[Depends(require("customers.edit"))])

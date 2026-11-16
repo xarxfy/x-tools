@@ -15,6 +15,7 @@ const PATHS = {
       <rect x="3" y="16" width="7" height="5" rx="1.5" />
     </>
   ),
+  tickets: <path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1zM13 5v2m0 4v2m0 4v2" />,
   customers: (
     <>
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
