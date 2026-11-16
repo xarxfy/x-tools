@@ -213,7 +213,7 @@ export function LinuxTab({ agent, info, tab }: { agent: AgentSummary; info: Linu
       {logs && (
         <Dialog wide title={`${logs.name} – ${t("docker.logs")}`} onClose={() => setLogs(null)}
                 footer={<><span className="spacer" /><button type="button" className="btn" onClick={() => setLogs(null)}>{t("common.close")}</button></>}>
-          {logs.error ? <p className="error-text">{logs.error}</p> : <pre className="code deploy-log">{logs.text === null ? t("common.loading") : logs.text || t("deploy.noLog")}</pre>}
+          {logs.error ? <p className="error-text">{logs.error}</p> : <pre className="code deploy-log">{logs.text === null ? t("loading") : logs.text || t("deploy.noLog")}</pre>}
         </Dialog>
       )}
       {showUpdates && (

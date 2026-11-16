@@ -1269,6 +1269,7 @@
       "agents": "Agents",
       "notifications": "Benachrichtigungen",
       "cloudflare": "Cloudflare",
+      "system": "System",
       "backup": "Backup"
     }
   },
