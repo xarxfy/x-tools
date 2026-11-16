@@ -24,7 +24,7 @@ const DOCS: Doc[] = [
       <li>Optional: switch on <Link to="/settings">customers</Link> if you host sites for others; their websites are
         checked from outside.</li>
       <li>Set up <Link to="/admin?tab=notifications">notifications</Link> so you hear about problems.</li>
-      <li>Connect more servers with an <Link to="/admin?tab=agents">agent</Link>.</li>
+      <li>Connect more servers with an <Link to="/servers">agent</Link>.</li>
     </ol>
   </>, "start first steps services customers notifications agent", [
     doc("start-overview", "Overview", <>
@@ -72,7 +72,7 @@ const DOCS: Doc[] = [
       audit – keep backups and be careful what you give it control over.</p>
   </>, "how works parts guide cloudflare access tunnel vibe coded ai audit"),
   doc("jobs", "Jobs and maintenance", <>
-    <p>The <Link to="/jobs">Jobs</Link> page monitors things that should happen regularly (backups, cron jobs).
+    <p>The <Link to="/monitoring">Monitoring → Jobs</Link> page monitors things that should happen regularly (backups, cron jobs).
       Each job has a secret address; the job calls it when it has run
       (<code>curl -fsS https://…/api/heartbeat/&lt;token&gt;</code>, add <code>/fail</code> to report a failure).
       If the call stays away longer than the expected interval plus tolerance, you get an alert.</p>
@@ -130,9 +130,9 @@ const DOCS: Doc[] = [
   </>, "agents servers home outbound", [
     doc("agents-setup", "Set up an agent", <>
       <ol>
-        <li><Link to="/admin?tab=agents">Administration → Agents</Link> → <em>Add server</em>. Choose
-          <em>Linux server</em> (any server, VM or LXC: services, ports, disks, updates), <em>Proxmox host</em>
-          (enter the API token) or <em>Docker host</em> (a server, LXC or VM with Docker).
+        <li>Open the page of the kind – <Link to="/servers">Servers</Link> (any Linux server, VM or LXC: services, ports,
+          disks, updates), <Link to="/proxmox">Proxmox</Link> (enter the API token) or <Link to="/docker">Docker</Link>
+          (a server, LXC or VM with Docker) – and press <em>Add … server/host</em>.
           Docker containers are only visible to an agent on the same machine, so install one on the Proxmox host and
           one on every LXC/VM with Docker.</li>
         <li>Copy the install command and run it as root on the other server. It installs a small service
@@ -144,7 +144,7 @@ const DOCS: Doc[] = [
       <p>Agents of the predecessor Server-Info keep working after the import – just point their URL to X-TOOLS.</p>
     </>, "setup agent key env compose"),
     doc("agents-remove", "Remove an agent", <>
-      <p>Delete the agent under <Link to="/admin?tab=agents">Administration → Agents</Link> – X-TOOLS then rejects its
+      <p>Delete the agent on its own page (the trash icon next to its name) – X-TOOLS then rejects its
         reports – and run this as root on that server (works for the systemd service and the Docker variant):</p>
       <pre className="code command">{"systemctl disable --now x-tools-agent 2>/dev/null; rm -rf /opt/x-tools-agent " +
         "/etc/x-tools-agent /etc/systemd/system/x-tools-agent.service; systemctl daemon-reload 2>/dev/null; " +

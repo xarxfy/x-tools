@@ -37,7 +37,8 @@ def test_roles(admin):
     h = as_user(admin, "olga")
     assert admin.get(f"/api/services/{sid}/credentials").status_code == 200
     assert admin.post("/api/services", json={"name": "X"}, headers=h).status_code == 201
-    assert admin.post("/api/agents", json={"name": "A"}, headers=h).status_code == 403
+    assert admin.post("/api/agents", json={"name": "A"}, headers=h).status_code == 201  # operators may add agents
+    assert admin.get("/api/backup/auto").status_code == 403
     assert admin.put("/api/features", json={"customers": True}, headers=h).status_code == 403
     assert admin.get("/api/audit").status_code == 403
 

@@ -154,7 +154,7 @@ ssh -L 8080:127.0.0.1:8080 you@your-server   # then open http://localhost:8080
    ```
 
    `sudo sh setup.sh` again, open `http://192.168.1.10:8080`, enter the setup code.
-3. *Administration → Agents → Add server* for the Proxmox host and every LXC/VM with Docker ([agents.md](agents.md)).
+3. the *Add … server/host* button on the *Servers*, *Proxmox* or *Docker* page for the Proxmox host and every LXC/VM with Docker ([agents.md](agents.md)).
 4. Services on other machines: enter their IP under *Host*, so their ports are checked there.
 
 From outside, use a VPN instead of opening a port. HTTPS inside the LAN: Caddy with `tls internal`. Without HTTPS the

@@ -91,3 +91,18 @@ def test_last_user_manager_stays(admin):
     # `hr` is now the only user manager: cannot remove the right from its own role
     assert other.put(f"/api/roles/{rid}", json={"name": "HR", "permissions": ["admin.roles"]}, headers=ho).status_code == 409
     assert other.get("/api/roles").status_code == 200
+
+
+def test_migration_gives_operators_agent_rights():
+    """The permission admin.agents became agents.manage; operators got it (migration f2b3c4d5e6f7)."""
+    import importlib
+    import sqlalchemy as sa
+    m = importlib.import_module("app.migrations.versions.20261121_f2b3c4d5e6f7_agents_permission")
+    engine = sa.create_engine("sqlite://")
+    with engine.begin() as conn:
+        conn.execute(sa.text("create table roles (id text primary key, permissions json)"))
+        conn.execute(sa.text("insert into roles values ('operator', '[\"services.edit\"]'), ('x1', '[\"admin.agents\"]'), ('viewer', '[]')"))
+        m._remap(conn, "admin.agents", "agents.manage", extra_for="operator")
+        got = {r[0]: r[1] for r in conn.execute(sa.text("select id, permissions from roles"))}
+    assert "agents.manage" in got["operator"] and "agents.manage" in got["x1"] and "admin.agents" not in got["x1"]
+    assert got["viewer"] == "[]"

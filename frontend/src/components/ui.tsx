@@ -1,5 +1,5 @@
 import i18n from "../i18n";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./Icon";
 import "./ui.css";
@@ -53,7 +53,19 @@ export function Dialog({
   );
 }
 
+/** True inside a Hub: the title and the tabs are shown by the hub, the page only adds its tools. */
+const EmbeddedContext = createContext(false);
+
 export function PageHead({ title, sub, children }: { title: string; sub?: ReactNode; children?: ReactNode }) {
+  const embedded = useContext(EmbeddedContext);
+  if (embedded) {
+    return (sub || children) ? (
+      <header className="page-head page-head-embedded">
+        <div>{sub && <p>{sub}</p>}</div>
+        {children && <div className="page-actions">{children}</div>}
+      </header>
+    ) : null;
+  }
   return (
     <header className="page-head">
       <div>
@@ -201,5 +213,25 @@ export function Collapsible({ title, summary, tools, open: initial = false, flat
         </div>
       )}
     </section>
+  );
+}
+
+/** One page with several tabs (e.g. Services | Logins): the hub shows title and tabs, each tab is a normal page. */
+export function Hub({ title, tabs, tab, onTab, children }: {
+  title: string; tabs: { key: string; label: string }[]; tab: string; onTab: (key: string) => void; children: ReactNode;
+}) {
+  return (
+    <>
+      <header className="page-head"><div><h1>{title}</h1></div></header>
+      {tabs.length > 1 && (
+        <div className="tabs hub-tabs" role="tablist">
+          {tabs.map((x) => (
+            <button key={x.key} type="button" role="tab" aria-selected={tab === x.key} className={tab === x.key ? "active" : ""}
+                    onClick={() => onTab(x.key)}>{x.label}</button>
+          ))}
+        </div>
+      )}
+      <EmbeddedContext.Provider value>{children}</EmbeddedContext.Provider>
+    </>
   );
 }

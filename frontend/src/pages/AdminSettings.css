@@ -307,3 +307,9 @@
 .monitor-status .plain-list {
   margin: 4px 0 0;
 }
+.agent-bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}

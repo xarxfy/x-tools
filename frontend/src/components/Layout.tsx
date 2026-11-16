@@ -8,23 +8,30 @@ import { useUpdateInfo } from "../api/ops";
 import { useCan } from "../api/users";
 import "./Layout.css";
 
-const MAIN: { to: string; key: string; icon: IconName }[] = [
-  { to: "/", key: "overview", icon: "overview" },
-  { to: "/customers", key: "customers", icon: "customers" },
-  { to: "/services", key: "services", icon: "services" },
-  { to: "/servers", key: "servers", icon: "servers" },
-  { to: "/proxmox", key: "proxmox", icon: "proxmox" },
-  { to: "/docker", key: "docker", icon: "docker" },
-  { to: "/domains", key: "domains", icon: "domains" },
-  { to: "/jobs", key: "jobs", icon: "jobs" },
-  { to: "/cloudflare", key: "cloudflare", icon: "cloud" },
-  { to: "/credentials", key: "credentials", icon: "credentials" },
+type NavItem = { to: string; key: string; icon: IconName };
+
+// The sidebar: Overview, then groups with a heading each, then Monitoring.
+const TOP: NavItem[] = [{ to: "/", key: "overview", icon: "overview" }];
+const GROUPS: { title: string; items: NavItem[] }[] = [
+  {
+    title: "infrastructure",
+    items: [
+      { to: "/servers", key: "servers", icon: "servers" },
+      { to: "/proxmox", key: "proxmox", icon: "proxmox" },
+      { to: "/docker", key: "docker", icon: "docker" },
+    ],
+  },
+  {
+    title: "manage",
+    items: [
+      { to: "/services", key: "services", icon: "services" },
+      { to: "/domains", key: "domains", icon: "domains" },
+      { to: "/customers", key: "customers", icon: "customers" },
+    ],
+  },
 ];
-const ADMIN_PERMISSIONS = ["admin.users", "admin.roles", "admin.audit", "admin.agents", "admin.settings", "admin.backup"];
-const FOOTER: { to: string; key: string; icon: IconName }[] = [
-  { to: "/settings", key: "settings", icon: "settings" },
-  { to: "/help", key: "help", icon: "help" },
-];
+const BOTTOM: NavItem[] = [{ to: "/monitoring", key: "monitoring", icon: "jobs" }];
+const ADMIN_PERMISSIONS = ["admin.users", "admin.roles", "admin.audit", "admin.settings", "admin.backup"];
 
 export function Layout() {
   const { t } = useTranslation();
@@ -39,14 +46,11 @@ export function Layout() {
   const can = useCan();
   const update = useUpdateInfo(can("admin.settings"));
   const adminArea = ADMIN_PERMISSIONS.some((p) => can(p));
-  const main = MAIN.filter((item) =>
-    (item.key !== "customers" || features.data?.customers) &&
-    (item.key !== "credentials" || can("credentials.manage")) &&
-    (item.key !== "cloudflare" || features.data?.cloudflare));
+  const visible = (item: NavItem) => item.key !== "customers" || features.data?.customers;
 
   useEffect(() => setOpen(false), [location.pathname]); // close the mobile menu after navigating
 
-  const link = (item: (typeof MAIN)[number], size = 18) => (
+  const link = (item: NavItem, size = 18) => (
     <NavLink key={item.to} to={item.to} end={item.to === "/"} className={({ isActive }) => (isActive ? "active" : "")}>
       <Icon name={item.icon} size={size} />
       <span>{t(`nav.${item.key}`)}</span>
@@ -74,27 +78,41 @@ export function Layout() {
           </button>
         </div>
         <nav className="nav-main" aria-label={t("nav.menu")}>
-          {main.map((item) => link(item))}
+          {TOP.map((item) => link(item))}
+          {GROUPS.map((group) => {
+            const items = group.items.filter(visible);
+            return items.length > 0 && (
+              <div key={group.title} className="nav-group">
+                <div className="nav-heading">{t(`nav.${group.title}`)}</div>
+                {items.map((item) => link(item))}
+              </div>
+            );
+          })}
+          <div className="nav-group">{BOTTOM.map((item) => link(item))}</div>
         </nav>
         <div className="side-foot">
-          <nav className="nav-foot" aria-label={`${t("nav.settings")}, ${t("nav.help")}`}>
+          <nav className="nav-foot" aria-label={t("nav.administration")}>
             {adminArea && link({ to: "/admin", key: "administration", icon: "shield" }, 16)}
-            {FOOTER.map((item) => link(item, 16))}
-            <button
-              type="button"
-              className="nav-button"
-              onClick={() => logout.mutate(undefined, { onSettled: () => navigate("/login") })}
-            >
-              <Icon name="logout" size={16} />
-              <span>{t("nav.logout")}</span>
-            </button>
+            {link({ to: "/help", key: "help", icon: "help" }, 16)}
           </nav>
+          <div className="user-row">
+            <NavLink to="/account" className={({ isActive }) => `user-chip${isActive ? " active" : ""}`} title={t("nav.account")}>
+              <span className="user-avatar">{(me?.username ?? "?").slice(0, 1).toUpperCase()}</span>
+              <span className="user-name">
+                <strong>{me?.username}</strong>
+                <span>{me?.role_name}</span>
+              </span>
+            </NavLink>
+            <button type="button" className="btn btn-ghost btn-icon" title={t("nav.logout")} aria-label={t("nav.logout")}
+                    onClick={() => logout.mutate(undefined, { onSettled: () => navigate("/login") })}>
+              <Icon name="logout" size={16} />
+            </button>
+          </div>
           <div className="side-meta">
-            {me && <span>{t("nav.signedInAs", { name: me.username })}</span>}
             {status && (
               <span>
                 {update.data?.available ? (
-                  <NavLink to="/settings?tab=about" className="update-dot" title={t("update.available", { version: update.data.latest })}>
+                  <NavLink to="/admin?tab=system" className="update-dot" title={t("update.available", { version: update.data.latest })}>
                     v{status.version} ●
                   </NavLink>
                 ) : <>v{status.version}</>}

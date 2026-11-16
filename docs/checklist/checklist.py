@@ -30,6 +30,13 @@ SECTIONS = [
         "With HTTPS: valid certificate, you stay logged in after a reload",
         "Without login, `/api/services` answers `401`",
     ]),
+    ("menu", "Menu and navigation", [
+        "The sidebar has *Infrastructure* (Servers, Proxmox, Docker), *Manage* (Services, Domains, Customers), *Monitoring*; *Administration*, *Help* and your name at the bottom",
+        "*Services* has a second tab *Credentials*; *Domains* has *DNS & tunnels* when the Cloudflare connection is on; *Monitoring* has Jobs, History, Maintenance",
+        "Your name at the bottom opens *Account* (password, 2FA, language); the logout button next to it works",
+        "On *Servers*, *Proxmox* and *Docker* an operator can add a host of that kind; on a host's page: rename, install command, disable, delete",
+        "Old links (`/settings?tab=agents`, `/jobs`, `/credentials`, `/cloudflare`) lead to the new places",
+    ]),
     ("overview", "Overview", [
         "*Needs attention* lists real problems (or *All good*); every entry leads to the right place",
         "The banner shows the overall state; the counters (LXCs/VMs, containers, services, customers) are plausible",
@@ -64,7 +71,7 @@ SECTIONS = [
         "*Add as service* creates a service with folder and ports",
     ]),
     ("agent-docker", "Agents – Docker hosts", [
-        "*Administration → Agents → Add server → Docker host*: the install command runs on an LXC/VM/server",
+        "the *Add Docker host* button on the *Docker* page: the install command runs on an LXC/VM/server",
         "Until the first report the server is listed as *waiting for the first report*",
         "The host appears on *Docker* within a minute with metrics and containers",
         "Running the same install command twice is rejected (\"already used\")",

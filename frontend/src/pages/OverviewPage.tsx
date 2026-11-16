@@ -133,7 +133,7 @@ export function OverviewPage() {
 
           <h2 className="section-title">{t("overview.jobs")} · {t("overview.backup")}</h2>
           <section className="card side-list">
-            <Link to="/jobs" className="side-row">
+            <Link to="/monitoring" className="side-row">
               <Dot state={!jobs.total ? "off" : jobs.late ? "down" : "up"} />
               <span>{!jobs.total ? t("overview.jobsNone") : jobs.late ? t("overview.jobsLate", { count: jobs.late }) : t("overview.jobsAllOk", { ok: jobs.ok, total: jobs.total - jobs.paused })}</span>
               {jobs.paused > 0 && <span className="badge">{t("overview.jobsPaused", { count: jobs.paused })}</span>}
@@ -172,7 +172,7 @@ export function OverviewPage() {
             <li><Link to="/services">{t("overview.start1")}</Link></li>
             {customersOn && <li><Link to="/customers">{t("overview.start2")}</Link></li>}
             <li><Link to="/admin?tab=notifications">{t("overview.start3")}</Link></li>
-            <li><Link to="/admin?tab=agents">{t("overview.start4")}</Link></li>
+            <li><Link to="/servers">{t("overview.start4")}</Link></li>
           </ol>
         </div>
       )}

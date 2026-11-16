@@ -10,9 +10,9 @@ const shots = [
   ['server', '/servers', { w: 1280, h: 900 }],
   ['proxmox', '/proxmox', { w: 1280, h: 860 }],
   ['customer', null, { w: 1280, h: 1000 }],
-  ['jobs', '/jobs', { w: 1280, h: 560 }],
-  ['agents', '/settings?tab=agents', { w: 1280, h: 700 }],
-  ['backup', '/settings?tab=backup', { w: 1280, h: 900 }],
+  ['jobs', '/monitoring', { w: 1280, h: 560 }],
+  ['roles', '/admin?tab=roles', { w: 1280, h: 700 }],
+  ['backup', '/admin?tab=backup', { w: 1280, h: 900 }],
 ];
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROME, args: ['--no-sandbox'] });

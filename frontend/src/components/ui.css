@@ -474,3 +474,13 @@ a.list-title svg,
   flex-wrap: wrap;
   gap: 8px;
 }
+.hub-tabs {
+  margin: 4px 0 14px;
+}
+.page-head-embedded {
+  margin: 0 0 12px;
+  align-items: center;
+}
+.page-head-embedded p {
+  margin: 0;
+}

@@ -29,21 +29,29 @@ labels: beta
 - [ ] With HTTPS: valid certificate, you stay logged in after a reload
 - [ ] Without login, `/api/services` answers `401`
 
-## 3. Overview
+## 3. Menu and navigation
+
+- [ ] The sidebar has *Infrastructure* (Servers, Proxmox, Docker), *Manage* (Services, Domains, Customers), *Monitoring*; *Administration*, *Help* and your name at the bottom
+- [ ] *Services* has a second tab *Credentials*; *Domains* has *DNS & tunnels* when the Cloudflare connection is on; *Monitoring* has Jobs, History, Maintenance
+- [ ] Your name at the bottom opens *Account* (password, 2FA, language); the logout button next to it works
+- [ ] On *Servers*, *Proxmox* and *Docker* an operator can add a host of that kind; on a host's page: rename, install command, disable, delete
+- [ ] Old links (`/settings?tab=agents`, `/jobs`, `/credentials`, `/cloudflare`) lead to the new places
+
+## 4. Overview
 
 - [ ] *Needs attention* lists real problems (or *All good*); every entry leads to the right place
 - [ ] The banner shows the overall state; the counters (LXCs/VMs, containers, services, customers) are plausible
 - [ ] *Servers* shows one row per server with load, memory, disk and pending updates; *Jobs · Backup* and *Websites* match the real state
 - [ ] *Recent events* fills up over time
 
-## 4. Services
+## 5. Services
 
 - [ ] Add, edit and delete a service; search finds it
 - [ ] Ports of running services are green, a wrong port turns red within a minute
 - [ ] *Host* set to another machine: its ports are checked there
 - [ ] After a day the uptime badge (e.g. "100 %") appears
 
-## 5. Assistant (Services → Assistant)
+## 6. Assistant (Services → Assistant)
 
 - [ ] Every template can be chosen; a port already in use and a domain already in use show warnings
 - [ ] Generated files can be copied and downloaded (file names make sense)
@@ -51,12 +59,12 @@ labels: beta
 - [ ] The created service has a checklist; ticking steps updates "x/y setup steps"
 - [ ] *Configs* in an existing service generates proxy configs for its domain and port
 
-## 6. Credentials
+## 7. Credentials
 
 - [ ] Add logins to a service; password hidden until revealed; copy works
 - [ ] Edit and delete logins; the *Credentials* page lists services with and without logins
 
-## 7. Docker (this server)
+## 8. Docker (this server)
 
 - [ ] Without the collector having reported, *Docker* shows a hint instead of an empty page
 - [ ] *This server* shows load, memory, disk; *Chart* fills after some hours
@@ -67,9 +75,9 @@ labels: beta
 - [ ] `x-tools` itself is marked *protected* and cannot be stopped
 - [ ] *Add as service* creates a service with folder and ports
 
-## 8. Agents – Docker hosts
+## 9. Agents – Docker hosts
 
-- [ ] *Administration → Agents → Add server → Docker host*: the install command runs on an LXC/VM/server
+- [ ] the *Add Docker host* button on the *Docker* page: the install command runs on an LXC/VM/server
 - [ ] Until the first report the server is listed as *waiting for the first report*
 - [ ] The host appears on *Docker* within a minute with metrics and containers
 - [ ] Running the same install command twice is rejected ("already used")
@@ -78,7 +86,7 @@ labels: beta
 - [ ] Delete an agent → the uninstall command is shown and removes the agent on the server
 - [ ] Optional: behind Cloudflare Access with a service token (docs/agents.md)
 
-## 9. Agents – Proxmox host
+## 10. Agents – Proxmox host
 
 - [ ] Without a Proxmox agent, *Proxmox* shows a hint to set one up
 - [ ] *Add server → Proxmox host* with an API token (role PVEAuditor): nodes, storage and all LXCs/VMs appear
@@ -86,7 +94,7 @@ labels: beta
 - [ ] Click a guest: resources, disks, network with current IPs, snapshots, backups and options are right
 - [ ] The `.conf` file on the detail page matches `/etc/pve/lxc/<id>.conf` on the host (password lines masked)
 
-## 10. Control (operator, agent with *Allow control*)
+## 11. Control (operator, agent with *Allow control*)
 
 - [ ] Docker host: restart a test container and read its logs
 - [ ] Proxmox (token with the XTools role from docs/agents.md): start/shut down a **test** LXC
@@ -94,7 +102,7 @@ labels: beta
 - [ ] Without the privilege a clear error is shown
 - [ ] As viewer: no control buttons; an agent without control shows no buttons for anyone
 
-## 11. Cloudflare (if you use it)
+## 12. Cloudflare (if you use it)
 
 - [ ] *Administration → Cloudflare*: a token with read permissions is accepted, a wrong one rejected
 - [ ] *Cloudflare* appears in the sidebar; zones, DNS records, tunnels and Access apps are correct
@@ -104,7 +112,7 @@ labels: beta
 - [ ] *Create route* on a hostname with a problem fixes it; add, edit, delete a test DNS record
 - [ ] Removing the token hides the sidebar entry
 
-## 12. One-command installer (on a fresh Debian/Ubuntu VM)
+## 13. One-command installer (on a fresh Debian/Ubuntu VM)
 
 - [ ] `curl … | sudo bash` installs Docker if you agree, asks the questions and prints a setup code
 - [ ] On a Proxmox host the installer refuses and says to use a separate VM/LXC
@@ -114,14 +122,14 @@ labels: beta
 - [ ] `sudo x-tools-ctl uninstall` asks before removing data; a reinstall afterwards still finds the data if you kept it
 - [ ] `curl -fsSL …/uninstall.sh | sudo bash` does the same from outside; the second question is about the data
 
-## 13. Customers (optional area)
+## 14. Customers (optional area)
 
 - [ ] *Settings → General*: switching on shows *Customers*, switching off hides it again
 - [ ] Add a customer, assign services; the customer page shows contact, sites and agreements
 - [ ] Website checks show DNS/HTTPS/certificate; *Check now* updates them
 - [ ] *Categories*: create A-customer/B-customer, reorder them, assign customers; filter and sorting in the list work; deleting a category keeps its customers
 
-## 14. Linux servers (agent kind *Linux server*)
+## 15. Linux servers (agent kind *Linux server*)
 
 - [ ] *Add server → Linux server*: the install command works on a Debian/Ubuntu server; it appears under *Servers*
 - [ ] Load, memory and disk meters, OS, kernel, pending updates and *Reboot required* are shown
@@ -136,7 +144,7 @@ labels: beta
 - [ ] *Pause alerts* for a group and for a tag silences the problems of its servers (they are marked as paused)
 - [ ] *Install updates on N* in a group header starts the updates on its servers one after the other
 
-## 15. Server administration (admin, agent *Allow control*, agent version 7 – use an unimportant test server)
+## 16. Server administration (admin, agent *Allow control*, agent version 7 – use an unimportant test server)
 
 - [ ] *Install updates* shows the log while it runs and ends with a clear result; afterwards the update count drops
 - [ ] Users: the list matches `/etc/passwd`; add a test SSH key and log in with it, then remove the key again
@@ -146,7 +154,7 @@ labels: beta
 - [ ] Turning the firewall on keeps your SSH session alive; a rule that would block SSH, or deleting the last SSH rule, is refused
 - [ ] Every action appears in the audit log
 
-## 16. Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)
+## 17. Deploying customer websites (optional – needs `COMPOSE_PROFILES=deploy`)
 
 - [ ] Without the deployer container, *Websites* shows a hint and *Deploy* says the deployer is not running
 - [ ] With it: add a website with a public repository that has a compose file; *Deploy* runs, the log shows the steps
@@ -156,7 +164,7 @@ labels: beta
 - [ ] Private repository with an access token works; the token and variables are never shown again
 - [ ] *Stop* stops the containers; deleting with *also remove containers and files* removes them
 
-## 17. Pause alerts, jobs, automatic backup, updates
+## 18. Pause alerts, jobs, automatic backup, updates
 
 - [ ] *Pause alerts* on the overview: pick a service for 30 min; its problem is marked *paused* and no message arrives
 - [ ] *End now* removes the banner; a problem that is still there is reported after the delay
@@ -166,7 +174,7 @@ labels: beta
 - [ ] A backup file from the folder can be restored with the passphrase (on a test instance)
 - [ ] *Settings → About → Updates* shows the check result; *Check now* works
 
-## 18. Notifications
+## 19. Notifications
 
 - [ ] Telegram and/or ntfy: *Send test* arrives
 - [ ] With the main switch off, a clear hint is shown and only tests are sent
@@ -175,13 +183,13 @@ labels: beta
 - [ ] A container stopped **through X-TOOLS** is not reported; started and stopped outside again, it is
 - [ ] *Monitoring checked … ago* is shown; open problems list whether they were notified
 
-## 19. Account and security
+## 20. Account and security
 
 - [ ] Change your password; other sessions are logged out
 - [ ] Turn on two-factor login (QR code); login asks for the code
 - [ ] A recovery code works once, then it is used up; turn two-factor login off again
 
-## 20. Users, roles and permissions, audit log (area *Administration*, visible only with administration permissions)
+## 21. Users, roles and permissions, audit log (area *Administration*, visible only with administration permissions)
 
 - [ ] **Viewer** sees everything but changes nothing and sees no *Administration* in the sidebar; *Settings* shows only *Account*
 - [ ] **Operator** edits services, customers, credentials and controls containers and servers; no users, agents, backups
@@ -193,13 +201,13 @@ labels: beta
 - [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes, role changes
 - [ ] Old links like `/settings?tab=agents` lead to the new place under *Administration*
 
-## 21. Backup and update
+## 22. Backup and update
 
 - [ ] *Administration → Backup*: download a backup with a passphrase
 - [ ] Restore it (ideally on a test installation): data and credentials are back, everyone is logged out
 - [ ] `git pull && sudo sh deploy/setup.sh` keeps data, users and settings
 
-## 22. Look and feel
+## 23. Look and feel
 
 - [ ] Phone: menu works, no horizontal scrolling, dialogs fit on the screen
 - [ ] Dark mode looks right

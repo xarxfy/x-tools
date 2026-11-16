@@ -130,7 +130,7 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
         page = {"proxmox": "/proxmox", "linux": "/servers"}.get(kind, "/docker")
         link = f"/servers/{aid}" if kind == "linux" else f"{page}#agent-{aid}"
         if report is None or received is None:
-            link = "/settings?tab=agents"
+            link = "/servers"
             add(f"agent:{aid}", "agent", "warn", f"Server '{name}' has never reported", link)
             continue
         received_ts = (received if received.tzinfo else received.replace(tzinfo=timezone.utc)).timestamp()
@@ -158,13 +158,13 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
         for h in beats:
             st = jobs.job_state(h)
             if st == "fail":
-                add(f"job:{h.id}", "job", "down", f"Job '{h.name}' reported a failure", "/jobs")
+                add(f"job:{h.id}", "job", "down", f"Job '{h.name}' reported a failure", "/monitoring")
             elif st == "late":
                 last = jobs.utc(h.last_ok_at)
                 since = f"last success {ago(last.timestamp())}" if last else "never reported"
                 add(f"job:{h.id}", "job", "down", f"Job '{h.name}' did not report ({since}, expected every "
                     f"{h.interval_minutes // 60 if h.interval_minutes % 60 == 0 else h.interval_minutes} "
-                    f"{'h' if h.interval_minutes % 60 == 0 else 'min'})", "/jobs")
+                    f"{'h' if h.interval_minutes % 60 == 0 else 'min'})", "/monitoring")
 
     # Automatic backup of X-TOOLS itself
     from app.monitor import autobackup

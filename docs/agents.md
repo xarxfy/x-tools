@@ -14,7 +14,7 @@ Docker containers are only visible to an agent on the same machine; the Proxmox 
 
 ## Add a server
 
-1. *Administration → Agents → Add server*, choose the kind, for a Proxmox host enter the API token.
+1. the *Add … server/host* button on the *Servers*, *Proxmox* or *Docker* page, choose the kind, for a Proxmox host enter the API token.
 2. Run the shown command **as root** on that server (Proxmox: in the host shell; elsewhere `| sudo sh`):
 
    ```sh
@@ -60,7 +60,7 @@ The *Servers* page is a list of your Linux servers. Group them and tag them howe
 ### Administering a Linux server (admins only)
 
 With control switched on, users with the role **admin** get three more things on the *Servers* page (agent version 7
-or newer – an outdated agent is marked in *Administration → Agents*; update it with the install command):
+or newer – an outdated agent is marked on its page; update it with the install command):
 
 - **Install updates** – runs `apt-get update` + `apt-get upgrade` (or `dnf upgrade`) in the background and shows the
   log (refreshed every few seconds). No `dist-upgrade`, no automatic reboot, no unattended runs.
@@ -142,7 +142,7 @@ A `403` or "answer was not JSON (login page?)" in the agent log means the token 
 
 ## Remove an agent
 
-Delete it under *Administration → Agents* – X-TOOLS shows the uninstall command. Run it as root on that server:
+Delete it on its own page (*Rename / Install command / Disable / trash icon*) – X-TOOLS shows the uninstall command. Run it as root on that server:
 
 ```sh
 systemctl disable --now x-tools-agent 2>/dev/null; rm -rf /opt/x-tools-agent /etc/x-tools-agent /etc/systemd/system/x-tools-agent.service; systemctl daemon-reload 2>/dev/null; docker rm -f x-tools-agent 2>/dev/null
@@ -158,7 +158,7 @@ journalctl -u x-tools-agent -n 50
 | Message | Meaning |
 |---|---|
 | `HTTP 401 … Unknown agent key` | the agent was deleted or got a new key – run a new install command |
-| `HTTP 403 … Agent is disabled` | enable it under *Administration → Agents* |
+| `HTTP 403 … Agent is disabled` | enable it on its own page (*Rename / Install command / Disable / trash icon*) |
 | `HTTP 403` / not JSON | Cloudflare Access (or another proxy) blocks `/api/agent/` |
 | `Proxmox API: HTTP 401` | token ID/secret wrong or the token has no permission (role PVEAuditor on `/`) |
 | `… needs the privilege …` | control is on, but the token lacks that privilege – use the XTools role above |

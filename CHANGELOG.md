@@ -5,6 +5,19 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Changed
+- **New menu structure**: the sidebar has headings – *Infrastructure* (Servers, Proxmox, Docker), *Manage* (Services,
+  Domains, Customers) – plus *Monitoring*; *Administration*, *Help* and your account sit at the bottom.
+  - *Services* has the stored logins as a second tab (the *Credentials* entry is gone).
+  - *Domains* has DNS and tunnels (Cloudflare) as a second tab.
+  - *Monitoring* holds jobs, the history of problems and the maintenance windows.
+  - Your own account (password, two-factor, language) is behind your name at the bottom; *Settings* is gone.
+    The switch for the customers area, version and updates moved to *Administration → System*.
+  - Old links (`/settings`, `/jobs`, `/credentials`, `/cloudflare`) are forwarded.
+- **Agents are managed on the page of their kind**: *Add Linux server / Docker host / Proxmox host* on the Servers,
+  Docker and Proxmox pages; rename, install command, disable and delete on the page of the host. Operators may do
+  this (new permission *Manage agents* replaces *Administration → Agents*).
+
 ### Added
 - **Administration** area (sidebar entry only for people with administration permissions): users, **roles and
   permissions**, audit log, agents, notifications, Cloudflare connection and backup. *Settings* keeps account,

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAllowWrite, useCloudflareSettings, useRemoveCloudflare, useSaveCloudflareToken } from "../api/cloudflare";
-import { Toggle } from "./SettingsPage";
+import { Toggle } from "./AdminSettings";
 import { ConfirmDelete, Loading } from "../components/ui";
 import { ago } from "../components/format";
 
@@ -39,7 +39,7 @@ export function CloudflareSettings() {
                   onChange={(v) => allow.mutate(v, { onSuccess: () => settings.refetch() })} />
           {allow.error && <span className="error-text">{allow.error.message}</span>}
           <div className="channel-actions">
-            <Link className="btn" to="/cloudflare">{t("cloudflare.open")}</Link>
+            <Link className="btn" to="/domains?view=cloudflare">{t("cloudflare.open")}</Link>
             <ConfirmDelete onConfirm={() => remove.mutate()} busy={remove.isPending} />
           </div>
         </section>

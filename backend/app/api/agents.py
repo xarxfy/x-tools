@@ -88,7 +88,7 @@ def read_agent(aid: str, db: Session = Depends(get_db)):
     return {**summary(agent), "report": agent.last_report}
 
 
-@router.post("", status_code=201, dependencies=[Depends(require("admin.agents"))])
+@router.post("", status_code=201, dependencies=[Depends(require("agents.manage"))])
 def create_agent(body: AgentIn, request: Request, db: Session = Depends(get_db)):
     name = body.name.strip()
     if not name:
@@ -117,7 +117,7 @@ def stored_options(agent: Agent) -> dict:
         return {}
 
 
-@router.get("/{aid}/install-options", dependencies=[Depends(require("admin.agents"))])
+@router.get("/{aid}/install-options", dependencies=[Depends(require("agents.manage"))])
 def install_options(aid: str, db: Session = Depends(get_db)):
     """Options of the last install command for prefilling – secrets are never sent back, only whether one is stored."""
     agent = get_agent(db, aid)
@@ -128,7 +128,7 @@ def install_options(aid: str, db: Session = Depends(get_db)):
     return out
 
 
-@router.post("/{aid}/install", dependencies=[Depends(require("admin.agents"))])
+@router.post("/{aid}/install", dependencies=[Depends(require("agents.manage"))])
 def new_install(aid: str, request: Request, body: dict = Body(...), db: Session = Depends(get_db)):
     """New install command (e.g. to reinstall or add Proxmox later). Replaces the agent key.
     Empty secret fields keep the stored secrets of the last install command."""
@@ -262,7 +262,7 @@ def delete_group(gid: str, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
-@router.put("/{aid}", dependencies=[Depends(require("admin.agents"))])
+@router.put("/{aid}", dependencies=[Depends(require("agents.manage"))])
 def update_agent(aid: str, body: AgentUpdate, db: Session = Depends(get_db)):
     agent = get_agent(db, aid)
     if body.name is not None:
@@ -284,7 +284,7 @@ def update_agent(aid: str, body: AgentUpdate, db: Session = Depends(get_db)):
     return summary(agent)
 
 
-@router.delete("/{aid}", status_code=204, dependencies=[Depends(require("admin.agents"))])
+@router.delete("/{aid}", status_code=204, dependencies=[Depends(require("agents.manage"))])
 def delete_agent(aid: str, db: Session = Depends(get_db)):
     agent = get_agent(db, aid)
     db.delete(agent)

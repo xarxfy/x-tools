@@ -4,7 +4,7 @@ import { useAutoBackup, useRunAutoBackup, useSaveAutoBackup, type AutoBackup, ty
 import { ago } from "../components/format";
 import { Icon } from "../components/Icon";
 import { Loading } from "../components/ui";
-import { Toggle } from "./SettingsPage";
+import { Toggle } from "./AdminSettings";
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 

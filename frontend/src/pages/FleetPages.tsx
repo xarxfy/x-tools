@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { Navigate, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { agentControl, localControl, useDocker, type SystemInfo } from "../api/docker";
@@ -10,6 +10,7 @@ import { Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago, fmtDuration } from "../components/format";
 import { MetricsChart } from "../components/history";
 import { counts, DockerTab, ProxmoxTab, SystemMeters } from "./HostParts";
+import { AddAgentButton, AgentManageBar } from "./AgentManage";
 import "./HostParts.css";
 
 /** Scroll to #agent-… / #local once the page has rendered its hosts. */
@@ -34,8 +35,8 @@ export function reported(a: AgentSummary): string {
 }
 
 /** Header of one host: name, state, metrics and an optional chart. */
-export function HostHead({ anchor, name, state, sub, sys, source }: {
-  anchor: string; name: string; state: "up" | "down" | "warn"; sub: string; sys?: SystemInfo; source: string;
+export function HostHead({ anchor, name, state, sub, sys, source, extra }: {
+  anchor: string; name: string; state: "up" | "down" | "warn"; sub: string; sys?: SystemInfo; source: string; extra?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [chart, setChart] = useState(false);
@@ -45,6 +46,7 @@ export function HostHead({ anchor, name, state, sub, sys, source }: {
         <span className="host-title"><Dot state={state} />{name}</span>
         <span className="muted">{sub}</span>
         <span className="spacer" />
+        {extra}
         {sys && (
           <button type="button" className="btn btn-ghost btn-small" onClick={() => setChart((c) => !c)}>
             <Icon name="overview" size={14} />{chart ? t("fleet.hideChart") : t("fleet.showChart")}
@@ -59,15 +61,15 @@ export function HostHead({ anchor, name, state, sub, sys, source }: {
 
 export function SetupHint({ kind }: { kind: "proxmox" | "docker" | "linux" }) {
   const { t } = useTranslation();
-  const isAdmin = useCan()("admin.agents");
+  const allowed = useCan()("agents.manage");
   return (
     <div className="card card-pad setup-hint">
       <span className="setup-icon"><Icon name={kind === "proxmox" ? "proxmox" : kind === "linux" ? "servers" : "docker"} size={26} /></span>
       <div>
         <h2>{t(`fleet.${kind}EmptyTitle`)}</h2>
         <p className="muted">{t(`fleet.${kind}EmptyText`)}</p>
-        {isAdmin ? (
-          <Link className="btn btn-primary" to="/admin?tab=agents">{t("fleet.installAgent")}</Link>
+        {allowed ? (
+          <AddAgentButton kind={kind} />
         ) : (
           <p className="muted small-note">{t("fleet.askAdmin")}</p>
         )}
@@ -83,9 +85,8 @@ export function Pending({ agents }: { agents: AgentSummary[] }) {
     <div className="card card-pad pending-agents">
       <strong>{t("fleet.pendingTitle")}</strong>
       <ul className="plain-list">
-        {agents.map((a) => <li key={a.id}><Dot state="warn" /> {a.name} <span className="muted">– {t("fleet.pending")}</span></li>)}
+        {agents.map((a) => <li key={a.id}><Dot state="warn" /> {a.name} <span className="muted">– {t("fleet.pending")}</span> <AgentManageBar agent={a} /></li>)}
       </ul>
-      <Link to="/admin?tab=agents" className="small-note">{t("fleet.pendingLink")}</Link>
     </div>
   );
 }
@@ -100,7 +101,9 @@ export function ProxmoxPage() {
   const pending = all.filter((a) => !a.has_proxmox);
   return (
     <>
-      <PageHead title="Proxmox" sub={live.length ? t("fleet.proxmoxSub", { count: live.length }) : undefined} />
+      <PageHead title="Proxmox" sub={live.length ? t("fleet.proxmoxSub", { count: live.length }) : undefined}>
+        <AddAgentButton kind="proxmox" />
+      </PageHead>
       {!live.length && <SetupHint kind="proxmox" />}
       <Pending agents={pending} />
       {live.map((a) => <ProxmoxHost key={a.id} agent={a} />)}
@@ -118,7 +121,8 @@ function ProxmoxHost({ agent }: { agent: AgentSummary }) {
       <HostHead anchor={`agent-${agent.id}`} name={agent.name} state={agentState(agent)} source={agent.id}
                 sys={report?.system}
                 sub={[agent.hostname, reported(agent), report?.system?.uptime && t("servers.uptime", { duration: fmtDuration(report.system.uptime) })]
-                  .filter(Boolean).join(" · ")} />
+                  .filter(Boolean).join(" · ")}
+                extra={agent.kind === "proxmox" ? <AgentManageBar agent={agent} /> : undefined} />
       {!detail.data ? <Loading error={detail.error} /> : px ? <ProxmoxTab px={px} agentId={agent.id} control={agent.control} />
         : <Empty>{t("fleet.noData")}</Empty>}
     </section>
@@ -138,7 +142,9 @@ export function DockerPage() {
   const total = (snap ? 1 : 0) + live.length;
   return (
     <>
-      <PageHead title="Docker" sub={total ? t("fleet.dockerSub", { count: total }) : undefined} />
+      <PageHead title="Docker" sub={total ? t("fleet.dockerSub", { count: total }) : undefined}>
+        <AddAgentButton kind="docker" />
+      </PageHead>
       {!total && <SetupHint kind="docker" />}
       <Pending agents={pending} />
       {snap && (
@@ -167,7 +173,8 @@ function DockerHost({ agent }: { agent: AgentSummary }) {
     <section className="host-section">
       <HostHead anchor={`agent-${agent.id}`} name={agent.name} state={agentState(agent)} source={agent.id}
                 sys={report?.system}
-                sub={[agent.hostname, snap && t("servers.containersRunning", counts(snap)), reported(agent)].filter(Boolean).join(" · ")} />
+                sub={[agent.hostname, snap && t("servers.containersRunning", counts(snap)), reported(agent)].filter(Boolean).join(" · ")}
+                extra={agent.kind === "docker" ? <AgentManageBar agent={agent} /> : undefined} />
       {!detail.data ? <Loading error={detail.error} /> : snap ? (
         <DockerTab snap={snap} protectedNames={[]} readonly={!agent.control} agent
                    control={agent.control ? agentControl(agent.id) : undefined} />

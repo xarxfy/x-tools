@@ -17,10 +17,10 @@ PERMISSIONS: dict[str, str] = {
     "servers.control": "servers",
     "servers.manage": "servers",
     "servers.organize": "servers",
+    "agents.manage": "servers",
     "cloudflare.edit": "servers",
     "admin.users": "administration",
     "admin.roles": "administration",
-    "admin.agents": "administration",
     "admin.settings": "administration",
     "admin.backup": "administration",
     "admin.audit": "administration",
@@ -30,7 +30,8 @@ AREAS = ("services", "customers", "monitoring", "servers", "administration")
 ALL = frozenset(PERMISSIONS)
 OPERATOR = frozenset(p for p, area in PERMISSIONS.items() if area != "administration" and p != "servers.manage")
 
-# id → (name, permissions). `servers.manage` (updates, users and SSH keys, firewall on the servers) is an
+# id → (name, permissions). `agents.manage` (add, reinstall, rename, delete agents) is part of the operator preset.
+# `servers.manage` (updates, users and SSH keys, firewall on the servers) is an
 # administrator right: it is not part of the operator preset.
 BUILTIN: dict[str, tuple[str, frozenset[str]]] = {
     "viewer": ("Viewer", frozenset()),

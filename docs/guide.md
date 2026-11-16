@@ -49,7 +49,7 @@ port forwarding, and X-TOOLS needs no access to them.
 2. **Open X-TOOLS** and create the admin account with that code. Turn on two-factor login under *Settings → Account*.
 3. **Add services** (*Services → Add*): name, ports, domains, folder. Ports are checked every minute. The
    *assistant* creates compose file, `.env` and proxy config for new services from templates.
-4. **Connect more servers** (*Administration → Agents → Add server*): choose the kind, copy the one-line install command and
+4. **Connect more servers** (the *Add … server/host* button on the *Servers*, *Proxmox* or *Docker* page): choose the kind, copy the one-line install command and
    run it as root on that server. It is valid for one hour and works once.
 5. **Turn on notifications** (*Administration → Notifications*): Telegram and/or ntfy, press *Send test*, then switch the
    main switch on. (Forgetting the main switch is the most common reason for “no message arrives”.)
@@ -103,7 +103,7 @@ Step by step for the agents:
 2. Access → Applications → *Add an application* → *Self-hosted*: hostname `tools.example.com`, **path
    `api/agent/`**. Policy: action **Service Auth**, include the service token. (More specific paths win over the
    application for the whole hostname, so this one is evaluated first.)
-3. In X-TOOLS, *Administration → Agents → Add server* (or *Install command*): switch on **X-TOOLS is behind Cloudflare
+3. In X-TOOLS, the *Add … server/host* button on the *Servers*, *Proxmox* or *Docker* page (or *Install command*): switch on **X-TOOLS is behind Cloudflare
    Access** and enter Client ID and Secret. The install command then carries the headers, and the agent sends them
    with every report. The secret is stored encrypted, so the next install command is pre-filled.
 

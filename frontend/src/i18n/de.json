@@ -21,7 +21,11 @@
     "docker": "Docker",
     "cloudflare": "Cloudflare",
     "jobs": "Jobs",
-    "administration": "Administration"
+    "administration": "Administration",
+    "monitoring": "Überwachung",
+    "infrastructure": "Infrastruktur",
+    "manage": "Verwalten",
+    "account": "Konto"
   },
   "auth": {
     "username": "Benutzername",
@@ -500,7 +504,12 @@
     "prefilled": "Aus dem letzten Installationsbefehl übernommen. Gespeicherte Secrets bleiben erhalten, solange du keine neuen eingibst.",
     "controlHintLinux": "Operatoren können systemd-Dienste starten, stoppen und neu starten, ihre Logs lesen und den Server neu starten. Der Agent läuft als root. Aus: Der Agent meldet nur.",
     "alsoDocker": "Docker mitmelden",
-    "alsoDockerHint": "Auf diesem Server läuft Docker: Seine Container erscheinen auf der Docker-Seite."
+    "alsoDockerHint": "Auf diesem Server läuft Docker: Seine Container erscheinen auf der Docker-Seite.",
+    "add": {
+      "linux": "Linux-Server hinzufügen",
+      "docker": "Docker-Host hinzufügen",
+      "proxmox": "Proxmox-Host hinzufügen"
+    }
   },
   "about": {
     "version": "Version",
@@ -1293,5 +1302,14 @@
       "name": "Audit-Log",
       "hint": "einsehen, wer was getan hat"
     }
+  },
+  "hub": {
+    "servicesTab": "Dienste",
+    "domainsTab": "Domains",
+    "dnsTab": "DNS & Tunnel",
+    "historyTab": "Verlauf",
+    "maintenanceTab": "Wartung",
+    "noWindows": "Keine Wartungsfenster. „Meldungen pausieren“ schaltet Alarme für eine Weile stumm (z. B. bei Arbeiten an einem Server).",
+    "days": "{{count}} Tage"
   }
 }

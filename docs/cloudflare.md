@@ -18,7 +18,7 @@ appears once a token is stored.
 - **Access** – applications and their domains/paths.
 
 Unhealthy tunnels and problems with service domains also appear on the overview and can be notified
-(*Administration → Notifications → Cloudflare*).
+(*Administration → Notifications*).
 
 ## Token
 

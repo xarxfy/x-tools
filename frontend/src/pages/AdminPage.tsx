@@ -5,7 +5,7 @@ import { Empty, PageHead } from "../components/ui";
 import { RolesSettings } from "./AdminRoles";
 import { BackupSettings } from "./SettingsAccount";
 import { CloudflareSettings } from "./SettingsCloudflare";
-import { Agents, Notifications } from "./SettingsPage";
+import { Notifications, SystemSettings } from "./AdminSettings";
 import { AuditSettings, UsersSettings } from "./SettingsUsers";
 
 // tab → permissions of which one is enough to see it
@@ -13,7 +13,7 @@ const TABS: Record<string, string[]> = {
   users: ["admin.users"],
   roles: ["admin.users", "admin.roles"],
   audit: ["admin.audit"],
-  agents: ["admin.agents"],
+  system: ["admin.settings"],
   notifications: ["admin.settings"],
   cloudflare: ["admin.settings"],
   backup: ["admin.backup"],
@@ -39,7 +39,7 @@ export function AdminPage() {
         ))}
       </div>
       {tab === "users" ? <UsersSettings /> : tab === "roles" ? <RolesSettings /> : tab === "audit" ? <AuditSettings />
-        : tab === "agents" ? <Agents /> : tab === "notifications" ? <Notifications />
+        : tab === "system" ? <SystemSettings /> : tab === "notifications" ? <Notifications />
           : tab === "cloudflare" ? <CloudflareSettings /> : <BackupSettings />}
     </>
   );

@@ -21,7 +21,11 @@
     "docker": "Docker",
     "cloudflare": "Cloudflare",
     "jobs": "Jobs",
-    "administration": "Administration"
+    "administration": "Administration",
+    "monitoring": "Monitoring",
+    "infrastructure": "Infrastructure",
+    "manage": "Manage",
+    "account": "Account"
   },
   "auth": {
     "username": "Username",
@@ -500,7 +504,12 @@
     "prefilled": "Filled in from the last install command. Stored secrets are kept unless you enter new ones.",
     "controlHintLinux": "Operators can start, stop and restart systemd services, read their logs and reboot the server. The agent runs as root. Off: the agent only reports.",
     "alsoDocker": "Also report Docker",
-    "alsoDockerHint": "This server runs Docker: its containers appear on the Docker page."
+    "alsoDockerHint": "This server runs Docker: its containers appear on the Docker page.",
+    "add": {
+      "linux": "Add Linux server",
+      "docker": "Add Docker host",
+      "proxmox": "Add Proxmox host"
+    }
   },
   "about": {
     "version": "Version",
@@ -1293,5 +1302,14 @@
       "name": "Audit log",
       "hint": "see who did what"
     }
+  },
+  "hub": {
+    "servicesTab": "Services",
+    "domainsTab": "Domains",
+    "dnsTab": "DNS & tunnels",
+    "historyTab": "History",
+    "maintenanceTab": "Maintenance",
+    "noWindows": "No maintenance windows. Pausing alerts silences them for a while (e.g. during work on a server).",
+    "days": "{{count}} days"
   }
 }

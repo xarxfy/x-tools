@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   manageAgent, useAgent, useAgents, useGroupActions, useSaveAgentMeta, useServerGroups,
@@ -13,6 +13,7 @@ import { level } from "../components/format";
 import { HostHead, Pending, ServerRedirect, SetupHint, agentState, reported } from "./FleetPages";
 import { LinuxTab, type ServerTab } from "./LinuxTab";
 import { fmtDuration } from "../components/format";
+import { AddAgentButton, AgentManageBar } from "./AgentManage";
 import "./ServersPage.css";
 
 const isLinux = (a: AgentSummary) => !a.disabled && (a.kind === "linux" || a.has_linux);
@@ -178,6 +179,7 @@ export function ServersPage() {
       <PageHead title={t("nav.servers")} sub={live.length ? t("fleet.linuxSub", { count: live.length }) : undefined}>
         {live.length > 0 && <SearchField value={query} onChange={setQuery} />}
         {edit && live.length > 0 && <button type="button" className="btn" onClick={() => setManaging(true)}>{t("servers.list.manageGroups")}</button>}
+        <AddAgentButton kind="linux" />
       </PageHead>
       {!live.length && <SetupHint kind="linux" />}
       <Pending agents={pending} />
@@ -271,6 +273,7 @@ export function ServerPage({ agent }: { agent: AgentSummary }) {
   const can = useCan();
   const edit = can("servers.organize");
   const groups = useServerGroups().data ?? [];
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [pausing, setPausing] = useState(false);
   const report = detail.data?.report;
@@ -291,6 +294,7 @@ export function ServerPage({ agent }: { agent: AgentSummary }) {
         <span className="spacer" />
         {edit && <button type="button" className="btn btn-ghost btn-small" onClick={() => setEditing(true)}>{t("servers.page.edit")}</button>}
         {can("alerts.pause") && <button type="button" className="btn btn-ghost btn-small" onClick={() => setPausing(true)}>{t("servers.list.pause")}</button>}
+        {agent.kind === "linux" && <AgentManageBar agent={agent} onRemoved={() => navigate("/servers")} />}
       </div>
       <div className="tabs server-tabs" role="tablist">
         {(["overview", "services", "network", "users"] as ServerTab[]).map((x) => (
