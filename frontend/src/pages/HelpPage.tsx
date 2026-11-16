@@ -71,6 +71,12 @@ const DOCS: Doc[] = [
     <p>Note: X-TOOLS is entirely “vibe coded” (written with an AI assistant) and has had no independent security
       audit – keep backups and be careful what you give it control over.</p>
   </>, "how works parts guide cloudflare access tunnel vibe coded ai audit"),
+  doc("phone", "X-TOOLS on your phone", <>
+    <p>On an iPhone or iPad open X-TOOLS in <strong>Safari</strong>, tap <em>Share</em> → <em>Add to Home Screen</em>; on
+      Android use Chrome → <em>Install app</em>. X-TOOLS then opens full-screen like an app with its own icon. Menu and
+      search are in the top bar, dialogs slide up from the bottom, wide tables scroll sideways. The app needs a
+      connection (no offline mode) and sends no push messages – use Telegram or ntfy for alerts on your phone.</p>
+  </>, "phone iphone ipad android app home screen mobile install pwa"),
   doc("search", "Search, notes and group actions", <>
     <p><strong>Search:</strong> press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘K</kbd> on a Mac) or <kbd>/</kbd> anywhere, or use
       the search button in the sidebar. It finds servers, containers, Proxmox guests, services (also by port, domain

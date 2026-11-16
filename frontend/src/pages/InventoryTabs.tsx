@@ -20,8 +20,8 @@ export function InventoryTab() {
   const columns: Column<InventoryRow>[] = [
     { key: "name", label: t("inventory.name"), value: (r) => r.name, render: (r) => <Link to={r.link}><strong>{r.name}</strong></Link> },
     { key: "kind", nowrap: true, label: t("inventory.kind"), value: (r) => t(KIND_KEY[r.kind] ?? r.kind), render: (r) => <span className="badge">{t(KIND_KEY[r.kind] ?? r.kind)}</span> },
-    { key: "group", label: t("inventory.group"), value: (r) => r.group, render: (r) => r.group || <span className="muted">–</span> },
-    { key: "tags", label: t("inventory.tags"), value: (r) => r.tags.join(" "), csv: (r) => r.tags.join(" "), render: (r) => r.tags.map((x) => <span key={x} className="tag">#{x}</span>) },
+    { key: "group", hideSmall: true, label: t("inventory.group"), value: (r) => r.group, render: (r) => r.group || <span className="muted">–</span> },
+    { key: "tags", hideSmall: true, label: t("inventory.tags"), value: (r) => r.tags.join(" "), csv: (r) => r.tags.join(" "), render: (r) => r.tags.map((x) => <span key={x} className="tag">#{x}</span>) },
     {
       key: "os", label: t("inventory.os"), value: (r) => r.os,
       csv: (r) => [r.os, r.support.state === "eol" ? `support ended ${r.support.until}` : r.support.state === "soon" ? `support ends ${r.support.until}` : ""].filter(Boolean).join(" – "),
@@ -33,18 +33,18 @@ export function InventoryTab() {
         </>
       ),
     },
-    { key: "kernel", label: t("inventory.kernel"), value: (r) => r.kernel, render: (r) => r.kernel || <span className="muted">–</span> },
+    { key: "kernel", hideSmall: true, label: t("inventory.kernel"), value: (r) => r.kernel, render: (r) => r.kernel || <span className="muted">–</span> },
     { key: "ips", nowrap: true, label: t("inventory.ips"), value: (r) => r.ips[0] ? ipSortKey(r.ips[0]) : "", csv: (r) => r.ips.join(" "), render: (r) => <span className="mono small-note">{r.ips.join(", ") || "–"}</span> },
     {
-      key: "version", nowrap: true, label: t("inventory.agent"), value: (r) => r.version,
+      key: "version", hideSmall: true, nowrap: true, label: t("inventory.agent"), value: (r) => r.version,
       render: (r) => (r.version ? <>{r.version}{r.outdated && <span className="badge badge-warn inv-badge">{t("inventory.outdated")}</span>}</> : <span className="muted">–</span>),
     },
-    { key: "uptime", nowrap: true, label: t("inventory.uptime"), value: (r) => r.uptime ?? -1, csv: (r) => (r.uptime ? fmtDuration(r.uptime) : ""), render: (r) => (r.uptime ? fmtDuration(r.uptime) : <span className="muted">–</span>) },
+    { key: "uptime", hideSmall: true, nowrap: true, label: t("inventory.uptime"), value: (r) => r.uptime ?? -1, csv: (r) => (r.uptime ? fmtDuration(r.uptime) : ""), render: (r) => (r.uptime ? fmtDuration(r.uptime) : <span className="muted">–</span>) },
     {
       key: "updates", nowrap: true, label: t("inventory.updates"), value: (r) => r.updates ?? -1, csv: (r) => (r.updates === null ? "" : String(r.updates)) + (r.reboot ? " (reboot)" : ""),
       render: (r) => (r.updates === null ? <span className="muted">–</span> : <>{r.updates > 0 ? <span className="badge badge-warn">{r.updates}</span> : <span className="state-up">0</span>}{r.reboot && <span className="badge badge-warn inv-badge">{t("overview.reboot")}</span>}</>),
     },
-    { key: "seen", nowrap: true, label: t("inventory.lastReport"), value: (r) => r.last_report_at ?? "", csv: (r) => r.last_report_at ?? "", render: (r) => (r.last_report_at ? ago(Date.parse(r.last_report_at) / 1000) : <span className="muted">–</span>) },
+    { key: "seen", hideSmall: true, nowrap: true, label: t("inventory.lastReport"), value: (r) => r.last_report_at ?? "", csv: (r) => r.last_report_at ?? "", render: (r) => (r.last_report_at ? ago(Date.parse(r.last_report_at) / 1000) : <span className="muted">–</span>) },
   ];
   return (
     <>
@@ -100,9 +100,9 @@ export function NetworkTab() {
     { key: "ip", label: t("network.ip"), value: (r) => ipSortKey(r.ip), csv: (r) => r.ip, render: (r) => <span className="mono">{r.ip}</span> },
     { key: "name", label: t("network.name"), value: (r) => r.name, render: (r) => (r.link ? <Link to={r.link}><strong>{r.name}</strong></Link> : <strong>{r.name}</strong>) },
     { key: "kind", label: t("network.type"), value: (r) => kindLabel(r.kind), render: (r) => <span className="badge">{kindLabel(r.kind)}</span> },
-    { key: "iface", label: t("network.iface"), value: (r) => r.iface, render: (r) => r.iface || <span className="muted">–</span> },
-    { key: "network", label: t("network.network"), value: (r) => r.network, render: (r) => <span className="mono small-note">{r.network || "–"}</span> },
-    { key: "mac", label: "MAC", value: (r) => r.mac, render: (r) => <span className="mono small-note">{r.mac || "–"}</span> },
+    { key: "iface", hideSmall: true, label: t("network.iface"), value: (r) => r.iface, render: (r) => r.iface || <span className="muted">–</span> },
+    { key: "network", hideSmall: true, label: t("network.network"), value: (r) => r.network, render: (r) => <span className="mono small-note">{r.network || "–"}</span> },
+    { key: "mac", hideSmall: true, label: "MAC", value: (r) => r.mac, render: (r) => <span className="mono small-note">{r.mac || "–"}</span> },
     { key: "notes", label: t("network.notes"), value: (r) => (r.kind === "manual" ? r.notes : r.source), render: (r) => <span className="muted small-note">{r.kind === "manual" ? r.notes : r.source}</span> },
     {
       key: "actions", label: "", value: () => "", csv: () => "",

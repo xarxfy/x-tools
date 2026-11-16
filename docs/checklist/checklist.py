@@ -37,6 +37,13 @@ SECTIONS = [
         "On *Servers*, *Proxmox* and *Docker* an operator can add a host of that kind; on a host's page: rename, install command, disable, delete",
         "Old links (`/settings?tab=agents`, `/jobs`, `/credentials`, `/cloudflare`) lead to the new places",
     ]),
+    ("phone", "Phone and home-screen app (iPhone/Android)", [
+        "On the phone every page fits the width (no sideways scrolling of the page); the header with search and menu stays on top",
+        "*Share → Add to Home Screen* (Safari) / *Install app* (Chrome): the icon looks right and the app opens without browser bars",
+        "In the app: log in, the notch and the home bar do not cover anything; dialogs slide up from the bottom and their buttons are reachable",
+        "Tapping into a text field does not zoom the page; tab bars scroll sideways; the inventory and network tables are readable",
+        "Dark and light mode follow the phone setting",
+    ]),
     ("search", "Search, notes, group actions", [
         "`Ctrl/Cmd+K` (or `/`) opens the search; it finds a server, a service by port/domain/note, a customer, a container; Enter opens it",
         "A note on a server (with a `https://` link) can be saved, shows on its page and is found by the search",

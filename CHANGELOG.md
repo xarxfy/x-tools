@@ -5,6 +5,12 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- **Use it like an app on your phone**: *Add to Home Screen* on iPhone/iPad (Safari) or *Install app* on Android gives
+  X-TOOLS its own icon and a full-screen look (web app manifest, home-screen icons, status-bar colours).
+- Phone layout: header with search and menu stays on top and respects the notch and home bar, dialogs slide up from the
+  bottom, tab bars scroll sideways, tables show the important columns, larger touch targets, no zooming into input fields.
+
 ### Security
 - Test that goes through every API route: not logged in → 401, a role without permissions → 403.
 - Fixed: the secret heartbeat address of a job was shown by the name of the role (operator/admin) instead of the

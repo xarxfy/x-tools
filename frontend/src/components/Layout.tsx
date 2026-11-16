@@ -82,15 +82,20 @@ export function Layout() {
             </span>
             {t("app.name")}
           </NavLink>
-          <button
-            type="button"
-            className="btn btn-ghost menu-toggle"
-            aria-label={t("nav.menu")}
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <Icon name="menu" size={22} />
-          </button>
+          <span className="brand-actions">
+            <button type="button" className="btn btn-ghost menu-toggle" aria-label={t("search.title")} onClick={() => setSearching(true)}>
+              <Icon name="search" size={22} />
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost menu-toggle"
+              aria-label={t("nav.menu")}
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+            >
+              <Icon name="menu" size={22} />
+            </button>
+          </span>
         </div>
         <nav className="nav-main" aria-label={t("nav.menu")}>
           <button type="button" className="search-button" onClick={() => setSearching(true)}>

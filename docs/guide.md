@@ -152,3 +152,8 @@ website unless you want it private; the check would then see the login page.
 | No message although a problem is shown | Main notification switch off, problem paused, or the event type switched off | *Administration → Notifications*; overview shows *paused* badges |
 
 More: [agents.md](agents.md#troubleshooting) · [installation.md](installation.md) · the *Help* page inside X-TOOLS.
+
+## On your phone
+
+Open X-TOOLS in Safari (iPhone/iPad) or Chrome (Android) and use *Share → Add to Home Screen* / *Install app*: it then
+starts like an app. Details: [installation.md](installation.md#use-it-like-an-app-on-your-phone).

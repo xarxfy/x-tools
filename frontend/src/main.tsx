@@ -21,6 +21,7 @@ import { ServerRoute, ServersPage } from "./pages/ServersPage";
 import { AdminPage } from "./pages/AdminPage";
 import { AssistantPage } from "./pages/AssistantPage";
 import { GuestPage } from "./pages/GuestPage";
+import "./styles/mobile.css"; // last: phone rules override the page styles
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: true, retry: 1 } },

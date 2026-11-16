@@ -8,6 +8,8 @@ export interface Column<T> {
   value: (row: T) => string | number;
   csv?: (row: T) => string;
   nowrap?: boolean;
+  /** hidden on phones, where the table has to be narrow */
+  hideSmall?: boolean;
 }
 
 /** IPv4 addresses sort numerically, IPv6 after them as text. */
@@ -44,7 +46,7 @@ export function DataTable<T>({ columns, rows, rowKey, rowClass, initialSort }: {
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={c.key} aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}>
+              <th key={c.key} className={c.hideSmall ? "hide-sm" : undefined} aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}>
                 <button type="button" onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key ? (-s.dir as 1 | -1) : 1 }))}>
                   {c.label}{sort.key === c.key ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
                 </button>
@@ -55,7 +57,7 @@ export function DataTable<T>({ columns, rows, rowKey, rowClass, initialSort }: {
         <tbody>
           {sorted.map((r) => (
             <tr key={rowKey(r)} className={rowClass?.(r)}>
-              {columns.map((c) => <td key={c.key} className={c.nowrap ? "nowrap" : undefined}>{c.render(r)}</td>)}
+              {columns.map((c) => <td key={c.key} className={[c.nowrap ? "nowrap" : "", c.hideSmall ? "hide-sm" : ""].filter(Boolean).join(" ") || undefined}>{c.render(r)}</td>)}
             </tr>
           ))}
         </tbody>

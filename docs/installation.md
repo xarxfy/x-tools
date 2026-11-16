@@ -248,3 +248,17 @@ sudo docker run --rm -v deploy_x-tools-data:/data -v /path/to/server-info:/si:ro
 
 Services, customers, credentials (re-encrypted), notification settings and agents are taken over; running it twice
 does not duplicate anything.
+
+## Use it like an app on your phone
+
+X-TOOLS can be put on the home screen of an iPhone, iPad or Android phone; it then opens full-screen like an app,
+without the browser bars, with its own icon.
+
+- **iPhone / iPad (Safari):** open your X-TOOLS address, tap the *Share* button → *Add to Home Screen* → *Add*.
+  (It has to be Safari; other browsers on iOS do not offer this.)
+- **Android (Chrome):** menu (⋮) → *Install app* or *Add to Home screen*.
+
+Good to know: log in once inside the app (the login lasts 14 days, `XT_SESSION_HOURS`); the app needs a connection
+(there is no offline mode); it works over plain HTTP in the LAN, HTTPS is nicer; for alerts on the phone use the
+notifications (Telegram or the ntfy app) – the web app itself sends no push messages. The layout adapts to the phone:
+menu and search in the top bar, dialogs slide up from the bottom, tables scroll sideways.
