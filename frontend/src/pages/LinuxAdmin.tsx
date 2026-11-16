@@ -13,8 +13,8 @@ function useManage(agentId: string) {
     mutationFn: ({ action, target, args }: { action: string; target?: string; args?: Record<string, unknown> }) =>
       manageAgent(agentId, action, target, args),
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ["agents"] });
-      setTimeout(() => qc.invalidateQueries({ queryKey: ["agents"] }), 6000);
+      // the agent reports right after the action; ask a few times until the new state is there
+      for (const ms of [0, 1500, 4000, 8000]) setTimeout(() => qc.invalidateQueries({ queryKey: ["agents"] }), ms);
     },
   });
 }

@@ -233,3 +233,21 @@ def test_read_only_system_gives_a_hint(tmp_path, monkeypatch):
     monkeypatch.setattr(la.os, "replace", boom)
     with pytest.raises(la.AdminError, match="install command"):
         la.admin_action("user.key_add", "marc", {"key": KEY})
+
+
+def test_after_an_action_only_users_and_firewall_are_read_again(monkeypatch):
+    calls = []
+    monkeypatch.setenv("XT_AGENT_LINUX", "1")
+    monkeypatch.setattr(agent.linux, "details", lambda: calls.append("details") or {"updates": []})
+    monkeypatch.setattr(la, "users", lambda: calls.append("users") or [])
+    monkeypatch.setattr(la, "ufw_status", lambda: calls.append("ufw") or {"installed": False})
+    monkeypatch.setattr(agent.linux, "services", lambda: [])
+    monkeypatch.setattr(agent.linux, "ports", lambda: [])
+    monkeypatch.setattr(agent.linux, "disks", lambda: [])
+    monkeypatch.setitem(agent._linux, "data", None)
+    agent.linux_info()
+    assert calls == ["details", "users", "ufw"]
+    calls.clear()
+    agent._linux["dirty"].add("users")
+    out = agent.linux_info()
+    assert calls == ["users"] and out["users"] == []

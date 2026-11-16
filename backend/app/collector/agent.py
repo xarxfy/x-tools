@@ -54,7 +54,16 @@ def proxmox_info() -> dict | None:
 
 
 LINUX_DETAILS_INTERVAL = max(120, int(os.environ.get("XT_LINUX_DETAILS_INTERVAL", "600")))
-_linux: dict = {"data": None, "at": 0.0}
+_linux: dict = {"data": None, "at": 0.0, "dirty": set()}
+_fast = threading.Event()  # set after an administration action: report at once, without waiting
+
+
+def _read_part(data: dict, key: str) -> None:
+    fn = linux_admin.users if key == "users" else linux_admin.ufw_status
+    try:
+        data[key] = fn()
+    except Exception as error:  # noqa: BLE001
+        data[key] = None if key == "users" else {"installed": True, "error": str(error)[:200]}
 
 
 def linux_info() -> dict | None:
@@ -66,14 +75,14 @@ def linux_info() -> dict | None:
     if _linux["data"] is None or finished or time.time() - _linux["at"] > LINUX_DETAILS_INTERVAL:
         try:
             _linux["data"] = linux.details()
-            for key, fn in (("users", linux_admin.users), ("firewall", linux_admin.ufw_status)):
-                try:
-                    _linux["data"][key] = fn()
-                except Exception as error:  # noqa: BLE001
-                    _linux["data"][key] = None if key == "users" else {"installed": True, "error": str(error)[:200]}
+            _read_part(_linux["data"], "users")
+            _read_part(_linux["data"], "firewall")
         except Exception as error:  # noqa: BLE001 – must never stop the report
             _linux["data"] = {"error": str(error)[:300], "fetched_at": time.time()}
         _linux["at"] = time.time()
+        _linux["dirty"].clear()
+    while _linux["dirty"]:  # after an action only the changed part is read again (fast)
+        _read_part(_linux["data"], _linux["dirty"].pop())
     out = {**_linux["data"], "collected_at": time.time(), "update_job": job}
     for key, fn in (("services", linux.services), ("ports", linux.ports), ("disks", linux.disks)):
         try:
@@ -111,7 +120,9 @@ def execute(command: dict) -> dict:
             if os.environ.get("XT_AGENT_LINUX", "0") != "1":
                 raise ValueError("Linux server mode is not enabled on this agent")
             result = linux_admin.admin_action(action, target, params)
-            _linux["at"] = 0.0  # read users, firewall and updates again with the next report
+            if action != "system.update":  # the update refreshes everything itself when it is done
+                _linux["dirty"].update(("users", "firewall"))
+                _fast.set()
             return result
         elif action == "system.reboot":
             if os.environ.get("XT_AGENT_LINUX", "0") != "1":
@@ -214,4 +225,5 @@ def run() -> None:
         report_now.wait(10 if (linux_admin.update_job() or {}).get("state") == "running" else interval)
         if report_now.is_set():
             report_now.clear()
-            time.sleep(3)  # give Docker/Proxmox a moment to change state
+            time.sleep(0 if _fast.is_set() else 3)  # give Docker/Proxmox a moment to change state
+            _fast.clear()

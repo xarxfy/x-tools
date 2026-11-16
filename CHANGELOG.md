@@ -5,6 +5,10 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Changed
+- After an administration action (users, SSH keys, firewall) the list is updated within seconds: the agent reads only the
+  changed part and reports at once.
+
 ### Fixed
 - Administration (users, SSH keys, updates, firewall) failed because the agent's systemd service was read-only. The
   install command of a Linux server with control now creates a writable service; older agents show a hint to renew
