@@ -262,7 +262,11 @@ def test_server_groups_and_tags(admin):
     assert [g["name"] for g in admin.get("/api/server-groups").json()] == ["Home", "Production"]
     assert admin.put("/api/server-groups/order", json={"ids": [a["id"]]}, headers=h).status_code == 422
     ag = admin.post("/api/agents", json={"name": "Web9", "kind": "linux"}, headers=h).json()
-    r = admin.put(f"/api/agents/{ag['id']}/meta", json={"group_id": a["id"], "tags": ["db", " Important ", "DB", ""]}, headers=h)
+    # tags are picked from the central list
+    assert admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": ["db"]}, headers=h).status_code == 422
+    for name in ("db", "Important"):
+        assert admin.post("/api/tags", json={"name": name}, headers=h).status_code == 201
+    r = admin.put(f"/api/agents/{ag['id']}/meta", json={"group_id": a["id"], "tags": ["db", " important ", "DB", ""]}, headers=h)
     assert r.status_code == 200 and r.json()["group_id"] == a["id"] and r.json()["tags"] == ["db", "Important"]
     assert admin.put(f"/api/agents/{ag['id']}/meta", json={"group_id": "nope", "tags": []}, headers=h).status_code == 422
     assert admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": ["x" * 31]}, headers=h).status_code == 422
@@ -288,6 +292,7 @@ def test_notes(admin):
     r = admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": [], "notes": "  DB for ACME\nhttps://wiki.example/db  "}, headers=h)
     assert r.json()["notes"] == "DB for ACME\nhttps://wiki.example/db"
     # tags without notes keep the notes
+    admin.post("/api/tags", json={"name": "x"}, headers=h)
     assert admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": ["x"]}, headers=h).json()["notes"].startswith("DB for ACME")
     assert admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": [], "notes": "x" * 5001}, headers=h).status_code == 422
     long = "n" * 2000

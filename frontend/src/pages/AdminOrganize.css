@@ -1,0 +1,26 @@
+.org-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.org-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.org-row .input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.org-usage {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.org-merge {
+  flex: 0 1 160px !important;
+}
+.org-add {
+  padding-top: 8px;
+  border-top: 1px solid var(--fill);
+}

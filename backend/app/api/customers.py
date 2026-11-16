@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.agents import clean_tags
+from app.api.organize import check_tags
+from app.core.palette import COLOR_PATTERN
 from app.api.deps import current_user, permissions_of, require
 from app.core.audit import audit
 from app.core.db import get_db
@@ -86,7 +87,7 @@ def apply(customer: Customer, body: CustomerIn, db: Session, contracts: bool) ->
     if body.contacts is not None:
         customer.contacts = [CustomerContact(name=p.name, role=p.role, email=p.email, phone=p.phone, position=i)
                              for i, p in enumerate(body.contacts)]
-    customer.tags = clean_tags(body.tags)
+    customer.tags = check_tags(db, body.tags)
     if body.links is not None:
         customer.links = [CustomerLink(title=x.title, url=x.url, position=i) for i, x in enumerate(body.links)]
     if contracts and body.contract is not None:
@@ -144,7 +145,7 @@ categories = APIRouter(prefix="/api/customer-categories", tags=["customers"], de
 
 
 def category_out(c: CustomerCategory) -> dict:
-    return {"id": c.id, "name": c.name, "position": c.position}
+    return {"id": c.id, "name": c.name, "position": c.position, "color": c.color}
 
 
 @categories.get("")
@@ -159,11 +160,11 @@ def unique_name(db: Session, name: str, own: str = "") -> None:
             raise HTTPException(409, "A category with this name already exists")
 
 
-@categories.post("", status_code=201, dependencies=[Depends(require("customers.edit"))])
+@categories.post("", status_code=201, dependencies=[Depends(require("admin.organize"))])
 def create_category(body: CategoryIn, db: Session = Depends(get_db)):
     unique_name(db, body.name)
     last = db.scalars(select(CustomerCategory.position).order_by(CustomerCategory.position.desc())).first()
-    category = CustomerCategory(name=body.name, position=(last + 1) if last is not None else 0)
+    category = CustomerCategory(name=body.name, color=body.color, position=(last + 1) if last is not None else 0)
     db.add(category)
     db.commit()
     audit("customer.category.created", category.name)
@@ -174,7 +175,7 @@ class OrderIn(BaseModel):
     ids: list[str] = Field(max_length=100)
 
 
-@categories.put("/order", dependencies=[Depends(require("customers.edit"))])
+@categories.put("/order", dependencies=[Depends(require("admin.organize"))])
 def order_categories(body: OrderIn, db: Session = Depends(get_db)):
     found = {c.id: c for c in db.scalars(select(CustomerCategory))}
     if set(body.ids) != set(found):
@@ -185,19 +186,19 @@ def order_categories(body: OrderIn, db: Session = Depends(get_db)):
     return [category_out(found[cid]) for cid in body.ids]
 
 
-@categories.put("/{cid}", dependencies=[Depends(require("customers.edit"))])
+@categories.put("/{cid}", dependencies=[Depends(require("admin.organize"))])
 def rename_category(cid: str, body: CategoryIn, db: Session = Depends(get_db)):
     category = db.get(CustomerCategory, cid)
     if category is None:
         raise HTTPException(404, "Category not found")
     unique_name(db, body.name, cid)
-    category.name = body.name
+    category.name, category.color = body.name, body.color
     db.commit()
     audit("customer.category.renamed", category.name)
     return category_out(category)
 
 
-@categories.delete("/{cid}", status_code=204, dependencies=[Depends(require("customers.edit"))])
+@categories.delete("/{cid}", status_code=204, dependencies=[Depends(require("admin.organize"))])
 def delete_category(cid: str, db: Session = Depends(get_db)):
     category = db.get(CustomerCategory, cid)
     if category is None:

@@ -59,8 +59,10 @@ cloud = service("Nextcloud", [(18304, "Web")], ["cloud.example.com"], "/home/mar
 git = service("Gitea", [(18305, "Web")], ["git.example.com"], "/home/marc/apps/gitea")
 mail = service("Mail relay", [(18399, "SMTP")], [], "/home/marc/apps/mail", "Docker Compose")
 call("/api/services", {"name": "Grafana", "ports": [{"port": 18305, "label": "Web"}], "domains": ["grafana.example.com"]})
-cat_a = call("/api/customer-categories", {"name": "A-customer"})["id"]
-cat_b = call("/api/customer-categories", {"name": "B-customer"})["id"]
+cat_a = call("/api/customer-categories", {"name": "A-customer", "color": "red"})["id"]
+cat_b = call("/api/customer-categories", {"name": "B-customer", "color": "orange"})["id"]
+for _name, _color in (("Hosting", "blue"), ("Shop", "purple"), ("debian", "gray"), ("web", "green"), ("database", "teal"), ("customer-acme", "pink")):
+    call("/api/tags", {"name": _name, "color": _color})
 import datetime as _dt
 _today = _dt.date.today()
 acme = call("/api/customers", {
@@ -186,8 +188,8 @@ db_report["linux"].update(updates=[], reboot_required=False, firewall={"installe
 db_report["network"] = [net("eth0", "10.0.0.22"), net("docker0", "172.17.0.1", 16, True)]
 db_report["linux"].update(os_id="debian", os_version="11", os="Debian GNU/Linux 11 (bullseye)")
 db_id = agent("db-01", "linux", db_report)
-grp_prod = call("/api/server-groups", {"name": "Production"})["id"]
-call("/api/server-groups", {"name": "Home network"})
+grp_prod = call("/api/server-groups", {"name": "Production", "color": "green"})["id"]
+call("/api/server-groups", {"name": "Home network", "color": "blue"})
 call(f"/api/agents/{linux_id}/meta", {"group_id": grp_prod, "tags": ["debian", "web", "customer-acme"],
      "notes": "Web server for the ACME shop and blog.\nResponsible: Anna Meyer (anna@acme-example.com)\nRunbook: https://wiki.example.com/runbooks/web-01"}, method="PUT")
 call(f"/api/agents/{db_id}/meta", {"group_id": grp_prod, "tags": ["debian", "database"]}, method="PUT")

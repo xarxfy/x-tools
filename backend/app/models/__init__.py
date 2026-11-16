@@ -74,6 +74,17 @@ class CustomerCategory(Base):
     id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(40))
     position: Mapped[int] = mapped_column(Integer, default=0)
+    color: Mapped[str] = mapped_column(String(10), default="gray", server_default="gray")
+
+
+class Tag(Base):
+    """A tag of the central list (Administration → Order). Servers and customers carry tags by name."""
+
+    __tablename__ = "tags"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(30))
+    color: Mapped[str] = mapped_column(String(10), default="gray", server_default="gray")
 
 
 class Customer(Base):
@@ -276,6 +287,7 @@ class ServerGroup(Base):
     id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(40))
     position: Mapped[int] = mapped_column(Integer, default=0)
+    color: Mapped[str] = mapped_column(String(10), default="gray", server_default="gray")
 
 
 class Agent(Base):

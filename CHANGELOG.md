@@ -12,6 +12,10 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
   **contract data** (end, period of notice, support hours, response time; warning on the overview 60 days before the
   last day to give notice), **links** (contract, documentation – web addresses only) and servers and jobs that belong
   to a customer.
+- **Order – one place for tags, categories and groups** (*Administration → Order*, permission *Manage tags and
+  categories*, administrators only by default): create, rename, merge and delete **tags** (one list for servers and
+  customers), customer **categories** and server **groups**, each with one of eight colours that show everywhere.
+  Everywhere else they are only picked from these lists. Tags that already exist are carried over automatically.
 - **Tickets:** per customer and in a list of all tickets (menu *Tickets*): status, priority, assignee, due date, a
   related service or server, description and comments. Changes are logged; the **history** of a customer shows
   comments, changes and free notes and can be searched. Overdue, soon due and urgent tickets show on the overview and

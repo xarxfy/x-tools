@@ -484,6 +484,7 @@ export interface ServerGroup {
   id: string;
   name: string;
   position: number;
+  color: string;
 }
 
 export const useServerGroups = () =>
@@ -496,12 +497,12 @@ export function useGroupActions() {
     qc.invalidateQueries({ queryKey: ["agents"] });
   };
   const add = useMutation({
-    mutationFn: (name: string) => api<ServerGroup>("/server-groups", { method: "POST", body: { name } }),
+    mutationFn: (b: { name: string; color: string }) => api<ServerGroup>("/server-groups", { method: "POST", body: b }),
     onSuccess: done,
   });
   const rename = useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) =>
-      api<ServerGroup>(`/server-groups/${id}`, { method: "PUT", body: { name } }),
+    mutationFn: ({ id, name, color }: { id: string; name: string; color: string }) =>
+      api<ServerGroup>(`/server-groups/${id}`, { method: "PUT", body: { name, color } }),
     onSuccess: done,
   });
   const remove = useMutation({

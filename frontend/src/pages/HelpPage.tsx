@@ -103,9 +103,16 @@ const DOCS: Doc[] = [
     <p>Before maintenance, <em>Pause alerts</em> on the overview silences a part of the system (or everything) for a
       while. Problems stay visible but nothing is sent, and no “back to normal” follows.</p>
   </>, "jobs heartbeat cron backup monitor maintenance pause silence alerts"),
+  doc("order", "Tags, categories and groups", <>
+    <p>Tags (for servers and customers), customer categories and server groups are managed in one place:
+      <Link to="/admin?tab=organize">Administration → Order</Link> (permission <em>Manage tags and categories</em>, administrators by
+      default). There you create, rename, sort, colour (eight colours), merge and delete them. On servers and customers you only
+      pick from these lists – no typing, no typos, one spelling everywhere. Renaming a tag changes it on every server and
+      customer; deleting it removes it everywhere.</p>
+  </>, "tags categories groups order colour color organize merge rename"),
   doc("customers", "Customers", <>
     <p>A small CRM: the list shows every customer in a table (category, contact, services, servers, status, contract
-      end, open tickets) and can be filtered by category and <strong>tags</strong> (free words like Hosting or Shop).
+      end, open tickets) and can be filtered by category and <strong>tags</strong> (labels like Hosting or Shop).
       A service, server or job belongs to at most one customer.</p>
     <p>A customer page has tabs: <em>Overview</em> (contact people with roles, contract, links, agreements),
       <em>Services and websites</em>, <em>Servers and jobs</em>, <em>Tickets</em> and <em>History</em>.

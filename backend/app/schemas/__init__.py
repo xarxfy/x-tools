@@ -167,5 +167,6 @@ class CustomerOut(BaseModel):
 
 class CategoryIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
+    color: str = Field(default="gray", pattern=r"^(gray|blue|green|orange|red|purple|pink|teal)$")
 
     _strip = field_validator("name", mode="before")(strip)

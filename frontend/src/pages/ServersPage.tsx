@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  manageAgent, useAgent, useAgents, useGroupActions, useSaveAgentMeta, useServerGroups,
-  type AgentSummary, type ServerGroup,
+  manageAgent, useAgent, useAgents, useSaveAgentMeta, useServerGroups,
+  type AgentSummary,
 } from "../api/monitor";
 import { useCan } from "../api/users";
+import { colorClass, useTagClass } from "../api/organize";
+import { TagPicker } from "../components/TagPicker";
 import { Icon } from "../components/Icon";
 import { PauseDialog } from "../components/Maintenance";
 import { ReportDialog } from "../components/ReportDialog";
-import { Dialog, Dot, Empty, Hub, Loading, PageHead, SearchField, ConfirmDelete, matches } from "../components/ui";
+import { Dialog, Dot, Empty, Hub, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { level } from "../components/format";
 import { HostHead, Pending, ServerRedirect, SetupHint, agentState, reported } from "./FleetPages";
 import { LinuxTab, type ServerTab } from "./LinuxTab";
@@ -42,6 +44,7 @@ function Meters({ a }: { a: AgentSummary }) {
 
 function ServerRow({ a, onTag }: { a: AgentSummary; onTag: (tag: string) => void }) {
   const { t } = useTranslation();
+  const tagClass = useTagClass();
   return (
     <Link to={`/servers/${a.id}`} className="list-row srv-row">
       <Dot state={agentState(a)} />
@@ -55,7 +58,7 @@ function ServerRow({ a, onTag }: { a: AgentSummary; onTag: (tag: string) => void
         {a.tags.length > 0 && (
           <div className="srv-tags">
             {a.tags.map((tag) => (
-              <button key={tag} type="button" className="tag" onClick={(e) => { e.preventDefault(); onTag(tag); }}>#{tag}</button>
+              <button key={tag} type="button" className={`tag ${tagClass(tag)}`} onClick={(e) => { e.preventDefault(); onTag(tag); }}>#{tag}</button>
             ))}
           </div>
         )}
@@ -109,58 +112,18 @@ function BulkUpdate({ servers }: { servers: AgentSummary[] }) {
   );
 }
 
-export function GroupsDialog({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation();
-  const groups = useServerGroups().data ?? [];
-  const { add, rename, remove, order } = useGroupActions();
-  const [name, setName] = useState("");
-  const [edits, setEdits] = useState<Record<string, string>>({});
-  const error = add.error ?? rename.error ?? remove.error ?? order.error;
-  const move = (index: number, by: number) => {
-    const ids = groups.map((g) => g.id);
-    [ids[index], ids[index + by]] = [ids[index + by], ids[index]];
-    order.mutate(ids);
-  };
-  const commit = (g: ServerGroup) => {
-    const v = (edits[g.id] ?? g.name).trim();
-    if (v && v !== g.name) rename.mutate({ id: g.id, name: v });
-    setEdits((x) => { const { [g.id]: _, ...rest } = x; return rest; });
-  };
-  return (
-    <Dialog title={t("servers.list.groupsTitle")} onClose={onClose}
-            onSubmit={() => name.trim() && add.mutate(name.trim(), { onSuccess: () => setName("") })}
-            footer={<><span className="spacer" /><button type="button" className="btn" onClick={onClose}>{t("common.close")}</button></>}>
-      <p className="hint">{t("servers.list.groupsHint")}</p>
-      {groups.map((g, i) => (
-        <div key={g.id} className="category-row">
-          <input className="input" maxLength={40} value={edits[g.id] ?? g.name}
-                 onChange={(e) => setEdits((x) => ({ ...x, [g.id]: e.target.value }))} onBlur={() => commit(g)} />
-          <button type="button" className="btn btn-ghost btn-small" disabled={i === 0} onClick={() => move(i, -1)} aria-label={t("servers.list.up")}>↑</button>
-          <button type="button" className="btn btn-ghost btn-small" disabled={i === groups.length - 1} onClick={() => move(i, 1)} aria-label={t("servers.list.down")}>↓</button>
-          <ConfirmDelete compact busy={remove.isPending} onConfirm={() => remove.mutate(g.id)} />
-        </div>
-      ))}
-      <div className="category-row">
-        <input className="input" maxLength={40} placeholder={t("servers.list.groupPlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" className="btn btn-primary btn-small" disabled={!name.trim() || add.isPending}>{t("servers.list.addGroup")}</button>
-      </div>
-      {error && <p className="error-text">{error.message}</p>}
-    </Dialog>
-  );
-}
-
 function ServersList() {
   const { t } = useTranslation();
   const agents = useAgents();
   const groups = useServerGroups();
   const { hash } = useLocation();
   const can = useCan();
-  const edit = can("servers.organize");
+  const canOrganize = can("admin.organize");
+  const tagClass = useTagClass();
   const [query, setQuery] = useState("");
   const [params] = useSearchParams();
   const [tag, setTag] = useState(params.get("tag") ?? "");
   useEffect(() => { const x = params.get("tag"); if (x !== null) setTag(x); }, [params]); // from the global search
-  const [managing, setManaging] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [acting, setActing] = useState(false);
   const [pause, setPause] = useState<{ scope: string; target: string } | null>(null);
@@ -176,8 +139,8 @@ function ServersList() {
   const shown = live.filter((a) =>
     (!tag || a.tags.some((x) => x.toLowerCase() === tag.toLowerCase())) &&
     matches(query, a.name, a.hostname, a.os, groupName.get(a.group_id ?? ""), ...a.tags));
-  const sections: { id: string; name: string | null; servers: AgentSummary[] }[] = [
-    ...groupList.map((g) => ({ id: g.id, name: g.name, servers: shown.filter((a) => a.group_id === g.id) })),
+  const sections: { id: string; name: string | null; color?: string; servers: AgentSummary[] }[] = [
+    ...groupList.map((g) => ({ id: g.id, name: g.name, color: g.color, servers: shown.filter((a) => a.group_id === g.id) })),
     { id: "", name: groupList.length ? t("servers.list.noGroup") : null,
       servers: shown.filter((a) => !a.group_id || !groupName.has(a.group_id)) },
   ].filter((s) => s.servers.length > 0);
@@ -186,7 +149,7 @@ function ServersList() {
     <>
       <PageHead title={t("nav.servers")} sub={live.length ? t("fleet.linuxSub", { count: live.length }) : undefined}>
         {live.length > 0 && <SearchField value={query} onChange={setQuery} />}
-        {edit && live.length > 0 && <button type="button" className="btn" onClick={() => setManaging(true)}>{t("servers.list.manageGroups")}</button>}
+        {canOrganize && live.length > 0 && <Link className="btn" to="/admin?tab=organize">{t("organize.manage")}</Link>}
         {live.length > 0 && (can("servers.manage") || can("servers.control")) && (
           <button type="button" className="btn" onClick={() => setActing(true)}>{t("bulk.button")}</button>
         )}
@@ -200,7 +163,7 @@ function ServersList() {
         <div className="category-bar">
           <button type="button" className={`category-pill${tag === "" ? " active" : ""}`} onClick={() => setTag("")}>{t("servers.list.allTags")}</button>
           {tags.map((x) => (
-            <button key={x} type="button" className={`category-pill${tag.toLowerCase() === x.toLowerCase() ? " active" : ""}`} onClick={() => setTag(tag === x ? "" : x)}>#{x}</button>
+            <button key={x} type="button" className={`category-pill ${tagClass(x)}${tag.toLowerCase() === x.toLowerCase() ? " active" : ""}`} onClick={() => setTag(tag === x ? "" : x)}>#{x}</button>
           ))}
         </div>
       )}
@@ -209,7 +172,7 @@ function ServersList() {
         <section key={s.id || "none"} className="srv-section">
           {(s.name || sections.length > 1) && (
             <div className="section-row">
-              <h2 className="section-title">{s.name ?? t("servers.list.noGroup")}<span className="muted srv-count">{t("servers.list.serverCount", { count: s.servers.length })}</span></h2>
+              <h2 className="section-title">{s.color && <span className={`swatch c-${s.color}`} />} {s.name ?? t("servers.list.noGroup")}<span className="muted srv-count">{t("servers.list.serverCount", { count: s.servers.length })}</span></h2>
               <div className="section-tools">
                 {can("alerts.pause") && s.id && <button type="button" className="btn btn-ghost btn-small" onClick={() => setPause({ scope: "group", target: s.id })}>{t("servers.list.pause")}</button>}
                 <BulkUpdate servers={s.servers} />
@@ -222,7 +185,6 @@ function ServersList() {
           </div>
         </section>
       ))}
-      {managing && <GroupsDialog onClose={() => setManaging(false)} />}
       {acting && <GroupActionsDialog servers={live} groups={groupList} initial={{ selected: shown.map((a) => a.id) }} onClose={() => setActing(false)} />}
       {pause && <PauseDialog initial={pause} onClose={() => setPause(null)} />}
     </>
@@ -235,48 +197,26 @@ function MetaDialog({ agent, onClose }: { agent: AgentSummary; onClose: () => vo
   const { t } = useTranslation();
   const save = useSaveAgentMeta(agent.id);
   const groups = useServerGroups().data ?? [];
-  const known = [...new Set((useAgents().data ?? []).flatMap((a) => a.tags))].sort();
   const [group, setGroup] = useState(agent.group_id ?? "");
   const [tags, setTags] = useState<string[]>(agent.tags);
-  const [input, setInput] = useState("");
-  const [managing, setManaging] = useState(false);
-  const addTag = () => {
-    const v = input.trim().replace(/^#/, "");
-    if (v && !tags.some((x) => x.toLowerCase() === v.toLowerCase())) setTags([...tags, v]);
-    setInput("");
-  };
   return (
-    <>
-      <Dialog title={t("servers.page.edit")} onClose={onClose}
-              onSubmit={() => { const pending = input.trim().replace(/^#/, ""); const all = pending && !tags.some((x) => x.toLowerCase() === pending.toLowerCase()) ? [...tags, pending] : tags;
-                save.mutate({ group_id: group || null, tags: all }, { onSuccess: onClose }); }}
-              footer={<><span className="spacer" /><button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
-                <button type="submit" className="btn btn-primary" disabled={save.isPending}>{t("common.save")}</button></>}>
-        <label className="field">
-          {t("servers.page.group")}
-          <select className="input" value={group} onChange={(e) => setGroup(e.target.value)}>
-            <option value="">{t("servers.page.noGroup")}</option>
-            {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
-          <button type="button" className="link-button small-note" onClick={() => setManaging(true)}>{t("servers.list.manageGroups")}</button>
-        </label>
-        <div className="field">
-          {t("servers.page.tags")}
-          <span className="hint">{t("servers.page.tagsHint")}</span>
-          <div className="srv-tags">
-            {tags.map((x) => (
-              <button key={x} type="button" className="tag" title={t("common.remove")} onClick={() => setTags(tags.filter((y) => y !== x))}>#{x} ×</button>
-            ))}
-          </div>
-          <input className="input" list="known-tags" maxLength={30} placeholder={t("servers.page.tagPlaceholder")} value={input}
-                 onChange={(e) => setInput(e.target.value)}
-                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); } }} />
-          <datalist id="known-tags">{known.map((x) => <option key={x} value={x} />)}</datalist>
-        </div>
-        {save.error && <p className="error-text">{save.error.message}</p>}
-      </Dialog>
-      {managing && <GroupsDialog onClose={() => setManaging(false)} />}
-    </>
+    <Dialog title={t("servers.page.edit")} onClose={onClose}
+            onSubmit={() => save.mutate({ group_id: group || null, tags }, { onSuccess: onClose })}
+            footer={<><span className="spacer" /><button type="button" className="btn" onClick={onClose}>{t("common.cancel")}</button>
+              <button type="submit" className="btn btn-primary" disabled={save.isPending}>{t("common.save")}</button></>}>
+      <label className="field">
+        {t("servers.page.group")}
+        <select className="input" value={group} onChange={(e) => setGroup(e.target.value)}>
+          <option value="">{t("servers.page.noGroup")}</option>
+          {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+        </select>
+      </label>
+      <div className="field">
+        {t("servers.page.tags")}
+        <TagPicker value={tags} onChange={setTags} />
+      </div>
+      {save.error && <p className="error-text">{save.error.message}</p>}
+    </Dialog>
   );
 }
 
@@ -331,6 +271,8 @@ export function ServerPage({ agent }: { agent: AgentSummary }) {
   const tab = (["overview", "services", "network", "users"] as ServerTab[]).find((x) => x === params.get("tab")) ?? "overview";
   const failed = (info?.services ?? []).filter((s) => s.active === "failed").length;
   const groupName = groups.find((g) => g.id === agent.group_id)?.name;
+  const groupColor = groups.find((g) => g.id === agent.group_id)?.color;
+  const tagClass = useTagClass();
 
   return (
     <>
@@ -339,8 +281,8 @@ export function ServerPage({ agent }: { agent: AgentSummary }) {
                 sub={[agent.hostname, reported(agent), report?.system?.uptime && t("servers.uptime", { duration: fmtDuration(report.system.uptime) })]
                   .filter(Boolean).join(" · ")} />
       <div className="srv-meta">
-        {groupName && <span className="badge">{groupName}</span>}
-        {agent.tags.map((x) => <span key={x} className="tag">#{x}</span>)}
+        {groupName && <span className={`badge ${colorClass(groupColor)}`}>{groupName}</span>}
+        {agent.tags.map((x) => <span key={x} className={`tag ${tagClass(x)}`}>#{x}</span>)}
         <span className="spacer" />
         {edit && <button type="button" className="btn btn-ghost btn-small" onClick={() => setEditing(true)}>{t("servers.page.edit")}</button>}
         {can("alerts.pause") && <button type="button" className="btn btn-ghost btn-small" onClick={() => setPausing(true)}>{t("servers.list.pause")}</button>}

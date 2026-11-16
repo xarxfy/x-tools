@@ -1,0 +1,55 @@
+/* The fixed colours of tags, categories and groups (names come from the server: api/organize.ts). */
+.c-gray { --c: #8e8e93; }
+.c-blue { --c: #0a84ff; }
+.c-green { --c: #30a14e; }
+.c-orange { --c: #ff9f0a; }
+.c-red { --c: #ff3b30; }
+.c-purple { --c: #af52de; }
+.c-pink { --c: #ff2d55; }
+.c-teal { --c: #14a7a7; }
+.tag.colored,
+.badge.colored,
+.chip.colored,
+.category-pill.colored {
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+  color: color-mix(in srgb, var(--c) 70%, var(--text));
+}
+.category-pill.active.colored {
+  background: var(--c);
+  color: #fff;
+}
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c, #8e8e93);
+  flex: none;
+}
+.swatches {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.swatches button {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--c);
+  padding: 0;
+  cursor: pointer;
+}
+.swatches button[aria-checked="true"] {
+  border-color: var(--text);
+}
+.pick-chip {
+  border: 1px dashed var(--fill);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.pick-chip.is-on {
+  border-style: solid;
+  border-color: transparent;
+}

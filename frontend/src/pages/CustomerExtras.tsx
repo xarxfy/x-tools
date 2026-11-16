@@ -1,5 +1,6 @@
 import "./Customers.css";
 import { useState } from "react";
+import { TagPicker } from "../components/TagPicker";
 import { useCan } from "../api/users";
 import { useJournal, useTicketActions, useTickets, type Ticket } from "../api/tickets";
 import { ago } from "../components/format";
@@ -229,24 +230,10 @@ export function AssignedCard({ customer }: { customer: Customer }) {
 
 export function TagsEditor({ form, setForm }: { form: CustomerInput; setForm: (f: (x: CustomerInput) => CustomerInput) => void }) {
   const { t } = useTranslation();
-  const [text, setText] = useState("");
-  const add = () => {
-    const tag = text.split(/\s+/).filter(Boolean).join(" ").slice(0, 30);
-    if (tag && !form.tags.some((x) => x.toLowerCase() === tag.toLowerCase())) setForm((f) => ({ ...f, tags: [...f.tags, tag] }));
-    setText("");
-  };
   return (
     <div className="field">
       {t("customers.tags")}
-      <div className="chips">
-        {form.tags.map((x) => (
-          <span key={x} className="chip">#{x}
-            <button type="button" className="btn btn-ghost btn-small" aria-label={t("common.delete")} onClick={() => setForm((f) => ({ ...f, tags: f.tags.filter((y) => y !== x) }))}>×</button>
-          </span>
-        ))}
-      </div>
-      <input className="input" maxLength={30} placeholder={t("customers.tagPlaceholder")} value={text} onChange={(e) => setText(e.target.value)}
-             onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(); } }} onBlur={add} />
+      <TagPicker value={form.tags} onChange={(tags) => setForm((f) => ({ ...f, tags }))} />
     </div>
   );
 }

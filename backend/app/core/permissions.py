@@ -27,6 +27,7 @@ PERMISSIONS: dict[str, str] = {
     "admin.settings": "administration",
     "admin.backup": "administration",
     "admin.audit": "administration",
+    "admin.organize": "administration",
 }
 AREAS = ("services", "customers", "monitoring", "servers", "administration")
 

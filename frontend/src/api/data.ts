@@ -92,6 +92,7 @@ export interface Category {
   id: string;
   name: string;
   position: number;
+  color: string;
 }
 
 export const useCategories = () =>
@@ -104,12 +105,12 @@ export function useCategoryActions() {
     qc.invalidateQueries({ queryKey: ["customers"] });
   };
   const add = useMutation({
-    mutationFn: (name: string) => api<Category>("/customer-categories", { method: "POST", body: { name } }),
+    mutationFn: (b: { name: string; color: string }) => api<Category>("/customer-categories", { method: "POST", body: b }),
     onSuccess: done,
   });
   const rename = useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) =>
-      api<Category>(`/customer-categories/${id}`, { method: "PUT", body: { name } }),
+    mutationFn: ({ id, name, color }: { id: string; name: string; color: string }) =>
+      api<Category>(`/customer-categories/${id}`, { method: "PUT", body: { name, color } }),
     onSuccess: done,
   });
   const remove = useMutation({

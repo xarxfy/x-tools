@@ -1260,7 +1260,7 @@
     "ruleCount_other": "{{count}} rules"
   },
   "administration": {
-    "sub": "Users, roles and permissions, agents, notifications, backup – only for people with these permissions",
+    "sub": "Users, roles and permissions, order (tags, categories, groups), agents, notifications, backup – only for people with these permissions",
     "forbidden": "You do not have access to the administration.",
     "tab": {
       "users": "Users",
@@ -1270,7 +1270,8 @@
       "notifications": "Notifications",
       "cloudflare": "Cloudflare",
       "system": "System",
-      "backup": "Backup"
+      "backup": "Backup",
+      "organize": "Order"
     }
   },
   "roles": {
@@ -1314,6 +1315,10 @@
     "tickets.edit": {
       "name": "Work on tickets",
       "hint": "create and edit tickets, comment on them"
+    },
+    "admin.organize": {
+      "name": "Manage tags and categories",
+      "hint": "create, rename, merge and delete tags, customer categories and server groups (picking them is allowed for everyone who may edit servers or customers)"
     },
     "sites.deploy": {
       "name": "Deploy websites",
@@ -1555,6 +1560,38 @@
       "priority": "changed the priority: {{from}} → {{to}}",
       "assignee": "assigned to {{name}}",
       "unassigned": "removed the assignee"
+    }
+  },
+  "organize": {
+    "manage": "Manage tags and categories",
+    "intro": "Tags, customer categories and server groups are created and changed here, once. Everywhere else you only pick from these lists.",
+    "tags": "Tags",
+    "tagsHint": "Free labels for servers and customers (e.g. Hosting, Production). Renaming changes them everywhere; merging combines two tags.",
+    "tagPlaceholder": "New tag",
+    "tagsEmpty": "No tags yet.",
+    "tagUsage": "Servers: {{servers}} · Customers: {{customers}}",
+    "merge": "Merge",
+    "mergeInto": "Merge into …",
+    "categories": "Customer categories",
+    "categoriesHint": "Priority classes of customers (A-customer, B-customer …). The order is the order in the customer list.",
+    "groups": "Server groups",
+    "groupsHint": "Groups of Linux servers (Production, Home …); a server is in one group. The order is the order on the Servers page.",
+    "add": "Add",
+    "empty": "Nothing yet.",
+    "customersCount_one": "{{count}} customer",
+    "customersCount_other": "{{count}} customers",
+    "serversCount_one": "{{count}} server",
+    "serversCount_other": "{{count}} servers",
+    "noTagsYet": "There are no tags yet.",
+    "colors": {
+      "gray": "Gray",
+      "blue": "Blue",
+      "green": "Green",
+      "orange": "Orange",
+      "red": "Red",
+      "purple": "Purple",
+      "pink": "Pink",
+      "teal": "Teal"
     }
   }
 }

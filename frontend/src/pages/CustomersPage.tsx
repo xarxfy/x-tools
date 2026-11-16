@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  useCategories, useCategoryActions, useCustomers, useDeleteCustomer, usePortStatus, useSaveCustomer, useServices,
+  useCategories, useCustomers, useDeleteCustomer, usePortStatus, useSaveCustomer, useServices,
   type Customer, type CustomerInput,
 } from "../api/data";
 import { ReportDialog } from "../components/ReportDialog";
 import { Icon } from "../components/Icon";
 import { AssignEditor, AssignedCard, ContactsCard, ContactsEditor, ContractCard, ContractEditor, CustomerJournal, CustomerTickets, LinksCard, LinksEditor, OpenTickets, TagsEditor, contractLevel, daysFrom, useRelDays } from "./CustomerExtras";
 import { DataTable, type Column } from "../components/DataTable";
+import { colorClass, useTagClass } from "../api/organize";
 import { ConfirmDelete, Dialog, Dot, Empty, Loading, PageHead, SearchField, matches } from "../components/ui";
 import { CredentialsDialog } from "./CredentialsPage";
 import { ServiceDialog, serviceState } from "./ServicesPage";
@@ -39,16 +40,18 @@ export function CustomersPage() {
   const [category, setCategory] = useState("");
   const [tag, setTag] = useState("");
   const [adding, setAdding] = useState(false);
-  const [managing, setManaging] = useState(false);
   const navigate = useNavigate();
   const edit = useCan()("customers.edit");
   const canContracts = useCan()("customers.contracts");
+  const canOrganize = useCan()("admin.organize");
+  const tagClass = useTagClass();
   const rel = useRelDays();
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const byId = new Map((services.data ?? []).map((s) => [s.id, s]));
   const rank = new Map(categories.map((c, i) => [c.id, i]));
   const catName = new Map(categories.map((c) => [c.id, c.name]));
+  const catColor = new Map(categories.map((c) => [c.id, c.color]));
   const allTags = [...new Set(customers.data.flatMap((c) => c.tags))].sort((x, y) => x.localeCompare(y));
   const list = customers.data
     .filter((c) => !category || (category === "none" ? !c.category_id : c.category_id === category))
@@ -57,10 +60,10 @@ export function CustomersPage() {
   const domainsOf = (c: Customer) => c.service_ids.flatMap((id) => byId.get(id)?.domains ?? []);
   const columns: Column<Customer>[] = [
     { key: "name", label: t("customers.name"), value: (c) => c.name,
-      render: (c) => <><Link to={`/customers/${c.id}`}><b>{c.name}</b></Link>{c.tags.length > 0 && <div className="chips">{c.tags.map((x) => <span key={x} className="chip">#{x}</span>)}</div>}</> },
+      render: (c) => <><Link to={`/customers/${c.id}`}><b>{c.name}</b></Link>{c.tags.length > 0 && <div className="chips">{c.tags.map((x) => <span key={x} className={`chip ${tagClass(x)}`}>#{x}</span>)}</div>}</> },
     { key: "category", label: t("customers.category"), nowrap: true,
       value: (c) => `${String(rank.get(c.category_id ?? "") ?? 999).padStart(3, "0")}${c.name}`, csv: (c) => catName.get(c.category_id ?? "") ?? "",
-      render: (c) => c.category_id && catName.get(c.category_id) ? <span className="badge category-badge">{catName.get(c.category_id)}</span> : <span className="muted">–</span> },
+      render: (c) => c.category_id && catName.get(c.category_id) ? <span className={`badge category-badge ${colorClass(catColor.get(c.category_id))}`}>{catName.get(c.category_id)}</span> : <span className="muted">–</span> },
     { key: "contact", label: t("customers.contactTitle"), value: (c) => c.contacts[0]?.name ?? "",
       render: (c) => c.contacts[0] ? <>{c.contacts[0].name}{c.contacts[0].email && <div className="small-note"><a href={`mailto:${c.contacts[0].email}`}>{c.contacts[0].email}</a></div>}</> : <span className="muted">–</span> },
     { key: "services", label: t("customers.sitesTitle"), value: (c) => c.service_ids.length,
@@ -86,24 +89,24 @@ export function CustomersPage() {
           </button>
         )}
       </PageHead>
-      {(categories.length > 0 || edit) && (
+      {(categories.length > 0 || canOrganize) && (
         <div className="category-bar">
           {categories.length > 0 && (
             <>
               <button type="button" className={`category-pill${category === "" ? " active" : ""}`} onClick={() => setCategory("")}>{t("customers.allCategories")}</button>
               {categories.map((c) => (
-                <button key={c.id} type="button" className={`category-pill${category === c.id ? " active" : ""}`} onClick={() => setCategory(c.id)}>{c.name}</button>
+                <button key={c.id} type="button" className={`category-pill ${colorClass(c.color)}${category === c.id ? " active" : ""}`} onClick={() => setCategory(c.id)}>{c.name}</button>
               ))}
               <button type="button" className={`category-pill${category === "none" ? " active" : ""}`} onClick={() => setCategory("none")}>{t("customers.noCategory")}</button>
             </>
           )}
-          {edit && <button type="button" className="btn btn-ghost btn-small" onClick={() => setManaging(true)}>{t("customers.manageCategories")}</button>}
+          {canOrganize && <Link className="btn btn-ghost btn-small" to="/admin?tab=organize">{t("organize.manage")}</Link>}
         </div>
       )}
       {allTags.length > 0 && (
         <div className="category-bar">
           {allTags.map((x) => (
-            <button key={x} type="button" className={`category-pill${tag === x ? " active" : ""}`} onClick={() => setTag(tag === x ? "" : x)}>#{x}</button>
+            <button key={x} type="button" className={`category-pill ${tagClass(x)}${tag === x ? " active" : ""}`} onClick={() => setTag(tag === x ? "" : x)}>#{x}</button>
           ))}
         </div>
       )}
@@ -112,7 +115,6 @@ export function CustomersPage() {
       ) : (
         <DataTable rows={list} rowKey={(c) => c.id} initialSort="category" columns={columns} />
       )}
-      {managing && <CategoryDialog onClose={() => setManaging(false)} />}
       {adding && (
         <CustomerDialog customer={null} onClose={() => setAdding(false)}
                         onSaved={(c) => navigate(`/customers/${c.id}`)} />
@@ -137,6 +139,7 @@ export function CustomerPage() {
   const can = useCan();
   const edit = can("customers.edit");
   const categories = useCategories().data ?? [];
+  const tagClass = useTagClass();
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const customer = customers.data.find((c) => c.id === id);
@@ -176,7 +179,7 @@ export function CustomerPage() {
         {siteLevel !== "off" && <span><Dot state={siteLevel} /> {t(`customers.siteState.${siteLevel}`)}</span>}
         {customer.contacts[0] && <span>{customer.contacts[0].name}{customer.contacts[0].email && <> · <a href={`mailto:${customer.contacts[0].email}`}>{customer.contacts[0].email}</a></>}{customer.contacts[0].phone && <> · <a href={`tel:${customer.contacts[0].phone.replace(/\s/g, "")}`}>{customer.contacts[0].phone}</a></>}</span>}
         {customer.contract?.deadline && (level === "warn" || level === "down") && <span className="due-late">{t("customers.noticeBy")} {new Date(`${customer.contract.deadline}T00:00:00`).toLocaleDateString()} ({rel(daysFrom(customer.contract.deadline))})</span>}
-        {customer.tags.map((x) => <span key={x} className="chip">#{x}</span>)}
+        {customer.tags.map((x) => <span key={x} className={`chip ${tagClass(x)}`}>#{x}</span>)}
       </div>
 
       {reporting && <ReportDialog customerId={customer.id} onClose={() => setReporting(false)} />}
@@ -397,42 +400,6 @@ function CustomerDialog({
       </label>
       {save.error && <p className="error-text">{save.error.message}</p>}
       {remove.error && <p className="error-text">{remove.error.message}</p>}
-    </Dialog>
-  );
-}
-
-function CategoryDialog({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation();
-  const categories = useCategories().data ?? [];
-  const { add, rename, remove, order } = useCategoryActions();
-  const [name, setName] = useState("");
-  const [edits, setEdits] = useState<Record<string, string>>({});
-  const error = add.error ?? rename.error ?? remove.error ?? order.error;
-  const move = (index: number, by: number) => {
-    const ids = categories.map((c) => c.id);
-    [ids[index], ids[index + by]] = [ids[index + by], ids[index]];
-    order.mutate(ids);
-  };
-  return (
-    <Dialog title={t("customers.manageCategories")} onClose={onClose}
-            onSubmit={() => name.trim() && add.mutate(name.trim(), { onSuccess: () => setName("") })}
-            footer={<><span className="spacer" /><button type="button" className="btn" onClick={onClose}>{t("common.close")}</button></>}>
-      <p className="hint">{t("customers.categoriesHint")}</p>
-      {categories.map((c, i) => (
-        <div key={c.id} className="category-row">
-          <input className="input" maxLength={40} value={edits[c.id] ?? c.name}
-                 onChange={(e) => setEdits((x) => ({ ...x, [c.id]: e.target.value }))}
-                 onBlur={() => { const v = (edits[c.id] ?? c.name).trim(); if (v && v !== c.name) rename.mutate({ id: c.id, name: v }); setEdits((x) => { const { [c.id]: _, ...rest } = x; return rest; }); }} />
-          <button type="button" className="btn btn-ghost btn-small" disabled={i === 0} onClick={() => move(i, -1)} aria-label={t("customers.up")}>↑</button>
-          <button type="button" className="btn btn-ghost btn-small" disabled={i === categories.length - 1} onClick={() => move(i, 1)} aria-label={t("customers.down")}>↓</button>
-          <ConfirmDelete compact busy={remove.isPending} onConfirm={() => remove.mutate(c.id)} />
-        </div>
-      ))}
-      <div className="category-row">
-        <input className="input" maxLength={40} placeholder={t("customers.categoryPlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" className="btn btn-primary btn-small" disabled={!name.trim() || add.isPending}>{t("customers.addCategory")}</button>
-      </div>
-      {error && <p className="error-text">{error.message}</p>}
     </Dialog>
   );
 }

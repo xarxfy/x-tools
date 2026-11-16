@@ -1,3 +1,4 @@
+import "./colors.css";
 import i18n from "../i18n";
 import { createContext, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";

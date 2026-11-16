@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_user, require
 from app.core.audit import audit
 from app.core.db import get_db
-from app.models import Agent, Customer, Heartbeat, Service, ServerGroup
+from app.models import Agent, Customer, Heartbeat, Service, ServerGroup, Tag
 from app.monitor import maintenance
 
 router = APIRouter(prefix="/api/maintenance", tags=["maintenance"], dependencies=[Depends(current_user)])
@@ -30,7 +30,7 @@ def list_windows():
 def create_window(body: WindowIn, request: Request, db: Session = Depends(get_db)):
     models = {"agent": Agent, "service": Service, "job": Heartbeat, "customer": Customer, "group": ServerGroup}
     if body.scope == "tag":
-        used = {t.lower(): t for a in db.scalars(select(Agent)) for t in a.tags or []}
+        used = {t.name.lower(): t.name for t in db.scalars(select(Tag))}
         if body.target.lower() not in used:
             raise HTTPException(422, "Unknown tag")
         label = f"#{used[body.target.lower()]}"

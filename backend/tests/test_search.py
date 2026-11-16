@@ -19,6 +19,7 @@ def test_search(admin):
     admin.post("/api/jobs", json={"name": "Database dump", "interval_minutes": 60, "grace_minutes": 5, "paused": False}, headers=h)
     ag = admin.post("/api/agents", json={"name": "web-01", "kind": "linux"}, headers=h).json()
     TestClient(admin.app).post("/api/agent/report", json=REPORT, headers={"X-Agent-Key": ag["key"]})
+    admin.post("/api/tags", json={"name": "Production"}, headers=h)
     admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": ["Production"], "notes": "DB for ACME"}, headers=h)
 
     kinds = lambda q: {(r["type"], r["title"]) for r in find(admin, q)}  # noqa: E731

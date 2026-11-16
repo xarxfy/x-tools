@@ -1260,7 +1260,7 @@
     "ruleCount_other": "{{count}} Regeln"
   },
   "administration": {
-    "sub": "Benutzer, Rollen und Rechte, Agents, Benachrichtigungen, Backup – nur für Personen mit diesen Rechten",
+    "sub": "Benutzer, Rollen und Rechte, Ordnung (Tags, Kategorien, Gruppen), Agents, Benachrichtigungen, Backup – nur für Personen mit diesen Rechten",
     "forbidden": "Du hast keinen Zugriff auf die Administration.",
     "tab": {
       "users": "Benutzer",
@@ -1270,7 +1270,8 @@
       "notifications": "Benachrichtigungen",
       "cloudflare": "Cloudflare",
       "system": "System",
-      "backup": "Backup"
+      "backup": "Backup",
+      "organize": "Ordnung"
     }
   },
   "roles": {
@@ -1314,6 +1315,10 @@
     "tickets.edit": {
       "name": "Tickets bearbeiten",
       "hint": "Tickets anlegen, bearbeiten und kommentieren"
+    },
+    "admin.organize": {
+      "name": "Tags und Kategorien verwalten",
+      "hint": "Tags, Kundenkategorien und Server-Gruppen anlegen, umbenennen, zusammenführen und löschen (Auswählen darf jeder, der Server oder Kunden bearbeiten darf)"
     },
     "sites.deploy": {
       "name": "Websites deployen",
@@ -1555,6 +1560,38 @@
       "priority": "hat die Priorität geändert: {{from}} → {{to}}",
       "assignee": "hat es {{name}} zugewiesen",
       "unassigned": "hat die Zuständigkeit entfernt"
+    }
+  },
+  "organize": {
+    "manage": "Tags und Kategorien verwalten",
+    "intro": "Tags, Kundenkategorien und Server-Gruppen werden hier einmal angelegt und geändert. Überall sonst wählst du nur aus diesen Listen.",
+    "tags": "Tags",
+    "tagsHint": "Freie Etiketten für Server und Kunden (z. B. Hosting, Produktion). Umbenennen gilt überall; Zusammenführen vereint zwei Tags.",
+    "tagPlaceholder": "Neuer Tag",
+    "tagsEmpty": "Noch keine Tags.",
+    "tagUsage": "Server: {{servers}} · Kunden: {{customers}}",
+    "merge": "Zusammenführen",
+    "mergeInto": "Zusammenführen mit …",
+    "categories": "Kundenkategorien",
+    "categoriesHint": "Prioritätsklassen der Kunden (A-Kunde, B-Kunde …). Die Reihenfolge gilt auch in der Kundenliste.",
+    "groups": "Server-Gruppen",
+    "groupsHint": "Gruppen der Linux-Server (Produktion, Zuhause …); ein Server ist in einer Gruppe. Die Reihenfolge gilt auch auf der Server-Seite.",
+    "add": "Hinzufügen",
+    "empty": "Noch nichts vorhanden.",
+    "customersCount_one": "{{count}} Kunde",
+    "customersCount_other": "{{count}} Kunden",
+    "serversCount_one": "{{count}} Server",
+    "serversCount_other": "{{count}} Server",
+    "noTagsYet": "Es gibt noch keine Tags.",
+    "colors": {
+      "gray": "Grau",
+      "blue": "Blau",
+      "green": "Grün",
+      "orange": "Orange",
+      "red": "Rot",
+      "purple": "Violett",
+      "pink": "Pink",
+      "teal": "Türkis"
     }
   }
 }

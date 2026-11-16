@@ -91,11 +91,14 @@ def test_ticket_permission(admin):
 
 def test_links_and_tags(admin):
     h = csrf_headers(admin)
+    for name in ("Hosting", "Shop"):
+        admin.post("/api/tags", json={"name": name}, headers=h)
     c = make(admin, tags=["Hosting", "hosting", " Shop "], links=[{"title": "Contract", "url": "https://files.example.org/c.pdf"}])
     assert c["tags"] == ["Hosting", "Shop"] and c["links"][0]["title"] == "Contract"
     bad = admin.put(f"/api/customers/{c['id']}", json={"name": "ACME", "links": [{"title": "x", "url": "javascript:alert(1)"}]}, headers=h)
     assert bad.status_code == 422
-    assert admin.put(f"/api/customers/{c['id']}", json={"name": "ACME", "tags": ["A"]}, headers=h).json()["links"][0]["title"] == "Contract"  # not sent: kept
+    assert admin.put(f"/api/customers/{c['id']}", json={"name": "ACME", "tags": ["Shop"]}, headers=h).json()["links"][0]["title"] == "Contract"  # not sent: kept
+    assert admin.put(f"/api/customers/{c['id']}", json={"name": "ACME", "tags": ["Unlisted"]}, headers=h).status_code == 422
 
 
 def test_assign_servers_and_jobs(admin):

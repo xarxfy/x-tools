@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useCan } from "../api/users";
 import { Empty, PageHead } from "../components/ui";
 import { RolesSettings } from "./AdminRoles";
+import { AdminOrganize } from "./AdminOrganize";
 import { BackupSettings } from "./SettingsAccount";
 import { CloudflareSettings } from "./SettingsCloudflare";
 import { Notifications, SystemSettings } from "./AdminSettings";
@@ -12,6 +13,7 @@ import { AuditSettings, UsersSettings } from "./SettingsUsers";
 const TABS: Record<string, string[]> = {
   users: ["admin.users"],
   roles: ["admin.users", "admin.roles"],
+  organize: ["admin.organize"],
   audit: ["admin.audit"],
   system: ["admin.settings"],
   notifications: ["admin.settings"],
@@ -38,7 +40,7 @@ export function AdminPage() {
           </button>
         ))}
       </div>
-      {tab === "users" ? <UsersSettings /> : tab === "roles" ? <RolesSettings /> : tab === "audit" ? <AuditSettings />
+      {tab === "users" ? <UsersSettings /> : tab === "roles" ? <RolesSettings /> : tab === "organize" ? <AdminOrganize /> : tab === "audit" ? <AuditSettings />
         : tab === "system" ? <SystemSettings /> : tab === "notifications" ? <Notifications />
           : tab === "cloudflare" ? <CloudflareSettings /> : <BackupSettings />}
     </>

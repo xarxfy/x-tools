@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 
 from app.api.agent_install import InstallOptions, bundle_response, create_install, install_script
 from app.api.deps import current_user, require
+from app.api.organize import check_tags
+from app.core.palette import COLOR_PATTERN
 from app.core.audit import audit
 from app.collector.agent import AGENT_VERSION
 from app.core.db import get_db
@@ -176,27 +178,14 @@ class MetaIn(BaseModel):
     notes: str | None = Field(default=None, max_length=5000)  # None keeps the stored notes
 
 
-def clean_tags(tags: list[str]) -> list[str]:
-    out: list[str] = []
-    for tag in tags:
-        tag = " ".join(tag.split())
-        if not tag:
-            continue
-        if len(tag) > 30 or not tag.isprintable():
-            raise HTTPException(422, "A tag may have up to 30 characters")
-        if tag.lower() not in {t.lower() for t in out}:
-            out.append(tag)
-    return out
-
-
 @router.put("/{aid}/meta", dependencies=[Depends(require("servers.organize"))])
 def update_meta(aid: str, body: MetaIn, db: Session = Depends(get_db)):
-    """Group (one) and tags (any number, free text) of a server."""
+    """Group (one) and tags (any number, from the central list) of a server."""
     agent = get_agent(db, aid)
     if body.group_id and db.get(ServerGroup, body.group_id) is None:
         raise HTTPException(422, "Unknown group")
     agent.group_id = body.group_id or None
-    agent.tags = clean_tags(body.tags)
+    agent.tags = check_tags(db, body.tags)
     if body.notes is not None:
         agent.notes = body.notes.strip()
     db.commit()
@@ -210,7 +199,7 @@ groups_router = APIRouter(prefix="/api/server-groups", tags=["agents"], dependen
 
 
 def group_out(g: ServerGroup) -> dict:
-    return {"id": g.id, "name": g.name, "position": g.position}
+    return {"id": g.id, "name": g.name, "position": g.position, "color": g.color}
 
 
 def unique_group(db: Session, name: str, own: str = "") -> None:
@@ -220,6 +209,7 @@ def unique_group(db: Session, name: str, own: str = "") -> None:
 
 class GroupIn(BaseModel):
     name: str = Field(min_length=1, max_length=40)
+    color: str = Field(default="gray", pattern=COLOR_PATTERN)
 
 
 class GroupOrder(BaseModel):
@@ -231,21 +221,21 @@ def list_groups(db: Session = Depends(get_db)):
     return [group_out(g) for g in db.scalars(select(ServerGroup).order_by(ServerGroup.position, ServerGroup.name))]
 
 
-@groups_router.post("", status_code=201, dependencies=[Depends(require("servers.organize"))])
+@groups_router.post("", status_code=201, dependencies=[Depends(require("admin.organize"))])
 def create_group(body: GroupIn, db: Session = Depends(get_db)):
     name = body.name.strip()
     if not name:
         raise HTTPException(422, "Name is missing")
     unique_group(db, name)
     last = db.scalars(select(ServerGroup.position).order_by(ServerGroup.position.desc())).first()
-    group = ServerGroup(name=name, position=(last + 1) if last is not None else 0)
+    group = ServerGroup(name=name, color=body.color, position=(last + 1) if last is not None else 0)
     db.add(group)
     db.commit()
     audit("servergroup.created", name)
     return group_out(group)
 
 
-@groups_router.put("/order", dependencies=[Depends(require("servers.organize"))])
+@groups_router.put("/order", dependencies=[Depends(require("admin.organize"))])
 def order_groups(body: GroupOrder, db: Session = Depends(get_db)):
     found = {g.id: g for g in db.scalars(select(ServerGroup))}
     if set(body.ids) != set(found) or len(body.ids) != len(found):
@@ -256,7 +246,7 @@ def order_groups(body: GroupOrder, db: Session = Depends(get_db)):
     return [group_out(found[gid]) for gid in body.ids]
 
 
-@groups_router.put("/{gid}", dependencies=[Depends(require("servers.organize"))])
+@groups_router.put("/{gid}", dependencies=[Depends(require("admin.organize"))])
 def rename_group(gid: str, body: GroupIn, db: Session = Depends(get_db)):
     group = db.get(ServerGroup, gid)
     if group is None:
@@ -265,13 +255,13 @@ def rename_group(gid: str, body: GroupIn, db: Session = Depends(get_db)):
     if not name:
         raise HTTPException(422, "Name is missing")
     unique_group(db, name, gid)
-    group.name = name
+    group.name, group.color = name, body.color
     db.commit()
     audit("servergroup.renamed", name)
     return group_out(group)
 
 
-@groups_router.delete("/{gid}", status_code=204, dependencies=[Depends(require("servers.organize"))])
+@groups_router.delete("/{gid}", status_code=204, dependencies=[Depends(require("admin.organize"))])
 def delete_group(gid: str, db: Session = Depends(get_db)):
     group = db.get(ServerGroup, gid)
     if group is None:
