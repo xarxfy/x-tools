@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.api.agents import host_metrics
 from app.api.deps import current_user, require
 from app.core.audit import audit
 from app.collector.exchange import load_snapshot
@@ -59,20 +60,10 @@ def overview(db: Session = Depends(get_db)):
 
 def hosts(agents, local: dict | None) -> list[dict]:
     """One compact row per server: this one plus every agent (state, load/memory/disk, pending updates)."""
-    def row(name, link, system, state_, linux=None, kinds=()):
-        system = system or {}
-        load = system.get("load")
-        return {
-            "name": name, "link": link, "state": state_, "kinds": list(kinds),
-            "load": round(load[0] / max(1, system.get("cpus") or 1) * 100) if load else None,
-            "mem": round(system["mem_used"] / system["mem_total"] * 100) if system.get("mem_total") else None,
-            "disk": round(system["disk_used"] / system["disk_total"] * 100) if system.get("disk_total") else None,
-            "updates": len(linux["updates"]) if linux and linux.get("updates") is not None else None,
-            "reboot": bool(linux and linux.get("reboot_required")),
-        }
     out = []
     if local:
-        out.append(row((local.get("hostname") or "X-TOOLS"), "/docker#local", local, "up", kinds=("docker",)))
+        out.append({"name": local.get("hostname") or "X-TOOLS", "link": "/docker#local", "state": "up",
+                    "kinds": ["docker"], **host_metrics({"system": local})})
     now = time.time()
     for a in agents:
         report = a.last_report or {}
@@ -81,7 +72,8 @@ def hosts(agents, local: dict | None) -> list[dict]:
         state_ = "warn" if age is None else "up" if age < AGENT_STALE else "down"
         kinds = [k for k in ("proxmox", "docker", "linux") if report.get(k)] or [a.kind]
         page = {"proxmox": "/proxmox", "linux": "/servers"}.get(a.kind, "/docker")
-        out.append(row(a.name, f"{page}#agent-{a.id}", report.get("system"), state_, report.get("linux"), kinds))
+        link = f"/servers/{a.id}" if a.kind == "linux" else f"{page}#agent-{a.id}"
+        out.append({"name": a.name, "link": link, "state": state_, "kinds": kinds, **host_metrics(report)})
     return out
 
 

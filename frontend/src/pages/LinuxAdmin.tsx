@@ -202,7 +202,7 @@ export function UsersSection({ agent, info, canManage }: { agent: AgentSummary; 
   const state = (u: LinuxUser): "up" | "down" | "off" => (u.locked ? "down" : u.login ? "up" : "off");
   return (
     <>
-      <Collapsible title={t("admin.users")} summary={<span>{t("admin.userCount", { count: users.length })}</span>}
+      <Collapsible flat title={t("admin.users")} summary={<span>{t("admin.userCount", { count: users.length })}</span>}
                    tools={canManage && <button type="button" className="btn btn-ghost btn-small" onClick={() => setAdding(true)}>{t("admin.addUser")}</button>}>
         <div className="card list">
           {users.map((u) => (
@@ -325,7 +325,7 @@ export function FirewallSection({ agent, info, canManage }: { agent: AgentSummar
   const ok = fw.installed && !fw.error;
   return (
     <>
-      <Collapsible title={t("admin.firewall")}
+      <Collapsible flat title={t("admin.firewall")}
                    summary={ok ? <>
                      <span className={`badge ${fw.active ? "" : "badge-warn"}`}>{fw.active ? t("admin.fwActive") : t("admin.fwInactive")}</span>
                      <span>{t("admin.ruleCount", { count: fw.rules?.length ?? 0 })}</span>

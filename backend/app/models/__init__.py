@@ -164,6 +164,16 @@ class Setting(Base):
     value: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class ServerGroup(Base):
+    """A group of servers with a free name (Production, Customer A, Home network …); `position` is the order."""
+
+    __tablename__ = "server_groups"
+
+    id: Mapped[str] = mapped_column(String(12), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(40))
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Agent(Base):
     __tablename__ = "agents"
 
@@ -178,6 +188,8 @@ class Agent(Base):
     last_report: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Options of the last install command (Proxmox/Cloudflare tokens …), encrypted – prefills the next one.
     install_options: Mapped[str | None] = mapped_column(Text, nullable=True)
+    group_id: Mapped[str | None] = mapped_column(ForeignKey("server_groups.id", ondelete="SET NULL"), nullable=True)
+    tags: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")  # free tags of this server
 
 
 class Event(Base):

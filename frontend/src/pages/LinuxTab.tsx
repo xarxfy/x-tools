@@ -81,7 +81,10 @@ function RebootButton({ agentId, hostname }: { agentId: string; hostname: string
   );
 }
 
-export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo }) {
+export type ServerTab = "overview" | "services" | "network" | "users";
+
+/** The content of one tab on the page of a server. */
+export function LinuxTab({ agent, info, tab }: { agent: AgentSummary; info: LinuxInfo; tab: ServerTab }) {
   const { t } = useTranslation();
   const canOperate = useCan()("operator");
   const control = canOperate && agent.control;
@@ -106,25 +109,27 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
 
   return (
     <>
-      <div className="card card-pad linux-facts">
-        {info.os && <span>{info.os}</span>}
-        {info.kernel && <span className="muted">Kernel {info.kernel}</span>}
-        {info.updates === null || info.updates === undefined ? (
-          <span className="muted">{t("linux.updatesUnknown")}</span>
-        ) : info.updates.length ? (
-          <button type="button" className="badge badge-warn badge-button" onClick={() => setShowUpdates(true)}>
-            {t("linux.updates", { count: info.updates.length })}
-          </button>
-        ) : (
-          <span className="state-up">{t("linux.upToDate")}</span>
-        )}
-        {info.reboot_required && <span className="badge badge-warn">{t("linux.rebootRequired")}</span>}
-        <UpdateControl agent={agent} info={info} canManage={canManage} />
-        <span className="spacer" />
-        {control && <RebootButton agentId={agent.id} hostname={agent.hostname || agent.name} />}
-      </div>
+      {tab === "overview" && (
+        <div className="card card-pad linux-facts">
+          {info.os && <span>{info.os}</span>}
+          {info.kernel && <span className="muted">Kernel {info.kernel}</span>}
+          {info.updates === null || info.updates === undefined ? (
+            <span className="muted">{t("linux.updatesUnknown")}</span>
+          ) : info.updates.length ? (
+            <button type="button" className="badge badge-warn badge-button" onClick={() => setShowUpdates(true)}>
+              {t("linux.updates", { count: info.updates.length })}
+            </button>
+          ) : (
+            <span className="state-up">{t("linux.upToDate")}</span>
+          )}
+          {info.reboot_required && <span className="badge badge-warn">{t("linux.rebootRequired")}</span>}
+          <UpdateControl agent={agent} info={info} canManage={canManage} />
+          <span className="spacer" />
+          {control && <RebootButton agentId={agent.id} hostname={agent.hostname || agent.name} />}
+        </div>
+      )}
 
-      <Collapsible title={t("linux.services")} open={failed > 0}
+      {tab === "services" && <Collapsible flat title={t("linux.services")}
                    summary={<>
                      <span>{t("linux.summary", { running: running, total: (info.services ?? []).length })}</span>
                      {failed > 0 && <span className="badge badge-down">{t("linux.failed", { count: failed })}</span>}
@@ -157,9 +162,9 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
             ))}
           </div>
         )}
-      </Collapsible>
+      </Collapsible>}
 
-      <Collapsible title={t("linux.ports")} summary={<span>{t("linux.portCount", { count: ports.length })}</span>}>
+      {tab === "network" && <Collapsible flat title={t("linux.ports")} summary={<span>{t("linux.portCount", { count: ports.length })}</span>}>
         {ports.length === 0 ? <Empty>{t("linux.noPorts")}</Empty> : (
           <div className="card list">
             {(allPorts ? ports : ports.slice(0, 10)).map((p) => (
@@ -177,10 +182,10 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
             )}
           </div>
         )}
-      </Collapsible>
+      </Collapsible>}
 
-      {(info.disks?.length ?? 0) > 0 && (
-        <Collapsible title={t("linux.disks")} open
+      {tab === "overview" && (info.disks?.length ?? 0) > 0 && (
+        <Collapsible flat title={t("linux.disks")}
                      summary={<span>{info.disks!.map((d) => `${d.mount} ${pct(d.used, d.total).toFixed(0)} %`).join(" · ")}</span>}>
           <div className="card list">
             {info.disks!.map((d) => {
@@ -202,8 +207,8 @@ export function LinuxTab({ agent, info }: { agent: AgentSummary; info: LinuxInfo
         </Collapsible>
       )}
 
-      <FirewallSection agent={agent} info={info} canManage={canManage} />
-      <UsersSection agent={agent} info={info} canManage={canManage} />
+      {tab === "network" && <FirewallSection agent={agent} info={info} canManage={canManage} />}
+      {tab === "users" && <UsersSection agent={agent} info={info} canManage={canManage} />}
 
       {logs && (
         <Dialog wide title={`${logs.name} – ${t("docker.logs")}`} onClose={() => setLogs(null)}

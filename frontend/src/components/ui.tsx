@@ -169,10 +169,24 @@ export function matches(query: string, ...values: (string | null | undefined)[])
 }
 
 /** A section that can be folded: title and a short summary stay visible, the content only when opened. */
-export function Collapsible({ title, summary, tools, open: initial = false, children }: {
-  title: string; summary?: ReactNode; tools?: ReactNode; open?: boolean; children: ReactNode;
+export function Collapsible({ title, summary, tools, open: initial = false, flat = false, children }: {
+  title: string; summary?: ReactNode; tools?: ReactNode; open?: boolean; flat?: boolean; children: ReactNode;
 }) {
   const [open, setOpen] = useState(initial);
+  if (flat) {
+    // no folding (e.g. on a tab of its own): heading with summary and tools, content always visible
+    return (
+      <section className="collapsible is-flat">
+        <div className="collapsible-head">
+          <span className="collapsible-title">{title}</span>
+          <span className="collapsible-summary">{summary}</span>
+          <span className="spacer" />
+          {tools && <span className="collapsible-flat-tools">{tools}</span>}
+        </div>
+        <div className="collapsible-body">{children}</div>
+      </section>
+    );
+  }
   return (
     <section className={`collapsible${open ? " is-open" : ""}`}>
       <button type="button" className="collapsible-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>

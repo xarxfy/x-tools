@@ -5,6 +5,14 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- Server groups and tags with free names (no predefined ones): groups split the server list into sections, tags
+  filter it; maintenance windows can cover a whole group or tag; *Install updates on N* per group.
+
+### Changed
+- The Servers page is now a list (status, OS, tags, load/RAM/disk, updates); every server has its own page
+  (`/servers/<id>`) with the tabs Overview, Services, Network and Users. Old `#agent-…` links still work.
+
 ### Changed
 - After an administration action (users, SSH keys, firewall) the list is updated within seconds: the agent reads only the
   changed part and reports at once.

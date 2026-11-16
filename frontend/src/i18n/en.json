@@ -202,6 +202,44 @@
       "local": "This server",
       "proxmox": "Proxmox hosts",
       "docker": "Docker hosts"
+    },
+    "list": {
+      "search": "Search servers",
+      "allTags": "All tags",
+      "manageGroups": "Groups",
+      "noGroup": "No group",
+      "emptyFilter": "No server matches.",
+      "updatesAll": "Install updates on {{count}}",
+      "updatesAllTitle": "Install updates on several servers",
+      "updatesAllText": "X-TOOLS starts the regular update (no dist-upgrade, no reboot) on these servers, one after the other. You can follow each one on its server page.",
+      "started": "started",
+      "failed": "failed",
+      "startAll": "Start",
+      "pause": "Pause alerts",
+      "serverCount_one": "{{count}} server",
+      "serverCount_other": "{{count}} servers",
+      "groupsTitle": "Server groups",
+      "groupsHint": "Groups sort your servers, e.g. Production, Customer A, Home network. A server belongs to one group. Name them as you like.",
+      "groupPlaceholder": "New group",
+      "addGroup": "Add",
+      "up": "Move up",
+      "down": "Move down"
+    },
+    "page": {
+      "back": "Servers",
+      "edit": "Group & tags",
+      "group": "Group",
+      "noGroup": "No group",
+      "tags": "Tags",
+      "tagsHint": "Free words to filter by, e.g. debian, database, important. Enter adds a tag.",
+      "tagPlaceholder": "New tag",
+      "tabs": {
+        "overview": "Overview",
+        "services": "Services",
+        "network": "Network",
+        "users": "Users"
+      },
+      "notFound": "Server not found"
     }
   },
   "docker": {
@@ -948,7 +986,9 @@
       "agent": "A server (agent)",
       "service": "A service",
       "job": "A job",
-      "customer": "All of a customer"
+      "customer": "All of a customer",
+      "group": "A server group",
+      "tag": "All servers with a tag"
     }
   },
   "jobs": {

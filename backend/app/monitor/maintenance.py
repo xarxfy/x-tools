@@ -1,6 +1,7 @@
 """Maintenance windows: alerts for a part of the system are paused for a while.
 
-A window has a scope: everything, this server (local Docker), one agent/service/job, or all of a customer.
+A window has a scope: everything, this server (local Docker), one agent/service/job, all of a customer, or all
+servers of a group or with a tag.
 Problems stay visible (marked as paused) but nothing is sent, and no "back to normal" message follows.
 """
 
@@ -10,11 +11,11 @@ import time
 from sqlalchemy import select
 
 from app.core.db import session_scope
-from app.models import Customer
+from app.models import Agent, Customer
 from app.monitor import state
 
 KEY = "maintenance"
-SCOPES = ("all", "local", "agent", "service", "job", "customer")
+SCOPES = ("all", "local", "agent", "service", "job", "customer", "group", "tag")
 MAX_MINUTES = 7 * 24 * 60
 
 
@@ -57,12 +58,24 @@ def _customer_parts(customer_id: str) -> tuple[set[str], set[str]]:
         return ({s.id for s in customer.services}, {d for s in customer.services for d in (s.domains or [])})
 
 
+def _group_agents(scope: str, target: str) -> set[str]:
+    """Ids of the agents in a server group or with a tag."""
+    with session_scope() as db:
+        agents = db.scalars(select(Agent))
+        if scope == "group":
+            return {a.id for a in agents if a.group_id == target}
+        wanted = target.lower()
+        return {a.id for a in agents if any(t.lower() == wanted for t in a.tags or [])}
+
+
 def silenced_keys(issues: list[dict], now: float | None = None) -> set[str]:
     """Keys of the issues that are covered by an active window."""
     windows = active(now)
     if not windows:
         return set()
     customers = {w["target"]: _customer_parts(w["target"]) for w in windows if w["scope"] == "customer"}
+    grouped = {(w["scope"], w["target"]): _group_agents(w["scope"], w["target"])
+               for w in windows if w["scope"] in ("group", "tag")}
     out = set()
     for issue in issues:
         key = issue["key"]
@@ -76,6 +89,8 @@ def silenced_keys(issues: list[dict], now: float | None = None) -> set[str]:
                 hit = key in ("disk", "mem") or key.startswith("docker:") or (parts[0] == "container" and len(parts) == 2)
             elif scope in ("agent", "service", "job"):
                 hit = target in parts[1:] or parts[0] == target
+            elif scope in ("group", "tag"):
+                hit = any(p in grouped[(scope, target)] for p in parts)
             else:
                 services, domains = customers.get(target, (set(), set()))
                 hit = any(p in services for p in parts[1:]) or (parts[0] == "site" and key[5:] in domains)

@@ -1,0 +1,85 @@
+.srv-row {
+  align-items: center;
+}
+.srv-badge {
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+.srv-meters {
+  display: grid;
+  grid-template-columns: repeat(3, 84px);
+  gap: 14px;
+}
+.srv-mini {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.srv-mini .bar {
+  grid-column: 1 / -1;
+  height: 5px;
+}
+.srv-mini b {
+  color: var(--text);
+  font-weight: 600;
+}
+.srv-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.tag {
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 980px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  cursor: default;
+}
+button.tag {
+  cursor: pointer;
+}
+.srv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+.srv-count {
+  font-size: 13px;
+  font-weight: 400;
+  margin-left: 8px;
+}
+.srv-section .section-row {
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+.srv-bulk {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.srv-result {
+  color: var(--muted);
+}
+.link-button {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+  text-align: left;
+}
+@media (max-width: 820px) {
+  .srv-meters {
+    display: none;
+  }
+}

@@ -202,6 +202,44 @@
       "local": "Dieser Server",
       "proxmox": "Proxmox-Hosts",
       "docker": "Docker-Hosts"
+    },
+    "list": {
+      "search": "Server suchen",
+      "allTags": "Alle Tags",
+      "manageGroups": "Gruppen",
+      "noGroup": "Ohne Gruppe",
+      "emptyFilter": "Kein Server passt.",
+      "updatesAll": "Updates auf {{count}} installieren",
+      "updatesAllTitle": "Updates auf mehreren Servern installieren",
+      "updatesAllText": "X-TOOLS startet auf diesen Servern nacheinander das normale Update (kein dist-upgrade, kein Neustart). Den Verlauf siehst du jeweils auf der Seite des Servers.",
+      "started": "gestartet",
+      "failed": "fehlgeschlagen",
+      "startAll": "Starten",
+      "pause": "Meldungen pausieren",
+      "serverCount_one": "{{count}} Server",
+      "serverCount_other": "{{count}} Server",
+      "groupsTitle": "Servergruppen",
+      "groupsHint": "Gruppen ordnen deine Server, z. B. Produktion, Kunde A, Heimnetz. Ein Server gehört zu einer Gruppe. Benenne sie, wie du willst.",
+      "groupPlaceholder": "Neue Gruppe",
+      "addGroup": "Hinzufügen",
+      "up": "Nach oben",
+      "down": "Nach unten"
+    },
+    "page": {
+      "back": "Server",
+      "edit": "Gruppe & Tags",
+      "group": "Gruppe",
+      "noGroup": "Ohne Gruppe",
+      "tags": "Tags",
+      "tagsHint": "Freie Wörter zum Filtern, z. B. debian, datenbank, wichtig. Enter fügt ein Tag hinzu.",
+      "tagPlaceholder": "Neues Tag",
+      "tabs": {
+        "overview": "Übersicht",
+        "services": "Dienste",
+        "network": "Netzwerk",
+        "users": "Benutzer"
+      },
+      "notFound": "Server nicht gefunden"
     }
   },
   "docker": {
@@ -948,7 +986,9 @@
       "agent": "Ein Server (Agent)",
       "service": "Ein Dienst",
       "job": "Ein Job",
-      "customer": "Alles eines Kunden"
+      "customer": "Alles eines Kunden",
+      "group": "Eine Servergruppe",
+      "tag": "Alle Server mit einem Tag"
     }
   },
   "jobs": {

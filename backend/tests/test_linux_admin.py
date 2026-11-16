@@ -251,3 +251,32 @@ def test_after_an_action_only_users_and_firewall_are_read_again(monkeypatch):
     agent._linux["dirty"].add("users")
     out = agent.linux_info()
     assert calls == ["users"] and out["users"] == []
+
+
+def test_server_groups_and_tags(admin):
+    h = csrf_headers(admin)
+    a = admin.post("/api/server-groups", json={"name": "Production"}, headers=h).json()
+    b = admin.post("/api/server-groups", json={"name": "Home"}, headers=h).json()
+    assert admin.post("/api/server-groups", json={"name": "production"}, headers=h).status_code == 409
+    assert admin.put("/api/server-groups/order", json={"ids": [b["id"], a["id"]]}, headers=h).status_code == 200
+    assert [g["name"] for g in admin.get("/api/server-groups").json()] == ["Home", "Production"]
+    assert admin.put("/api/server-groups/order", json={"ids": [a["id"]]}, headers=h).status_code == 422
+    ag = admin.post("/api/agents", json={"name": "Web9", "kind": "linux"}, headers=h).json()
+    r = admin.put(f"/api/agents/{ag['id']}/meta", json={"group_id": a["id"], "tags": ["db", " Important ", "DB", ""]}, headers=h)
+    assert r.status_code == 200 and r.json()["group_id"] == a["id"] and r.json()["tags"] == ["db", "Important"]
+    assert admin.put(f"/api/agents/{ag['id']}/meta", json={"group_id": "nope", "tags": []}, headers=h).status_code == 422
+    assert admin.put(f"/api/agents/{ag['id']}/meta", json={"tags": ["x" * 31]}, headers=h).status_code == 422
+    listed = [x for x in admin.get("/api/agents").json() if x["id"] == ag["id"]][0]
+    assert listed["tags"] == ["db", "Important"]
+    # maintenance for a group and for a tag silences the problems of its servers (the agent never reported)
+    key = f"agent:{ag['id']}"
+    for scope, target in (("group", a["id"]), ("tag", "important")):
+        w = admin.post("/api/maintenance", json={"scope": scope, "target": target, "minutes": 30}, headers=h)
+        assert w.status_code == 201, w.text
+        issues = {i["key"]: i for i in admin.get("/api/overview").json()["issues"]}
+        assert issues[key].get("paused") is True, scope
+        assert admin.delete(f"/api/maintenance/{w.json()['id']}", headers=h).status_code == 204
+    assert admin.post("/api/maintenance", json={"scope": "tag", "target": "ghost", "minutes": 5}, headers=h).status_code == 422
+    assert admin.delete(f"/api/server-groups/{a['id']}", headers=h).status_code == 204
+    listed = [x for x in admin.get("/api/agents").json() if x["id"] == ag["id"]][0]
+    assert listed["group_id"] is None and listed["tags"] == ["db", "Important"]

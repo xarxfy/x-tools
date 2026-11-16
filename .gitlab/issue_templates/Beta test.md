@@ -123,7 +123,11 @@
 - [ ] With *Allow control*: restart a harmless service and read its logs; `x-tools-agent` itself cannot be stopped
 - [ ] Reboot (with confirmation) restarts the server and it reports again afterwards
 - [ ] With *Also report Docker*, its containers appear on the Docker page
-- [ ] With two or more servers there is a tab per server; services, ports, firewall and users fold open and closed (services open by themselves when one failed)
+- [ ] The *Servers* page is a list; clicking a server opens its page with the tabs Overview, Services, Network, Users
+- [ ] *Groups*: create, rename, reorder and delete groups; assign a server to one; the list is split into sections; deleting a group keeps the server
+- [ ] *Group & tags*: add and remove free tags; clicking a tag filters the list; search finds name, group and tags
+- [ ] *Pause alerts* for a group and for a tag silences the problems of its servers (they are marked as paused)
+- [ ] *Install updates on N* in a group header starts the updates on its servers one after the other
 
 ## 15. Server administration (admin, agent *Allow control*, agent version 7 – use an unimportant test server)
 

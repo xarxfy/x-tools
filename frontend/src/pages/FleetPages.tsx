@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { agentControl, localControl, useDocker, type SystemInfo } from "../api/docker";
@@ -10,7 +10,6 @@ import { Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago, fmtDuration } from "../components/format";
 import { MetricsChart } from "../components/history";
 import { counts, DockerTab, ProxmoxTab, SystemMeters } from "./HostParts";
-import { LinuxTab } from "./LinuxTab";
 import "./HostParts.css";
 
 /** Scroll to #agent-… / #local once the page has rendered its hosts. */
@@ -23,19 +22,19 @@ function useScrollToHash(ready: boolean) {
   }, [ready, hash]);
 }
 
-function agentState(a: AgentSummary): "up" | "down" | "warn" {
+export function agentState(a: AgentSummary): "up" | "down" | "warn" {
   const age = agentAge(a);
   return age === null ? "warn" : age < AGENT_STALE ? "up" : "down";
 }
 
-function reported(a: AgentSummary): string {
+export function reported(a: AgentSummary): string {
   const age = agentAge(a);
   const when = ago(Date.now() / 1000 - (age ?? 0));
   return age === null ? "" : age < AGENT_STALE ? i18n.t("servers.reported", { when }) : i18n.t("servers.silent", { when });
 }
 
 /** Header of one host: name, state, metrics and an optional chart. */
-function HostHead({ anchor, name, state, sub, sys, source }: {
+export function HostHead({ anchor, name, state, sub, sys, source }: {
   anchor: string; name: string; state: "up" | "down" | "warn"; sub: string; sys?: SystemInfo; source: string;
 }) {
   const { t } = useTranslation();
@@ -58,7 +57,7 @@ function HostHead({ anchor, name, state, sub, sys, source }: {
   );
 }
 
-function SetupHint({ kind }: { kind: "proxmox" | "docker" | "linux" }) {
+export function SetupHint({ kind }: { kind: "proxmox" | "docker" | "linux" }) {
   const { t } = useTranslation();
   const isAdmin = useCan()("admin");
   return (
@@ -77,7 +76,7 @@ function SetupHint({ kind }: { kind: "proxmox" | "docker" | "linux" }) {
   );
 }
 
-function Pending({ agents }: { agents: AgentSummary[] }) {
+export function Pending({ agents }: { agents: AgentSummary[] }) {
   const { t } = useTranslation();
   if (!agents.length) return null;
   return (
@@ -88,59 +87,6 @@ function Pending({ agents }: { agents: AgentSummary[] }) {
       </ul>
       <Link to="/settings?tab=agents" className="small-note">{t("fleet.pendingLink")}</Link>
     </div>
-  );
-}
-
-export function ServersPage() {
-  const { t } = useTranslation();
-  const agents = useAgents();
-  const { hash } = useLocation();
-  const navigate = useNavigate();
-  const [picked, setPicked] = useState<string | null>(null);
-  if (!agents.data) return <Loading error={agents.error} />;
-  const all = agents.data.filter((a) => !a.disabled && (a.kind === "linux" || a.has_linux));
-  const live = all.filter((a) => a.has_linux);
-  const pending = all.filter((a) => !a.has_linux);
-  const fromHash = live.find((a) => hash === `#agent-${a.id}`);
-  const current = live.find((a) => a.id === picked) ?? fromHash ?? live[0];
-  const pick = (id: string) => {
-    setPicked(id);
-    navigate(`#agent-${id}`, { replace: true });
-  };
-  return (
-    <>
-      <PageHead title={t("nav.servers")} sub={live.length ? t("fleet.linuxSub", { count: live.length }) : undefined} />
-      {!live.length && <SetupHint kind="linux" />}
-      <Pending agents={pending} />
-      {live.length > 1 && (
-        <div className="tabs server-tabs" role="tablist">
-          {live.map((a) => (
-            <button key={a.id} type="button" role="tab" aria-selected={a.id === current?.id}
-                    className={a.id === current?.id ? "active" : ""} onClick={() => pick(a.id)}>
-              <Dot state={agentState(a)} />{a.name}
-            </button>
-          ))}
-        </div>
-      )}
-      {current && <LinuxHost key={current.id} agent={current} />}
-    </>
-  );
-}
-
-function LinuxHost({ agent }: { agent: AgentSummary }) {
-  const { t } = useTranslation();
-  const detail = useAgent(agent.id);
-  const report = detail.data?.report;
-  const info = report?.linux;
-  return (
-    <section className="host-section">
-      <HostHead anchor={`agent-${agent.id}`} name={agent.name} state={agentState(agent)} source={agent.id}
-                sys={report?.system}
-                sub={[agent.hostname, reported(agent), report?.system?.uptime && t("servers.uptime", { duration: fmtDuration(report.system.uptime) })]
-                  .filter(Boolean).join(" · ")} />
-      {!detail.data ? <Loading error={detail.error} /> : info ? <LinuxTab agent={agent} info={info} />
-        : <Empty>{t("fleet.noData")}</Empty>}
-    </section>
   );
 }
 

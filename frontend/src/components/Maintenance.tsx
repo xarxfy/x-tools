@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAgents } from "../api/monitor";
+import { useAgents, useServerGroups } from "../api/monitor";
 import { useCustomers, useServices } from "../api/data";
 import { useEndMaintenance, useJobs, useMaintenance, useStartMaintenance } from "../api/ops";
 import { useCan } from "../api/users";
@@ -44,15 +44,16 @@ export function MaintenanceBanner() {
   );
 }
 
-export function PauseDialog({ onClose }: { onClose: () => void }) {
+export function PauseDialog({ onClose, initial }: { onClose: () => void; initial?: { scope: string; target: string } }) {
   const { t } = useTranslation();
   const start = useStartMaintenance();
   const agents = useAgents();
   const services = useServices();
   const customers = useCustomers();
   const jobs = useJobs();
-  const [scope, setScope] = useState("all");
-  const [target, setTarget] = useState("");
+  const [scope, setScope] = useState(initial?.scope ?? "all");
+  const [target, setTarget] = useState(initial?.target ?? "");
+  const groups = useServerGroups();
   const [minutes, setMinutes] = useState(60);
   const [reason, setReason] = useState("");
 
@@ -61,6 +62,8 @@ export function PauseDialog({ onClose }: { onClose: () => void }) {
     service: (services.data ?? []).map((s) => ({ id: s.id, name: s.name })),
     customer: (customers.data ?? []).map((c) => ({ id: c.id, name: c.name })),
     job: (jobs.data ?? []).map((j) => ({ id: j.id, name: j.name })),
+    group: (groups.data ?? []).map((g) => ({ id: g.id, name: g.name })),
+    tag: [...new Set((agents.data ?? []).flatMap((a) => a.tags))].sort().map((x) => ({ id: x, name: `#${x}` })),
   };
   const needsTarget = scope in options;
   const list = options[scope] ?? [];

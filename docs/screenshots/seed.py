@@ -163,7 +163,11 @@ db_report["hostname"] = "db-01"
 db_report["system"].update(hostname="db-01", load=[0.9, 0.7, 0.6], mem_used=3.1 * GB, disk_used=22 * GB)
 db_report["linux"].update(updates=[], reboot_required=False, firewall={"installed": False}, update_job=None,
                           services=[svc("postgresql@16-main", "PostgreSQL Cluster 16-main"), svc("ssh", "OpenBSD Secure Shell server")])
-agent("db-01", "linux", db_report)
+db_id = agent("db-01", "linux", db_report)
+grp_prod = call("/api/server-groups", {"name": "Production"})["id"]
+call("/api/server-groups", {"name": "Home network"})
+call(f"/api/agents/{linux_id}/meta", {"group_id": grp_prod, "tags": ["debian", "web", "customer-acme"]}, method="PUT")
+call(f"/api/agents/{db_id}/meta", {"group_id": grp_prod, "tags": ["debian", "database"]}, method="PUT")
 
 def guest(vmid, name, typ, status, cpu, maxcpu, mem, maxmem, up):
     return {"vmid": vmid, "name": name, "type": typ, "status": status, "node": "pve", "cpu": cpu, "maxcpu": maxcpu,

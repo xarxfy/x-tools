@@ -462,3 +462,15 @@ a.list-title svg,
   overflow-x: auto;
   margin: 8px 0 16px;
 }
+.collapsible.is-flat .collapsible-head {
+  cursor: default;
+}
+.collapsible.is-flat .collapsible-head:hover .collapsible-title {
+  color: inherit;
+}
+.collapsible-flat-tools {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}

@@ -110,7 +110,7 @@ def test_report_issue_and_control(admin):
     assert summary["kind"] == "linux" and summary["has_linux"] and not summary["outdated"]
     issues = admin.get("/api/overview").json()["issues"]
     failed = [i for i in issues if i["key"] == f"service:{r['id']}:nginx.service"][0]
-    assert failed["link"] == f"/servers#agent-{r['id']}" and "failed" in failed["text"]
+    assert failed["link"] == f"/servers/{r['id']}" and "failed" in failed["text"]
 
     seen = []
     t = threading.Thread(target=answer, args=(client, r["key"], {"ok": True}, seen))

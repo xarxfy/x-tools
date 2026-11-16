@@ -18,7 +18,7 @@ something breaks.
 <table>
 <tr>
 <td width="50%"><img src="docs/screenshots/docker.png" alt="Docker: containers per compose project"><br><sub>Docker – containers, compose files, logs, start/stop</sub></td>
-<td width="50%"><img src="docs/screenshots/servers.png" alt="Linux server: services, ports, disks, updates"><br><sub>Linux servers – services, ports, disks, updates</sub></td>
+<td width="50%"><img src="docs/screenshots/servers.png" alt="Servers: list with groups and tags"><br><sub>Servers – list with free groups and tags; a page with tabs per server</sub></td>
 </tr>
 <tr>
 <td><img src="docs/screenshots/proxmox.png" alt="Proxmox: LXCs and VMs"><br><sub>Proxmox – LXCs and VMs</sub></td>
@@ -39,7 +39,7 @@ something breaks.
 | **Overview** | Everything that needs attention on one page, recent events, the state of this server |
 | **Services** | What runs where: host, ports (checked every minute), domains, folder, uptime; credentials encrypted |
 | **Assistant** | New services from templates – compose file, `.env`, proxy/tunnel config and a setup checklist |
-| **Servers** | Any Linux server with an agent: load, memory, disks, systemd services (failed ones raise an alert), open ports, pending updates; optional restart of services and reboot |
+| **Servers** | Any Linux server with an agent: a list with your own groups and tags, and a page with tabs per server – load, memory, disks, systemd services (failed ones raise an alert), open ports, pending updates, users and SSH keys, ufw firewall; optional restart, reboot, installing updates |
 | **Docker** | All Docker hosts on one page: containers per compose project, start/stop/restart, logs, compose files (secrets masked), host metrics and charts |
 | **Proxmox** | Nodes, storage, host network, updates; every LXC/VM with resources, network, IPs, snapshots, backups and its `.conf` file |
 | **Agents** | More servers: Linux servers, Proxmox hosts (nodes, LXCs, VMs) and Docker hosts – one install command, outbound only, optional control (start/stop) |

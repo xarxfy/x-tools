@@ -96,6 +96,15 @@ export interface AgentSummary {
   outdated: boolean;
   latest_version: string;
   control: boolean;
+  group_id: string | null;
+  tags: string[];
+  load: number | null;
+  mem: number | null;
+  disk: number | null;
+  updates: number | null;
+  reboot: boolean;
+  os: string;
+  uptime: number | null;
 }
 
 export interface ProxmoxGuest {
@@ -456,3 +465,48 @@ export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: () => api
 /** Server administration (updates, users, ufw) – administrators only. */
 export const manageAgent = (agentId: string, action: string, target = "host", args: Record<string, unknown> = {}) =>
   api<{ ok: boolean }>(`/agents/${agentId}/manage`, { method: "POST", body: { action, target, args } });
+
+// --- server groups and tags (free names) ---
+export interface ServerGroup {
+  id: string;
+  name: string;
+  position: number;
+}
+
+export const useServerGroups = () =>
+  useQuery({ queryKey: ["server-groups"], queryFn: () => api<ServerGroup[]>("/server-groups") });
+
+export function useGroupActions() {
+  const qc = useQueryClient();
+  const done = () => {
+    qc.invalidateQueries({ queryKey: ["server-groups"] });
+    qc.invalidateQueries({ queryKey: ["agents"] });
+  };
+  const add = useMutation({
+    mutationFn: (name: string) => api<ServerGroup>("/server-groups", { method: "POST", body: { name } }),
+    onSuccess: done,
+  });
+  const rename = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      api<ServerGroup>(`/server-groups/${id}`, { method: "PUT", body: { name } }),
+    onSuccess: done,
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api<void>(`/server-groups/${id}`, { method: "DELETE" }),
+    onSuccess: done,
+  });
+  const order = useMutation({
+    mutationFn: (ids: string[]) => api<ServerGroup[]>("/server-groups/order", { method: "PUT", body: { ids } }),
+    onSuccess: done,
+  });
+  return { add, rename, remove, order };
+}
+
+export function useSaveAgentMeta(agentId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { group_id: string | null; tags: string[] }) =>
+      api<AgentSummary>(`/agents/${agentId}/meta`, { method: "PUT", body }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["agents"] }),
+  });
+}

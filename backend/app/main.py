@@ -40,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(jobs.ping_router)
     app.include_router(maintenance.router)
     app.include_router(docker.router)
+    app.include_router(agents.groups_router)
     app.include_router(agents.router)
     app.include_router(agents.report_router)
     app.include_router(monitor.router)

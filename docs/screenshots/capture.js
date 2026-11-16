@@ -6,7 +6,8 @@ const shots = [
   ['overview', '/', { w: 1280, h: 860 }],
   ['services', '/services', { w: 1280, h: 760 }],
   ['docker', '/docker', { w: 1280, h: 900 }],
-  ['servers', '/servers', { w: 1280, h: 900 }],
+  ['servers', '/servers', { w: 1280, h: 760 }],
+  ['server', '/servers', { w: 1280, h: 900 }],
   ['proxmox', '/proxmox', { w: 1280, h: 860 }],
   ['customer', null, { w: 1280, h: 1000 }],
   ['jobs', '/jobs', { w: 1280, h: 560 }],
@@ -26,7 +27,7 @@ const shots = [
       await page.goto(base + '/customers');
       await page.getByText('ACME Shop GmbH').first().click();
     }
-    if (name === 'servers') await page.getByRole('tab', { name: 'web-01' }).click().catch(() => {});
+    if (name === 'server') { await page.getByText('web-01').first().click(); await page.getByRole('tab', { name: 'Services' }).click(); }
     await page.waitForTimeout(900);
     await page.screenshot({ path: `${out}/${name}.png` });
   }

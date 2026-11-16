@@ -44,6 +44,19 @@ only services the agent reported itself, never `x-tools-agent` itself, no arbitr
 network service can lock you out – there is a confirmation, but think before you click. Pending updates are read from
 the local package cache (apt, dnf).
 
+### Groups and tags
+
+The *Servers* page is a list of your Linux servers. Group them and tag them however you like – nothing is predefined:
+
+- **Groups** (*Groups* button): your own names and order, e.g. Production, Customer A, Home network. A server is in
+  one group; the list is split into sections. Deleting a group keeps its servers.
+- **Tags**: any number of free words per server (*Group & tags* on the server's page), e.g. `debian`, `database`.
+  Click a tag to filter the list.
+- A group or tag can be used for **pausing alerts** (maintenance window for all its servers) and a group's header has
+  *Install updates on N* for the servers with pending updates (admins, control on; one after the other, each shows
+  its log on its own page).
+- Click a server to open its page with the tabs **Overview**, **Services**, **Network** (ports, firewall) and **Users**.
+
 ### Administering a Linux server (admins only)
 
 With control switched on, users with the role **admin** get three more things on the *Servers* page (agent version 7

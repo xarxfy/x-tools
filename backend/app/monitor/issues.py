@@ -128,7 +128,7 @@ def find_issues(ports: dict[int, bool] | None = None) -> list[dict]:
     # Agents
     for aid, name, report, received, kind in agents:
         page = {"proxmox": "/proxmox", "linux": "/servers"}.get(kind, "/docker")
-        link = f"{page}#agent-{aid}"
+        link = f"/servers/{aid}" if kind == "linux" else f"{page}#agent-{aid}"
         if report is None or received is None:
             link = "/settings?tab=agents"
             add(f"agent:{aid}", "agent", "warn", f"Server '{name}' has never reported", link)

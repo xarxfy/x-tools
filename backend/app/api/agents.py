@@ -19,7 +19,7 @@ from app.core.audit import audit
 from app.collector.agent import AGENT_VERSION
 from app.core.db import get_db
 from app.core.security import decrypt_json, encrypt_json, token_hash
-from app.models import Agent
+from app.models import Agent, ServerGroup
 
 router = APIRouter(prefix="/api/agents", tags=["agents"], dependencies=[Depends(current_user)])
 report_router = APIRouter(prefix="/api/agent", tags=["agents"])
@@ -42,15 +42,31 @@ def as_utc(value: datetime | None) -> datetime | None:
     return value.replace(tzinfo=timezone.utc) if value is not None and value.tzinfo is None else value
 
 
+def host_metrics(report: dict) -> dict:
+    """Load, memory and disk in percent, pending updates and reboot flag – for lists."""
+    system, linux = report.get("system") or {}, report.get("linux") or {}
+    load = system.get("load")
+    return {
+        "load": round(load[0] / max(1, system.get("cpus") or 1) * 100) if load else None,
+        "mem": round(system["mem_used"] / system["mem_total"] * 100) if system.get("mem_total") else None,
+        "disk": round(system["disk_used"] / system["disk_total"] * 100) if system.get("disk_total") else None,
+        "updates": len(linux["updates"]) if linux.get("updates") is not None else None,
+        "reboot": bool(linux.get("reboot_required")),
+        "os": linux.get("os", ""),
+        "uptime": system.get("uptime"),
+    }
+
+
 def summary(a: Agent) -> dict:
     report = a.last_report or {}
-    return {"id": a.id, "name": a.name, "kind": a.kind, "disabled": a.disabled, "created_at": as_utc(a.created_at),
+    return {**host_metrics(report), "id": a.id, "name": a.name, "kind": a.kind, "disabled": a.disabled, "created_at": as_utc(a.created_at),
             "last_report_at": as_utc(a.last_report_at), "hostname": report.get("hostname", ""),
             "version": report.get("version", ""),
             "has_docker": bool(report.get("docker")), "has_proxmox": bool(report.get("proxmox")),
             "has_linux": bool(report.get("linux")),
             "outdated": bool(report) and str(report.get("version", "")) != AGENT_VERSION,
             "control": bool(report.get("control")),
+            "group_id": a.group_id, "tags": a.tags or [],
             "latest_version": AGENT_VERSION}
 
 
@@ -133,6 +149,117 @@ def new_install(aid: str, request: Request, body: dict = Body(...), db: Session 
     db.commit()
     audit("agent.install_command", agent.name, f"{agent.kind}, new key")
     return {"key": key, "install": create_install(request, agent.id, key, body)}
+
+
+class MetaIn(BaseModel):
+    group_id: str | None = Field(default=None, max_length=12)
+    tags: list[str] = Field(default_factory=list, max_length=20)
+
+
+def clean_tags(tags: list[str]) -> list[str]:
+    out: list[str] = []
+    for tag in tags:
+        tag = " ".join(tag.split())
+        if not tag:
+            continue
+        if len(tag) > 30 or not tag.isprintable():
+            raise HTTPException(422, "A tag may have up to 30 characters")
+        if tag.lower() not in {t.lower() for t in out}:
+            out.append(tag)
+    return out
+
+
+@router.put("/{aid}/meta", dependencies=[Depends(require("operator"))])
+def update_meta(aid: str, body: MetaIn, db: Session = Depends(get_db)):
+    """Group (one) and tags (any number, free text) of a server."""
+    agent = get_agent(db, aid)
+    if body.group_id and db.get(ServerGroup, body.group_id) is None:
+        raise HTTPException(422, "Unknown group")
+    agent.group_id = body.group_id or None
+    agent.tags = clean_tags(body.tags)
+    db.commit()
+    audit("agent.meta", agent.name, ", ".join(agent.tags))
+    return summary(agent)
+
+
+# --- server groups --------------------------------------------------------------------------------
+
+groups_router = APIRouter(prefix="/api/server-groups", tags=["agents"], dependencies=[Depends(current_user)])
+
+
+def group_out(g: ServerGroup) -> dict:
+    return {"id": g.id, "name": g.name, "position": g.position}
+
+
+def unique_group(db: Session, name: str, own: str = "") -> None:
+    if any(g.id != own and g.name.lower() == name.lower() for g in db.scalars(select(ServerGroup))):
+        raise HTTPException(409, "A group with this name already exists")
+
+
+class GroupIn(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+
+
+class GroupOrder(BaseModel):
+    ids: list[str] = Field(max_length=100)
+
+
+@groups_router.get("")
+def list_groups(db: Session = Depends(get_db)):
+    return [group_out(g) for g in db.scalars(select(ServerGroup).order_by(ServerGroup.position, ServerGroup.name))]
+
+
+@groups_router.post("", status_code=201, dependencies=[Depends(require("operator"))])
+def create_group(body: GroupIn, db: Session = Depends(get_db)):
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(422, "Name is missing")
+    unique_group(db, name)
+    last = db.scalars(select(ServerGroup.position).order_by(ServerGroup.position.desc())).first()
+    group = ServerGroup(name=name, position=(last + 1) if last is not None else 0)
+    db.add(group)
+    db.commit()
+    audit("servergroup.created", name)
+    return group_out(group)
+
+
+@groups_router.put("/order", dependencies=[Depends(require("operator"))])
+def order_groups(body: GroupOrder, db: Session = Depends(get_db)):
+    found = {g.id: g for g in db.scalars(select(ServerGroup))}
+    if set(body.ids) != set(found) or len(body.ids) != len(found):
+        raise HTTPException(422, "The list must contain every group exactly once")
+    for position, gid in enumerate(body.ids):
+        found[gid].position = position
+    db.commit()
+    return [group_out(found[gid]) for gid in body.ids]
+
+
+@groups_router.put("/{gid}", dependencies=[Depends(require("operator"))])
+def rename_group(gid: str, body: GroupIn, db: Session = Depends(get_db)):
+    group = db.get(ServerGroup, gid)
+    if group is None:
+        raise HTTPException(404, "Group not found")
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(422, "Name is missing")
+    unique_group(db, name, gid)
+    group.name = name
+    db.commit()
+    audit("servergroup.renamed", name)
+    return group_out(group)
+
+
+@groups_router.delete("/{gid}", status_code=204, dependencies=[Depends(require("operator"))])
+def delete_group(gid: str, db: Session = Depends(get_db)):
+    group = db.get(ServerGroup, gid)
+    if group is None:
+        raise HTTPException(404, "Group not found")
+    for agent in db.scalars(select(Agent).where(Agent.group_id == gid)):
+        agent.group_id = None  # the servers stay, without a group
+    db.delete(group)
+    db.commit()
+    audit("servergroup.deleted", group.name)
+    return Response(status_code=204)
 
 
 @router.put("/{aid}", dependencies=[Depends(require("admin"))])
