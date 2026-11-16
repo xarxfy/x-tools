@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   agentAge, AGENT_STALE, useAbout, useAgents, useCreateAgent, useDeleteAgent, useFeatures, useNewInstall,
@@ -11,20 +11,22 @@ import { useCheckUpdate, useUpdateInfo } from "../api/ops";
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, CopyButton, Dialog, Dot, Empty, Loading, PageHead } from "../components/ui";
 import { ago } from "../components/format";
-import { AccountSettings, BackupSettings } from "./SettingsAccount";
-import { AuditSettings, UsersSettings } from "./SettingsUsers";
-import { CloudflareSettings } from "./SettingsCloudflare";
+import { AccountSettings } from "./SettingsAccount";
 import { useCan } from "../api/users";
 import "./SettingsPage.css";
 
-const TABS = ["general", "account", "notifications", "agents", "cloudflare", "users", "audit", "backup", "about"] as const;
+const TABS = ["general", "account", "about"] as const;
+/** These tabs moved to the Administration area; old links (/settings?tab=agents …) are forwarded. */
+const MOVED = ["notifications", "agents", "cloudflare", "users", "audit", "backup"];
 const EVENTS = ["port", "container", "docker", "system", "site", "agent", "cloudflare", "job"];
 
 export function SettingsPage() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const can = useCan();
-  const tabs = can("admin") ? TABS : (["account"] as const);
+  const tabs = can("admin.settings") ? TABS : (["account"] as const);
+  const asked = params.get("tab") ?? "";
+  if (MOVED.includes(asked)) return <Navigate to={`/admin?tab=${asked}`} replace />;
   const tab = tabs.find((k) => k === params.get("tab")) ?? tabs[0];
   return (
     <>
@@ -37,11 +39,7 @@ export function SettingsPage() {
           </button>
         ))}
       </div>
-      {tab === "general" ? <General /> : tab === "account" ? <AccountSettings />
-        : tab === "notifications" ? <Notifications /> : tab === "agents" ? <Agents />
-          : tab === "cloudflare" ? <CloudflareSettings />
-          : tab === "users" ? <UsersSettings /> : tab === "audit" ? <AuditSettings />
-            : tab === "backup" ? <BackupSettings /> : <About />}
+      {tab === "general" ? <General /> : tab === "account" ? <AccountSettings /> : <About />}
     </>
   );
 }
@@ -51,7 +49,7 @@ type Form = Omit<NotificationSettings, "telegram" | "ntfy" | "last" | "base_url"
   ntfy: { enabled: boolean; server: string; topic: string; token: string; has_token: boolean; clear_token?: boolean };
 };
 
-function Notifications() {
+export function Notifications() {
   const { t } = useTranslation();
   const settings = useNotificationSettings();
   const save = useSaveNotifications();
@@ -341,7 +339,7 @@ function InstallFields({ value, onChange, stored }: {
   );
 }
 
-function Agents() {
+export function Agents() {
   const { t } = useTranslation();
   const agents = useAgents();
   const update = useUpdateAgent();

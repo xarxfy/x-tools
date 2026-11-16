@@ -20,7 +20,8 @@
     "proxmox": "Proxmox",
     "docker": "Docker",
     "cloudflare": "Cloudflare",
-    "jobs": "Jobs"
+    "jobs": "Jobs",
+    "administration": "Administration"
   },
   "auth": {
     "username": "Benutzername",
@@ -536,16 +537,16 @@
     "installAgent": "Agent einrichten",
     "askAdmin": "Bitte einen Admin, einen Agent einzurichten.",
     "proxmoxEmptyTitle": "Kein Proxmox-Host verbunden",
-    "proxmoxEmptyText": "Installiere den X-TOOLS-Agent auf deinem Proxmox-Host (Einstellungen → Agents → Server hinzufügen → Proxmox-Host). Er zeigt Nodes, Storage, alle LXCs und VMs samt Konfiguration – nur ausgehend, keine offenen Ports.",
+    "proxmoxEmptyText": "Installiere den X-TOOLS-Agent auf deinem Proxmox-Host (Administration → Agents → Server hinzufügen → Proxmox-Host). Er zeigt Nodes, Storage, alle LXCs und VMs samt Konfiguration – nur ausgehend, keine offenen Ports.",
     "dockerEmptyTitle": "Noch keine Docker-Daten",
-    "dockerEmptyText": "Die Container dieses Servers kommen vom Collector-Container x-tools-collector (von setup.sh gestartet). Für andere Server, LXCs oder VMs mit Docker installierst du einen Agent (Einstellungen → Agents → Server hinzufügen → Docker-Host).",
+    "dockerEmptyText": "Die Container dieses Servers kommen vom Collector-Container x-tools-collector (von setup.sh gestartet). Für andere Server, LXCs oder VMs mit Docker installierst du einen Agent (Administration → Agents → Server hinzufügen → Docker-Host).",
     "pendingTitle": "Warte auf die erste Meldung",
     "pending": "angelegt, hat sich aber noch nicht gemeldet",
     "pendingLink": "Installationsbefehl erneut anzeigen →",
     "linuxSub_one": "{{count}} Linux-Server",
     "linuxSub_other": "{{count}} Linux-Server",
     "linuxEmptyTitle": "Kein Linux-Server verbunden",
-    "linuxEmptyText": "Installiere den X-TOOLS-Agent auf einem beliebigen Linux-Server, einer VM oder einem LXC (Einstellungen → Agents → Server hinzufügen → Linux-Server). Er zeigt Last, Speicher, Platten, systemd-Dienste, offene Ports und ausstehende Updates – nur ausgehend, keine offenen Ports."
+    "linuxEmptyText": "Installiere den X-TOOLS-Agent auf einem beliebigen Linux-Server, einer VM oder einem LXC (Administration → Agents → Server hinzufügen → Linux-Server). Er zeigt Last, Speicher, Platten, systemd-Dienste, offene Ports und ausstehende Updates – nur ausgehend, keine offenen Ports."
   },
   "history": {
     "load": "Last",
@@ -623,11 +624,6 @@
       "viewer": "Betrachter",
       "operator": "Operator",
       "admin": "Admin"
-    },
-    "rolesHint": {
-      "viewer": "Sieht alles, ändert nichts – keine Zugangsdaten, keine Logs.",
-      "operator": "Pflegt Dienste, Kunden und Zugangsdaten, startet und stoppt Container.",
-      "admin": "Alles, auch Benutzer, Einstellungen, Agents, Backups und das Audit-Log."
     }
   },
   "audit": {
@@ -785,7 +781,7 @@
     "notSetUp": "Cloudflare ist nicht verbunden.",
     "setUp": "Verbinden →",
     "partial": "Einige Daten konnten nicht gelesen werden:",
-    "permissionsHint": "Prüfe die Berechtigungen des API-Tokens (Einstellungen → Cloudflare).",
+    "permissionsHint": "Prüfe die Berechtigungen des API-Tokens (Administration → Cloudflare).",
     "tabs": {
       "hosts": "Hostnamen",
       "dns": "DNS",
@@ -1189,5 +1185,113 @@
     "userCount_other": "{{count}} Benutzer",
     "ruleCount_one": "{{count}} Regel",
     "ruleCount_other": "{{count}} Regeln"
+  },
+  "administration": {
+    "sub": "Benutzer, Rollen und Rechte, Agents, Benachrichtigungen, Backup – nur für Personen mit diesen Rechten",
+    "forbidden": "Du hast keinen Zugriff auf die Administration.",
+    "tab": {
+      "users": "Benutzer",
+      "roles": "Rollen & Rechte",
+      "audit": "Audit-Log",
+      "agents": "Agents",
+      "notifications": "Benachrichtigungen",
+      "cloudflare": "Cloudflare",
+      "backup": "Backup"
+    }
+  },
+  "roles": {
+    "intro": "Eine Rolle ist eine Sammlung von Rechten. Jeder Benutzer hat genau eine Rolle. Lege eigene Rollen an; Betrachter und Operator sind Vorlagen, die du anpassen kannst, der Administrator darf alles und lässt sich nicht ändern.",
+    "add": "Rolle hinzufügen",
+    "none": "Keine Rollen.",
+    "builtin": "eingebaut",
+    "summary": "{{perms}} von {{total}} Rechten · {{users}} Benutzer",
+    "view": "Ansehen",
+    "editTitle": "Rolle: {{name}}",
+    "name": "Name",
+    "copyFrom": "Ausgehen von",
+    "lockedHint": "Die Rolle Administrator hat immer alle Rechte und lässt sich nicht ändern.",
+    "builtinHint": "Eingebaute Rolle: Der Name ist fest, die Rechte kannst du ändern.",
+    "notYours": "Du kannst keine Rechte vergeben, die du selbst nicht hast."
+  },
+  "perm": {
+    "area": {
+      "services": "Dienste und Zugangsdaten",
+      "customers": "Kunden und Websites",
+      "monitoring": "Überwachung",
+      "servers": "Server",
+      "administration": "Administration"
+    },
+    "services.edit": {
+      "name": "Dienste bearbeiten",
+      "hint": "Dienste anlegen, ändern und löschen"
+    },
+    "credentials.manage": {
+      "name": "Zugangsdaten",
+      "hint": "gespeicherte Logins sehen, anzeigen und bearbeiten"
+    },
+    "customers.edit": {
+      "name": "Kunden bearbeiten",
+      "hint": "Kunden, Kategorien, Website-Checks"
+    },
+    "sites.deploy": {
+      "name": "Websites deployen",
+      "hint": "Kunden-Websites aus Git ausrollen"
+    },
+    "jobs.edit": {
+      "name": "Jobs bearbeiten",
+      "hint": "Heartbeat-Überwachung"
+    },
+    "alerts.pause": {
+      "name": "Meldungen pausieren",
+      "hint": "Wartungsfenster"
+    },
+    "docker.control": {
+      "name": "Docker steuern",
+      "hint": "Container starten, stoppen, neu starten und ihre Logs lesen"
+    },
+    "proxmox.control": {
+      "name": "Proxmox steuern",
+      "hint": "Strom und Einstellungen von LXCs und VMs"
+    },
+    "servers.control": {
+      "name": "Server steuern",
+      "hint": "Dienste neu starten, ihre Logs lesen, Server neu starten"
+    },
+    "servers.manage": {
+      "name": "Server verwalten",
+      "hint": "Updates installieren, Benutzer und SSH-Schlüssel, Firewall auf den Servern"
+    },
+    "servers.organize": {
+      "name": "Server ordnen",
+      "hint": "Gruppen und Tags"
+    },
+    "cloudflare.edit": {
+      "name": "Cloudflare bearbeiten",
+      "hint": "DNS-Einträge und Tunnel-Routen"
+    },
+    "admin.users": {
+      "name": "Benutzer verwalten",
+      "hint": "Benutzer anlegen, Rolle ändern, Passwörter zurücksetzen"
+    },
+    "admin.roles": {
+      "name": "Rollen verwalten",
+      "hint": "Rollen und Rechte anlegen und ändern"
+    },
+    "admin.agents": {
+      "name": "Agents verwalten",
+      "hint": "Agents hinzufügen, neu installieren, umbenennen und löschen"
+    },
+    "admin.settings": {
+      "name": "Einstellungen",
+      "hint": "Allgemeine Einstellungen, Benachrichtigungen, Cloudflare-Anbindung, Updates"
+    },
+    "admin.backup": {
+      "name": "Backup",
+      "hint": "Backups herunterladen und einspielen, automatisches Backup"
+    },
+    "admin.audit": {
+      "name": "Audit-Log",
+      "hint": "einsehen, wer was getan hat"
+    }
   }
 }

@@ -26,7 +26,7 @@ def list_windows():
     return maintenance.active()
 
 
-@router.post("", status_code=201, dependencies=[Depends(require("operator"))])
+@router.post("", status_code=201, dependencies=[Depends(require("alerts.pause"))])
 def create_window(body: WindowIn, request: Request, db: Session = Depends(get_db)):
     models = {"agent": Agent, "service": Service, "job": Heartbeat, "customer": Customer, "group": ServerGroup}
     if body.scope == "tag":
@@ -47,7 +47,7 @@ def create_window(body: WindowIn, request: Request, db: Session = Depends(get_db
     return window
 
 
-@router.delete("/{wid}", status_code=204, dependencies=[Depends(require("operator"))])
+@router.delete("/{wid}", status_code=204, dependencies=[Depends(require("alerts.pause"))])
 def end_window(wid: str):
     if not maintenance.end(wid):
         raise HTTPException(404, "Window not found or already over")

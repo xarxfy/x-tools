@@ -6,10 +6,18 @@ All notable changes to X-TOOLS. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **Administration** area (sidebar entry only for people with administration permissions): users, **roles and
+  permissions**, audit log, agents, notifications, Cloudflare connection and backup. *Settings* keeps account,
+  general settings and about. Old `/settings?tab=…` links are forwarded.
+- **Roles with free permissions**: create your own roles and tick what they may do (18 permissions in five areas).
+  Viewer and Operator are adjustable presets, Administrator is fixed. Nobody can give a role or a user more
+  permissions than they have; the last user who can manage users cannot be removed or demoted; a role that is in use
+  cannot be deleted.
 - Server groups and tags with free names (no predefined ones): groups split the server list into sections, tags
   filter it; maintenance windows can cover a whole group or tag; *Install updates on N* per group.
 
 ### Changed
+- The API checks permissions instead of three fixed ranks; `/api/auth/me` returns the permissions of the user.
 - The Servers page is now a list (status, OS, tags, load/RAM/disk, updates); every server has its own page
   (`/servers/<id>`) with the tabs Overview, Services, Network and Users. Old `#agent-…` links still work.
 
@@ -80,7 +88,7 @@ Agent protocol version: **6**.
 - **Jobs** (new page): heartbeat monitors for cron jobs and backups. Each job has a secret address
   (`/api/heartbeat/<token>`, plus `/start` and `/fail`); an alert comes when the call stays away or reports failure.
 - **Automatic backup of X-TOOLS**: schedule (daily/weekly), passphrase stored encrypted, locations: folders (keeps the
-  newest N) and WebDAV; failures show up as a problem. *Settings → Backup*.
+  newest N) and WebDAV; failures show up as a problem. *Administration → Backup*.
 - **Update notice**: X-TOOLS checks GitHub tags every few hours and shows a hint in the overview, the sidebar and
   *Settings → About* (switch off with `XT_UPDATE_CHECK=false`).
 
@@ -90,7 +98,7 @@ Agent protocol version: **6**.
   optional website deployer, unattended mode with `--yes`.
 
 ### Added
-- **Linux servers** as a third agent kind (*Settings → Agents → Linux server*, new sidebar entry *Servers*): load,
+- **Linux servers** as a third agent kind (*Administration → Agents → Linux server*, new sidebar entry *Servers*): load,
   memory, disks, systemd services (failed ones raise an alert), listening ports with process, OS/kernel, pending
   updates (apt/dnf cache), reboot flag. With control: start/stop/restart services, journal, reboot. Optionally
   reports Docker too. Agent protocol version: **6** (existing agents show an update hint).

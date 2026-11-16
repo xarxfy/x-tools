@@ -20,6 +20,7 @@ const MAIN: { to: string; key: string; icon: IconName }[] = [
   { to: "/cloudflare", key: "cloudflare", icon: "cloud" },
   { to: "/credentials", key: "credentials", icon: "credentials" },
 ];
+const ADMIN_PERMISSIONS = ["admin.users", "admin.roles", "admin.audit", "admin.agents", "admin.settings", "admin.backup"];
 const FOOTER: { to: string; key: string; icon: IconName }[] = [
   { to: "/settings", key: "settings", icon: "settings" },
   { to: "/help", key: "help", icon: "help" },
@@ -36,10 +37,11 @@ export function Layout() {
   const features = useFeatures();
   // Optional entries: customers when switched on, Proxmox/Docker only when such a server reports.
   const can = useCan();
-  const update = useUpdateInfo(can("admin"));
+  const update = useUpdateInfo(can("admin.settings"));
+  const adminArea = ADMIN_PERMISSIONS.some((p) => can(p));
   const main = MAIN.filter((item) =>
     (item.key !== "customers" || features.data?.customers) &&
-    (item.key !== "credentials" || can("operator")) &&
+    (item.key !== "credentials" || can("credentials.manage")) &&
     (item.key !== "cloudflare" || features.data?.cloudflare));
 
   useEffect(() => setOpen(false), [location.pathname]); // close the mobile menu after navigating
@@ -76,6 +78,7 @@ export function Layout() {
         </nav>
         <div className="side-foot">
           <nav className="nav-foot" aria-label={`${t("nav.settings")}, ${t("nav.help")}`}>
+            {adminArea && link({ to: "/admin", key: "administration", icon: "shield" }, 16)}
             {FOOTER.map((item) => link(item, 16))}
             <button
               type="button"

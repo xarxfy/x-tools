@@ -9,15 +9,9 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.security import CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE, csrf_matches, token_hash
-from app.models import User, UserSession
+from app.models import Role, User, UserSession
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
-
-# Roles, from least to most: viewer (read only, no credentials or logs) < operator (maintain services,
-# customers, credentials, control containers) < admin (everything: users, settings, agents, backups, audit log).
-ROLES = ("viewer", "operator", "admin")
-RANK = {role: i for i, role in enumerate(ROLES)}
-
 
 def client_ip(request: Request) -> str:
     if get_settings().trust_proxy:
@@ -50,10 +44,36 @@ def current_user(session: UserSession = Depends(current_session)) -> User:
     return session.user
 
 
-def require(role: str):
-    """Dependency: the logged-in user needs at least this role."""
-    def check(user: User = Depends(current_user)) -> User:
-        if RANK.get(user.role, -1) < RANK[role]:
+def permissions_of(user: User, db: Session | None = None) -> frozenset[str]:
+    """What the user's role allows (cached per request through the user object)."""
+    cached = getattr(user, "_xt_permissions", None)
+    if cached is not None:
+        return cached
+    from app.core.db import session_scope
+    from app.core.permissions import ALL, PERMISSIONS
+
+    def load(session: Session) -> frozenset[str]:
+        role = session.get(Role, user.role)
+        if role is None:
+            return frozenset()  # unknown role: nothing is allowed
+        return ALL if role.id == "admin" else frozenset(p for p in role.permissions or [] if p in PERMISSIONS)
+    if db is not None:
+        perms = load(db)
+    else:
+        with session_scope() as session:
+            perms = load(session)
+    user._xt_permissions = perms
+    return perms
+
+
+def require(permission: str):
+    """Dependency: the logged-in user's role needs this permission (core/permissions.py)."""
+    from app.core.permissions import PERMISSIONS
+    if permission not in PERMISSIONS:
+        raise ValueError(f"unknown permission {permission}")
+
+    def check(user: User = Depends(current_user), db: Session = Depends(get_db)) -> User:
+        if permission not in permissions_of(user, db):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "You are not allowed to do this")
         return user
     return check

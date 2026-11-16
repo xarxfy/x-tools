@@ -19,7 +19,7 @@ export const pingUrl = (token: string) => `${window.location.origin}/api/heartbe
 export function JobsPage() {
   const { t } = useTranslation();
   const jobs = useJobs();
-  const edit = useCan()("operator");
+  const edit = useCan()("jobs.edit");
   const [dialog, setDialog] = useState<Job | "new" | null>(null);
   const [howto, setHowto] = useState<Job | null>(null);
   if (!jobs.data) return <Loading error={jobs.error} retry={() => jobs.refetch()} />;

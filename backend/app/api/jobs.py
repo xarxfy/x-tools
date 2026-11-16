@@ -50,7 +50,7 @@ def list_jobs(user=Depends(current_user), db: Session = Depends(get_db)):
     return [out(h, can) for h in db.scalars(select(Heartbeat).order_by(Heartbeat.name))]
 
 
-@router.post("", status_code=201, dependencies=[Depends(require("operator"))])
+@router.post("", status_code=201, dependencies=[Depends(require("jobs.edit"))])
 def create_job(body: JobIn, db: Session = Depends(get_db)):
     h = Heartbeat(token=secrets.token_urlsafe(24), **body.model_dump())
     db.add(h)
@@ -59,7 +59,7 @@ def create_job(body: JobIn, db: Session = Depends(get_db)):
     return out(h, True)
 
 
-@router.put("/{jid}", dependencies=[Depends(require("operator"))])
+@router.put("/{jid}", dependencies=[Depends(require("jobs.edit"))])
 def update_job(jid: str, body: JobIn, db: Session = Depends(get_db)):
     h = get_job(db, jid)
     for k, v in body.model_dump().items():
@@ -69,7 +69,7 @@ def update_job(jid: str, body: JobIn, db: Session = Depends(get_db)):
     return out(h, True)
 
 
-@router.post("/{jid}/new-token", dependencies=[Depends(require("operator"))])
+@router.post("/{jid}/new-token", dependencies=[Depends(require("jobs.edit"))])
 def new_token(jid: str, db: Session = Depends(get_db)):
     h = get_job(db, jid)
     h.token = secrets.token_urlsafe(24)
@@ -78,7 +78,7 @@ def new_token(jid: str, db: Session = Depends(get_db)):
     return out(h, True)
 
 
-@router.delete("/{jid}", status_code=204, dependencies=[Depends(require("operator"))])
+@router.delete("/{jid}", status_code=204, dependencies=[Depends(require("jobs.edit"))])
 def delete_job(jid: str, db: Session = Depends(get_db)):
     h = get_job(db, jid)
     name = h.name

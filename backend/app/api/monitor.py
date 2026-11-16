@@ -92,7 +92,7 @@ def backup_summary() -> dict:
 # --- Notifications ------------------------------------------------------------------
 
 
-@router.get("/settings/notifications", dependencies=[Depends(require("admin"))])
+@router.get("/settings/notifications", dependencies=[Depends(require("admin.settings"))])
 def get_notifications():
     data = notify.public(notify.load())
     alert_state = state.load(ALERT_STATE, {}) or {}
@@ -106,7 +106,7 @@ def get_notifications():
     return data
 
 
-@router.put("/settings/notifications", dependencies=[Depends(require("admin"))])
+@router.put("/settings/notifications", dependencies=[Depends(require("admin.settings"))])
 def put_notifications(body: dict):
     try:
         saved = notify.public(notify.save(body))
@@ -120,7 +120,7 @@ class TestIn(BaseModel):
     channel: str
 
 
-@router.post("/settings/notifications/test", dependencies=[Depends(require("admin"))])
+@router.post("/settings/notifications/test", dependencies=[Depends(require("admin.settings"))])
 def test_notification(body: TestIn):
     if body.channel not in ("telegram", "ntfy"):
         raise HTTPException(422, "Unknown channel")
@@ -148,7 +148,7 @@ class SiteCheckIn(BaseModel):
     customer_id: str | None = None
 
 
-@router.post("/sitechecks", dependencies=[Depends(require("operator"))])
+@router.post("/sitechecks", dependencies=[Depends(require("customers.edit"))])
 def run_sitechecks(body: SiteCheckIn, db: Session = Depends(get_db)):
     """Check now – the domains of one customer, or all customer domains."""
     if body.customer_id:
@@ -163,12 +163,12 @@ def run_sitechecks(body: SiteCheckIn, db: Session = Depends(get_db)):
     return sites.load_results()
 
 
-@router.get("/update", dependencies=[Depends(require("admin"))])
+@router.get("/update", dependencies=[Depends(require("admin.settings"))])
 def update_info():
     return updates.info()
 
 
-@router.post("/update/check", dependencies=[Depends(require("admin"))])
+@router.post("/update/check", dependencies=[Depends(require("admin.settings"))])
 def update_check():
     if not get_settings().update_check:
         raise HTTPException(409, "The update check is switched off (XT_UPDATE_CHECK=false)")
@@ -176,7 +176,7 @@ def update_check():
     return updates.info()
 
 
-@router.get("/about", dependencies=[Depends(require("admin"))])
+@router.get("/about", dependencies=[Depends(require("admin.settings"))])
 def about():
     s = get_settings()
     snap = load_snapshot()

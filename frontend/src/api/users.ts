@@ -2,19 +2,51 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { api } from "./client";
 import { useMe } from "./auth";
 
-export type Role = "viewer" | "operator" | "admin";
-const RANK: Record<string, number> = { viewer: 0, operator: 1, admin: 2 };
-
-/** can("operator") → true for operators and admins. */
+/** can("services.edit") → true when the role of the logged-in user has this permission. */
 export function useCan() {
   const { data: me } = useMe();
-  return (role: Role) => !!me && (RANK[me.role] ?? -1) >= RANK[role];
+  return (permission: string) => !!me && (me.permissions ?? []).includes(permission);
+}
+
+export interface RoleRow {
+  id: string;
+  name: string;
+  builtin: boolean;
+  locked: boolean;
+  permissions: string[];
+  users: number;
+}
+
+export interface RolesData {
+  roles: RoleRow[];
+  permissions: { key: string; area: string }[];
+  areas: string[];
+}
+
+export const useRoles = (enabled = true) =>
+  useQuery({ queryKey: ["roles"], queryFn: () => api<RolesData>("/roles"), enabled });
+
+export function useRoleActions() {
+  const qc = useQueryClient();
+  const done = () => {
+    qc.invalidateQueries({ queryKey: ["roles"] });
+    qc.invalidateQueries({ queryKey: ["users"] });
+    qc.invalidateQueries({ queryKey: ["me"] });
+  };
+  const save = useMutation({
+    mutationFn: ({ id, name, permissions }: { id?: string; name: string; permissions: string[] }) =>
+      id ? api<RoleRow>(`/roles/${id}`, { method: "PUT", body: { name, permissions } })
+        : api<RoleRow>("/roles", { method: "POST", body: { name, permissions } }),
+    onSuccess: done,
+  });
+  const remove = useMutation({ mutationFn: (id: string) => api<void>(`/roles/${id}`, { method: "DELETE" }), onSuccess: done });
+  return { save, remove };
 }
 
 export interface UserRow {
   id: number;
   username: string;
-  role: Role;
+  role: string;
   disabled: boolean;
   totp_enabled: boolean;
   created_at: string;
@@ -45,9 +77,9 @@ function useUserMutation<B>(fn: (body: B) => Promise<unknown>) {
 }
 
 export const useCreateUser = () =>
-  useUserMutation((body: { username: string; role: Role; password: string }) => api<UserRow>("/users", { method: "POST", body }));
+  useUserMutation((body: { username: string; role: string; password: string }) => api<UserRow>("/users", { method: "POST", body }));
 export const useUpdateUser = () =>
-  useUserMutation(({ id, ...body }: { id: number; role?: Role; disabled?: boolean }) =>
+  useUserMutation(({ id, ...body }: { id: number; role?: string; disabled?: boolean }) =>
     api<UserRow>(`/users/${id}`, { method: "PUT", body }));
 export const useResetPassword = () =>
   useUserMutation(({ id, password }: { id: number; password: string }) =>

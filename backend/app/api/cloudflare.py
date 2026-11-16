@@ -67,7 +67,7 @@ def overview(db: Session = Depends(get_db)):
             "hosts": cf.analyse(snap, service_rows(db)) if snap else []}
 
 
-@router.post("/refresh", dependencies=[Depends(require("operator"))])
+@router.post("/refresh", dependencies=[Depends(require("cloudflare.edit"))])
 def refresh(db: Session = Depends(get_db)):
     if not cf.configured():
         raise HTTPException(409, "Cloudflare is not set up")
@@ -76,7 +76,7 @@ def refresh(db: Session = Depends(get_db)):
             "hosts": cf.analyse(snap, service_rows(db))}
 
 
-@router.get("/settings", dependencies=[Depends(require("admin"))])
+@router.get("/settings", dependencies=[Depends(require("admin.settings"))])
 def get_settings_():
     snap = cf.load_snapshot() or {}
     return {"configured": cf.configured(), "allow_write": cf.allow_write(), "fetched_at": snap.get("fetched_at"),
@@ -85,7 +85,7 @@ def get_settings_():
             "access_apps": len(snap.get("access_apps", []))}
 
 
-@router.put("/settings", dependencies=[Depends(require("admin"))])
+@router.put("/settings", dependencies=[Depends(require("admin.settings"))])
 def put_settings(body: TokenIn):
     try:
         cf.verify(body.token)
@@ -97,14 +97,14 @@ def put_settings(body: TokenIn):
     return {"configured": True, "errors": snap.get("errors", {}), "zones": len(snap.get("zones", []))}
 
 
-@router.delete("/settings", status_code=204, dependencies=[Depends(require("admin"))])
+@router.delete("/settings", status_code=204, dependencies=[Depends(require("admin.settings"))])
 def delete_settings():
     cf.remove()
     audit("settings.cloudflare", "", "token removed")
     return Response(status_code=204)
 
 
-@router.put("/settings/write", dependencies=[Depends(require("admin"))])
+@router.put("/settings/write", dependencies=[Depends(require("admin.settings"))])
 def put_write(body: WriteIn):
     if not cf.configured():
         raise HTTPException(409, "Store a token first")
@@ -113,7 +113,7 @@ def put_write(body: WriteIn):
     return {"allow_write": cf.allow_write()}
 
 
-OPERATOR = [Depends(require("operator"))]
+OPERATOR = [Depends(require("cloudflare.edit"))]
 
 
 @router.post("/dns", dependencies=OPERATOR)

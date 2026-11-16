@@ -3,13 +3,14 @@ import { useTranslation } from "react-i18next";
 import { useMe } from "../api/auth";
 import {
   useAudit, useAuditFilters, useCreateUser, useDeleteUser, useReset2fa, useResetPassword, useUpdateUser, useUsers,
-  type Role, type UserRow,
+  useRoles, type UserRow,
 } from "../api/users";
 import { Icon } from "../components/Icon";
 import { ConfirmDelete, Dialog, Dot, Empty, Loading } from "../components/ui";
 import { ago } from "../components/format";
 
-const ROLES: Role[] = ["viewer", "operator", "admin"];
+export const roleLabel = (r: { id: string; name: string; builtin: boolean }, t: (k: string) => string) =>
+  r.builtin ? t(`users.roles.${r.id}`) : r.name;
 
 export function UsersSettings() {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ export function UsersSettings() {
   const reset2fa = useReset2fa();
   const [adding, setAdding] = useState(false);
   const [resetting, setResetting] = useState<UserRow | null>(null);
+  const roles = useRoles().data?.roles ?? [];
   if (!users.data) return <Loading error={users.error} />;
 
   return (
@@ -30,11 +32,6 @@ export function UsersSettings() {
           <Icon name="plus" size={16} />
           {t("users.add")}
         </button>
-      </div>
-      <div className="role-legend card card-pad">
-        {ROLES.map((r) => (
-          <div key={r}><strong>{t(`users.roles.${r}`)}</strong><span className="muted">{t(`users.rolesHint.${r}`)}</span></div>
-        ))}
       </div>
       <div className="card list" style={{ marginTop: 16 }}>
         {users.data.map((u) => (
@@ -55,8 +52,8 @@ export function UsersSettings() {
             </div>
             <div className="list-side">
               <select className="input role-select" value={u.role} aria-label={t("users.role")}
-                      onChange={(e) => update.mutate({ id: u.id, role: e.target.value as Role })}>
-                {ROLES.map((r) => <option key={r} value={r}>{t(`users.roles.${r}`)}</option>)}
+                      onChange={(e) => update.mutate({ id: u.id, role: e.target.value })}>
+                {roles.map((r) => <option key={r.id} value={r.id}>{roleLabel(r, t)}</option>)}
               </select>
               <button type="button" className="btn btn-small" onClick={() => setResetting(u)}>{t("users.resetPassword")}</button>
               {u.totp_enabled && u.id !== me?.id && (
@@ -84,7 +81,8 @@ function AddUserDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const create = useCreateUser();
   const [username, setUsername] = useState("");
-  const [role, setRole] = useState<Role>("viewer");
+  const roles = useRoles().data?.roles ?? [];
+  const [role, setRole] = useState("viewer");
   const [password, setPassword] = useState("");
   return (
     <Dialog title={t("users.add")} onClose={onClose}
@@ -101,8 +99,8 @@ function AddUserDialog({ onClose }: { onClose: () => void }) {
       </label>
       <label className="field">
         {t("users.role")}
-        <select className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-          {ROLES.map((r) => <option key={r} value={r}>{t(`users.roles.${r}`)} – {t(`users.rolesHint.${r}`)}</option>)}
+        <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
+          {roles.map((r) => <option key={r.id} value={r.id}>{roleLabel(r, t)}</option>)}
         </select>
       </label>
       <label className="field">

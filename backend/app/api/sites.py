@@ -186,7 +186,7 @@ def list_sites(customer_id: str | None = Query(default=None), db: Session = Depe
     return SiteList(deployer=dx.alive(), sites=[to_out(s) for s in db.scalars(query)])
 
 
-@router.post("", response_model=SiteOut, status_code=201, dependencies=[Depends(require("operator"))])
+@router.post("", response_model=SiteOut, status_code=201, dependencies=[Depends(require("sites.deploy"))])
 def create_site(body: SiteIn, db: Session = Depends(get_db)):
     need_customers()
     site = Site(slug=make_slug(db, body.name))
@@ -198,7 +198,7 @@ def create_site(body: SiteIn, db: Session = Depends(get_db)):
     return to_out(site)
 
 
-@router.put("/{sid}", response_model=SiteOut, dependencies=[Depends(require("operator"))])
+@router.put("/{sid}", response_model=SiteOut, dependencies=[Depends(require("sites.deploy"))])
 def update_site(sid: str, body: SiteIn, db: Session = Depends(get_db)):
     site = get_site(db, sid)
     apply(site, body, db)
@@ -208,14 +208,14 @@ def update_site(sid: str, body: SiteIn, db: Session = Depends(get_db)):
     return to_out(site)
 
 
-@router.get("/{sid}", response_model=SiteOut, dependencies=[Depends(require("operator"))])
+@router.get("/{sid}", response_model=SiteOut, dependencies=[Depends(require("sites.deploy"))])
 def read_site(sid: str, db: Session = Depends(get_db)):
     """With the log of the last job (operators only: logs can contain build output)."""
     site = get_site(db, sid)
     return to_out(site, with_log=True)
 
 
-@router.post("/{sid}/deploy", response_model=SiteOut, dependencies=[Depends(require("operator"))])
+@router.post("/{sid}/deploy", response_model=SiteOut, dependencies=[Depends(require("sites.deploy"))])
 def deploy(sid: str, db: Session = Depends(get_db)):
     site = get_site(db, sid)
     queue("deploy", site)
@@ -223,7 +223,7 @@ def deploy(sid: str, db: Session = Depends(get_db)):
     return to_out(site)
 
 
-@router.post("/{sid}/stop", response_model=SiteOut, dependencies=[Depends(require("operator"))])
+@router.post("/{sid}/stop", response_model=SiteOut, dependencies=[Depends(require("sites.deploy"))])
 def stop(sid: str, db: Session = Depends(get_db)):
     site = get_site(db, sid)
     queue("stop", site)
@@ -231,7 +231,7 @@ def stop(sid: str, db: Session = Depends(get_db)):
     return to_out(site)
 
 
-@router.delete("/{sid}", status_code=204, dependencies=[Depends(require("operator"))])
+@router.delete("/{sid}", status_code=204, dependencies=[Depends(require("sites.deploy"))])
 def delete_site(sid: str, purge: bool = False, db: Session = Depends(get_db)):
     """Forget the website. With purge=true the containers are removed and the folder is deleted as well."""
     site = get_site(db, sid)

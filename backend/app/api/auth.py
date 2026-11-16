@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import client_ip, current_session, current_user
+from app.api.deps import client_ip, current_session, current_user, permissions_of
 from app.core.audit import audit
 from app.core.config import VERSION, get_settings
 from app.core.db import get_db
@@ -19,7 +19,7 @@ from app.core.security import (
     CSRF_COOKIE, SESSION_COOKIE, decrypt_json, hash_password, login_throttle, new_token, recovery_hash,
     session_expiry, token_hash, totp_verify, validate_new_password, verify_password,
 )
-from app.models import User, UserSession
+from app.models import Role, User, UserSession
 
 router = APIRouter(prefix="/api", tags=["auth"])
 _setup_lock = threading.Lock()  # two simultaneous setup requests must not create two admins
@@ -68,6 +68,14 @@ class UserOut(BaseModel):
     id: int
     username: str
     role: str
+    role_name: str = ""
+    permissions: list[str] = []
+
+
+def user_out(user: User, db: Session) -> UserOut:
+    role = db.get(Role, user.role)
+    return UserOut(id=user.id, username=user.username, role=user.role, role_name=role.name if role else user.role,
+                   permissions=sorted(permissions_of(user, db)))
 
 
 def _user_count(db: Session) -> int:
@@ -126,7 +134,7 @@ def setup(body: SetupRequest, request: Request, response: Response, db: Session 
         db.flush()
         _start_session(db, user, request, response)
     audit("setup", user=user)
-    return UserOut(id=user.id, username=user.username, role=user.role)
+    return user_out(user, db)
 
 
 # Second login step: after the password, users with two-factor login get a short-lived ticket.
@@ -184,7 +192,7 @@ def login(body: Credentials, request: Request, response: Response, db: Session =
         return {"totp_required": True, "ticket": ticket}
     _start_session(db, user, request, response)
     audit("login", user=user)
-    return UserOut(id=user.id, username=user.username, role=user.role)
+    return user_out(user, db)
 
 
 @router.post("/auth/login/2fa", response_model=UserOut)
@@ -208,7 +216,7 @@ def login_second_factor(body: SecondFactor, request: Request, response: Response
         _tickets.pop(key, None)
     _start_session(db, user, request, response)
     audit("login", "", "with two-factor code", user=user)
-    return UserOut(id=user.id, username=user.username, role=user.role)
+    return user_out(user, db)
 
 
 @router.post("/auth/logout", status_code=204)
@@ -221,8 +229,8 @@ def logout(response: Response, session: UserSession = Depends(current_session), 
 
 
 @router.get("/auth/me", response_model=UserOut)
-def me(user: User = Depends(current_user)):
-    return UserOut(id=user.id, username=user.username, role=user.role)
+def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    return user_out(user, db)
 
 
 _DUMMY_HASH = hash_password("x-tools-dummy-password")

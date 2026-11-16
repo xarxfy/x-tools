@@ -154,7 +154,7 @@ ssh -L 8080:127.0.0.1:8080 you@your-server   # then open http://localhost:8080
    ```
 
    `sudo sh setup.sh` again, open `http://192.168.1.10:8080`, enter the setup code.
-3. *Settings → Agents → Add server* for the Proxmox host and every LXC/VM with Docker ([agents.md](agents.md)).
+3. *Administration → Agents → Add server* for the Proxmox host and every LXC/VM with Docker ([agents.md](agents.md)).
 4. Services on other machines: enter their IP under *Host*, so their ports are checked there.
 
 From outside, use a VPN instead of opening a port. HTTPS inside the LAN: Caddy with `tls internal`. Without HTTPS the
@@ -203,14 +203,14 @@ Database migrations run automatically.
 
 ## Backup
 
-*Settings → Backup → Automatic backup* makes the encrypted backup on a schedule. Locations are folders (the newest N
+*Administration → Backup → Automatic backup* makes the encrypted backup on a schedule. Locations are folders (the newest N
 files are kept) and WebDAV (Nextcloud etc., upload only). A folder must be writable **inside the container**: the
 default `/data/backups` lies in the data volume; for another folder add a volume to `x-tools` in
 `deploy/docker-compose.yml`. A backup in the same volume does not protect against losing the server – copy the folder
 elsewhere (rsync, NAS) or add a WebDAV location. The passphrase is stored encrypted in the database so the job can run
 without you; a failed backup shows up as a problem.
 
-**In the UI:** *Settings → Backup* downloads database and secret key as one file, encrypted with a passphrase you
+**In the UI:** *Administration → Backup* downloads database and secret key as one file, encrypted with a passphrase you
 choose, and restores such a file.
 
 **On the command line:** everything lives in the volume `<project>_x-tools-data` (default project name: `deploy`):

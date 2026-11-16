@@ -61,7 +61,7 @@ def run(action: str, container: str, lines: int | None = None) -> dict:
     return result
 
 
-@router.post("/action", dependencies=[Depends(require("operator"))])
+@router.post("/action", dependencies=[Depends(require("docker.control"))])
 def container_action(body: ActionIn):
     try:
         run(body.action, body.container)
@@ -73,7 +73,7 @@ def container_action(body: ActionIn):
     return {"ok": True}
 
 
-@router.post("/logs", dependencies=[Depends(require("operator"))])
+@router.post("/logs", dependencies=[Depends(require("docker.control"))])
 def container_logs(body: LogsIn):
     logs = run("logs", body.container, body.lines).get("logs", "")
     audit("container.logs", body.container)

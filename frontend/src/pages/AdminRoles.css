@@ -1,0 +1,27 @@
+.perm-area {
+  border: 1px solid var(--fill);
+  border-radius: 12px;
+  margin: 12px 0 0;
+  padding: 6px 14px 10px;
+}
+.perm-area legend {
+  padding: 0 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.perm-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 5px 0;
+  font-size: 14px;
+}
+.perm-row input {
+  margin-top: 3px;
+}
+.perm-row.is-missing {
+  opacity: 0.5;
+}
+.role-badge {
+  margin-left: 8px;
+}

@@ -88,7 +88,7 @@ def read_agent(aid: str, db: Session = Depends(get_db)):
     return {**summary(agent), "report": agent.last_report}
 
 
-@router.post("", status_code=201, dependencies=[Depends(require("admin"))])
+@router.post("", status_code=201, dependencies=[Depends(require("admin.agents"))])
 def create_agent(body: AgentIn, request: Request, db: Session = Depends(get_db)):
     name = body.name.strip()
     if not name:
@@ -117,7 +117,7 @@ def stored_options(agent: Agent) -> dict:
         return {}
 
 
-@router.get("/{aid}/install-options", dependencies=[Depends(require("admin"))])
+@router.get("/{aid}/install-options", dependencies=[Depends(require("admin.agents"))])
 def install_options(aid: str, db: Session = Depends(get_db)):
     """Options of the last install command for prefilling – secrets are never sent back, only whether one is stored."""
     agent = get_agent(db, aid)
@@ -128,7 +128,7 @@ def install_options(aid: str, db: Session = Depends(get_db)):
     return out
 
 
-@router.post("/{aid}/install", dependencies=[Depends(require("admin"))])
+@router.post("/{aid}/install", dependencies=[Depends(require("admin.agents"))])
 def new_install(aid: str, request: Request, body: dict = Body(...), db: Session = Depends(get_db)):
     """New install command (e.g. to reinstall or add Proxmox later). Replaces the agent key.
     Empty secret fields keep the stored secrets of the last install command."""
@@ -169,7 +169,7 @@ def clean_tags(tags: list[str]) -> list[str]:
     return out
 
 
-@router.put("/{aid}/meta", dependencies=[Depends(require("operator"))])
+@router.put("/{aid}/meta", dependencies=[Depends(require("servers.organize"))])
 def update_meta(aid: str, body: MetaIn, db: Session = Depends(get_db)):
     """Group (one) and tags (any number, free text) of a server."""
     agent = get_agent(db, aid)
@@ -209,7 +209,7 @@ def list_groups(db: Session = Depends(get_db)):
     return [group_out(g) for g in db.scalars(select(ServerGroup).order_by(ServerGroup.position, ServerGroup.name))]
 
 
-@groups_router.post("", status_code=201, dependencies=[Depends(require("operator"))])
+@groups_router.post("", status_code=201, dependencies=[Depends(require("servers.organize"))])
 def create_group(body: GroupIn, db: Session = Depends(get_db)):
     name = body.name.strip()
     if not name:
@@ -223,7 +223,7 @@ def create_group(body: GroupIn, db: Session = Depends(get_db)):
     return group_out(group)
 
 
-@groups_router.put("/order", dependencies=[Depends(require("operator"))])
+@groups_router.put("/order", dependencies=[Depends(require("servers.organize"))])
 def order_groups(body: GroupOrder, db: Session = Depends(get_db)):
     found = {g.id: g for g in db.scalars(select(ServerGroup))}
     if set(body.ids) != set(found) or len(body.ids) != len(found):
@@ -234,7 +234,7 @@ def order_groups(body: GroupOrder, db: Session = Depends(get_db)):
     return [group_out(found[gid]) for gid in body.ids]
 
 
-@groups_router.put("/{gid}", dependencies=[Depends(require("operator"))])
+@groups_router.put("/{gid}", dependencies=[Depends(require("servers.organize"))])
 def rename_group(gid: str, body: GroupIn, db: Session = Depends(get_db)):
     group = db.get(ServerGroup, gid)
     if group is None:
@@ -249,7 +249,7 @@ def rename_group(gid: str, body: GroupIn, db: Session = Depends(get_db)):
     return group_out(group)
 
 
-@groups_router.delete("/{gid}", status_code=204, dependencies=[Depends(require("operator"))])
+@groups_router.delete("/{gid}", status_code=204, dependencies=[Depends(require("servers.organize"))])
 def delete_group(gid: str, db: Session = Depends(get_db)):
     group = db.get(ServerGroup, gid)
     if group is None:
@@ -262,7 +262,7 @@ def delete_group(gid: str, db: Session = Depends(get_db)):
     return Response(status_code=204)
 
 
-@router.put("/{aid}", dependencies=[Depends(require("admin"))])
+@router.put("/{aid}", dependencies=[Depends(require("admin.agents"))])
 def update_agent(aid: str, body: AgentUpdate, db: Session = Depends(get_db)):
     agent = get_agent(db, aid)
     if body.name is not None:
@@ -284,7 +284,7 @@ def update_agent(aid: str, body: AgentUpdate, db: Session = Depends(get_db)):
     return summary(agent)
 
 
-@router.delete("/{aid}", status_code=204, dependencies=[Depends(require("admin"))])
+@router.delete("/{aid}", status_code=204, dependencies=[Depends(require("admin.agents"))])
 def delete_agent(aid: str, db: Session = Depends(get_db)):
     agent = get_agent(db, aid)
     db.delete(agent)

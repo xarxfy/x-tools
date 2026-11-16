@@ -20,7 +20,8 @@
     "proxmox": "Proxmox",
     "docker": "Docker",
     "cloudflare": "Cloudflare",
-    "jobs": "Jobs"
+    "jobs": "Jobs",
+    "administration": "Administration"
   },
   "auth": {
     "username": "Username",
@@ -536,16 +537,16 @@
     "installAgent": "Set up an agent",
     "askAdmin": "Ask an admin to set up an agent.",
     "proxmoxEmptyTitle": "No Proxmox host connected",
-    "proxmoxEmptyText": "Install the X-TOOLS agent on your Proxmox host (Settings → Agents → Add server → Proxmox host). It shows nodes, storage, all LXCs and VMs with their configuration – outbound only, no open ports.",
+    "proxmoxEmptyText": "Install the X-TOOLS agent on your Proxmox host (Administration → Agents → Add server → Proxmox host). It shows nodes, storage, all LXCs and VMs with their configuration – outbound only, no open ports.",
     "dockerEmptyTitle": "No Docker data yet",
-    "dockerEmptyText": "Containers of this server come from the collector container x-tools-collector (started by setup.sh). For other servers, LXCs or VMs with Docker install an agent (Settings → Agents → Add server → Docker host).",
+    "dockerEmptyText": "Containers of this server come from the collector container x-tools-collector (started by setup.sh). For other servers, LXCs or VMs with Docker install an agent (Administration → Agents → Add server → Docker host).",
     "pendingTitle": "Waiting for the first report",
     "pending": "created, but has not reported yet",
     "pendingLink": "Show the install command again →",
     "linuxSub_one": "{{count}} Linux server",
     "linuxSub_other": "{{count}} Linux servers",
     "linuxEmptyTitle": "No Linux server connected",
-    "linuxEmptyText": "Install the X-TOOLS agent on any Linux server, VM or LXC (Settings → Agents → Add server → Linux server). It shows load, memory, disks, systemd services, open ports and pending updates – outbound only, no open ports."
+    "linuxEmptyText": "Install the X-TOOLS agent on any Linux server, VM or LXC (Administration → Agents → Add server → Linux server). It shows load, memory, disks, systemd services, open ports and pending updates – outbound only, no open ports."
   },
   "history": {
     "load": "Load",
@@ -623,11 +624,6 @@
       "viewer": "Viewer",
       "operator": "Operator",
       "admin": "Admin"
-    },
-    "rolesHint": {
-      "viewer": "Sees everything, changes nothing – no credentials, no logs.",
-      "operator": "Maintains services, customers and credentials, starts and stops containers.",
-      "admin": "Everything, including users, settings, agents, backups and the audit log."
     }
   },
   "audit": {
@@ -785,7 +781,7 @@
     "notSetUp": "Cloudflare is not connected.",
     "setUp": "Connect it →",
     "partial": "Some data could not be read:",
-    "permissionsHint": "Check the permissions of the API token (Settings → Cloudflare).",
+    "permissionsHint": "Check the permissions of the API token (Administration → Cloudflare).",
     "tabs": {
       "hosts": "Hostnames",
       "dns": "DNS",
@@ -1189,5 +1185,113 @@
     "userCount_other": "{{count}} users",
     "ruleCount_one": "{{count}} rule",
     "ruleCount_other": "{{count}} rules"
+  },
+  "administration": {
+    "sub": "Users, roles and permissions, agents, notifications, backup – only for people with these permissions",
+    "forbidden": "You do not have access to the administration.",
+    "tab": {
+      "users": "Users",
+      "roles": "Roles & permissions",
+      "audit": "Audit log",
+      "agents": "Agents",
+      "notifications": "Notifications",
+      "cloudflare": "Cloudflare",
+      "backup": "Backup"
+    }
+  },
+  "roles": {
+    "intro": "A role is a set of permissions. Each user has one role. Create your own roles; Viewer and Operator are presets you can adjust, Administrator can do everything and cannot be changed.",
+    "add": "Add role",
+    "none": "No roles.",
+    "builtin": "built in",
+    "summary": "{{perms}} of {{total}} permissions · {{users}} users",
+    "view": "View",
+    "editTitle": "Role: {{name}}",
+    "name": "Name",
+    "copyFrom": "Start from",
+    "lockedHint": "The Administrator role always has every permission and cannot be changed.",
+    "builtinHint": "Built-in role: the name is fixed, the permissions can be changed.",
+    "notYours": "You cannot give permissions you do not have yourself."
+  },
+  "perm": {
+    "area": {
+      "services": "Services and credentials",
+      "customers": "Customers and websites",
+      "monitoring": "Monitoring",
+      "servers": "Servers",
+      "administration": "Administration"
+    },
+    "services.edit": {
+      "name": "Edit services",
+      "hint": "add, change and delete services"
+    },
+    "credentials.manage": {
+      "name": "Credentials",
+      "hint": "see, reveal and edit stored logins"
+    },
+    "customers.edit": {
+      "name": "Edit customers",
+      "hint": "customers, categories, website checks"
+    },
+    "sites.deploy": {
+      "name": "Deploy websites",
+      "hint": "deploy customer websites from git"
+    },
+    "jobs.edit": {
+      "name": "Edit jobs",
+      "hint": "heartbeat monitors"
+    },
+    "alerts.pause": {
+      "name": "Pause alerts",
+      "hint": "maintenance windows"
+    },
+    "docker.control": {
+      "name": "Control Docker",
+      "hint": "start, stop, restart containers and read their logs"
+    },
+    "proxmox.control": {
+      "name": "Control Proxmox",
+      "hint": "power and settings of LXCs and VMs"
+    },
+    "servers.control": {
+      "name": "Control servers",
+      "hint": "restart services, read their logs, reboot"
+    },
+    "servers.manage": {
+      "name": "Manage servers",
+      "hint": "install updates, users and SSH keys, firewall on the servers"
+    },
+    "servers.organize": {
+      "name": "Organize servers",
+      "hint": "groups and tags"
+    },
+    "cloudflare.edit": {
+      "name": "Edit Cloudflare",
+      "hint": "DNS records and tunnel routes"
+    },
+    "admin.users": {
+      "name": "Manage users",
+      "hint": "create users, change their role, reset passwords"
+    },
+    "admin.roles": {
+      "name": "Manage roles",
+      "hint": "create and change roles and permissions"
+    },
+    "admin.agents": {
+      "name": "Manage agents",
+      "hint": "add, reinstall, rename and delete agents"
+    },
+    "admin.settings": {
+      "name": "Settings",
+      "hint": "general settings, notifications, Cloudflare connection, updates"
+    },
+    "admin.backup": {
+      "name": "Backup",
+      "hint": "download and restore backups, automatic backup"
+    },
+    "admin.audit": {
+      "name": "Audit log",
+      "hint": "see who did what"
+    }
   }
 }

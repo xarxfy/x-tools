@@ -59,7 +59,7 @@ export function HostHead({ anchor, name, state, sub, sys, source }: {
 
 export function SetupHint({ kind }: { kind: "proxmox" | "docker" | "linux" }) {
   const { t } = useTranslation();
-  const isAdmin = useCan()("admin");
+  const isAdmin = useCan()("admin.agents");
   return (
     <div className="card card-pad setup-hint">
       <span className="setup-icon"><Icon name={kind === "proxmox" ? "proxmox" : kind === "linux" ? "servers" : "docker"} size={26} /></span>
@@ -67,7 +67,7 @@ export function SetupHint({ kind }: { kind: "proxmox" | "docker" | "linux" }) {
         <h2>{t(`fleet.${kind}EmptyTitle`)}</h2>
         <p className="muted">{t(`fleet.${kind}EmptyText`)}</p>
         {isAdmin ? (
-          <Link className="btn btn-primary" to="/settings?tab=agents">{t("fleet.installAgent")}</Link>
+          <Link className="btn btn-primary" to="/admin?tab=agents">{t("fleet.installAgent")}</Link>
         ) : (
           <p className="muted small-note">{t("fleet.askAdmin")}</p>
         )}
@@ -85,7 +85,7 @@ export function Pending({ agents }: { agents: AgentSummary[] }) {
       <ul className="plain-list">
         {agents.map((a) => <li key={a.id}><Dot state="warn" /> {a.name} <span className="muted">– {t("fleet.pending")}</span></li>)}
       </ul>
-      <Link to="/settings?tab=agents" className="small-note">{t("fleet.pendingLink")}</Link>
+      <Link to="/admin?tab=agents" className="small-note">{t("fleet.pendingLink")}</Link>
     </div>
   );
 }

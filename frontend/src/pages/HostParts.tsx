@@ -60,7 +60,7 @@ export function counts(snap: Snapshot | null | undefined) {
 /** One server as the pages need it – the machine X-TOOLS runs on, or an agent. */
 export function ProxmoxTab({ px, agentId, control = false }: { px: Proxmox; agentId: string; control?: boolean }) {
   const { t } = useTranslation();
-  const canControl = useCan()("operator") && control;
+  const canControl = useCan()("proxmox.control") && control;
   const [showUpdates, setShowUpdates] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -186,7 +186,7 @@ export function DockerTab({ snap, protectedNames, readonly: agentReadonly, agent
   control?: DockerControl;
 }) {
   const { t } = useTranslation();
-  const canOperate = useCan()("operator");
+  const canOperate = useCan()("docker.control");
   const readonly = agentReadonly || !canOperate || !control;
   const [file, setFile] = useState<ProjectFile | null>(null);
   const [logs, setLogs] = useState<string | null>(null);

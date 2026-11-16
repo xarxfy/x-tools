@@ -34,7 +34,7 @@ def get_features():
     return load()
 
 
-@router.put("", response_model=Features, dependencies=[Depends(require("admin"))])
+@router.put("", response_model=Features, dependencies=[Depends(require("admin.settings"))])
 def put_features(body: Features):
     state.save(KEY, {"customers": body.customers})
     audit("settings.features", "", f"customers={'on' if body.customers else 'off'}")

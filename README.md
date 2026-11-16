@@ -73,7 +73,7 @@ X-TOOLS listens on `127.0.0.1:8080`. Make it reachable, open it and enter the se
 | Only at home, nothing public | LAN mode, agents on Proxmox and LXCs → [installation.md](docs/installation.md#homelab-only-no-vps-nothing-public) |
 | Just for me, no proxy | SSH tunnel or VPN → [installation.md](docs/installation.md#d-private-only-vpn-or-ssh) |
 
-Update: `sudo x-tools-ctl update` · Backup: *Settings → Backup* · Remove: `curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/uninstall.sh | sudo bash`
+Update: `sudo x-tools-ctl update` · Backup: *Administration → Backup* · Remove: `curl -fsSL https://raw.githubusercontent.com/xarxfy/x-tools/main/uninstall.sh | sudo bash`
 
 ## Documentation
 

@@ -27,7 +27,8 @@
 
 - First account protected by a one-time setup code (server log). Argon2 password hashes, session tokens stored
   hashed, CSRF protection, login throttling, optional two-factor login (TOTP) with recovery codes.
-- Roles (viewer, operator, admin) are enforced by the API, not only hidden in the UI. Logins, viewed and changed
+- Roles with free permissions (built in: viewer, operator, administrator; your own on top) are enforced by the API, not
+  only hidden in the UI. Nobody can hand out permissions they do not have; the last user manager cannot be removed. Logins, viewed and changed
   credentials, container actions and all changes land in the audit log (user, IP, one year).
 - Credentials, notification tokens, the Cloudflare token and the Proxmox/Cloudflare tokens of agent install commands
   are encrypted with the instance's secret key; secrets are never sent back to the browser after saving. Backups
@@ -40,7 +41,7 @@
   It sees neither the database nor the secret key (no `.env`, only the exchange volume), takes jobs from a queue,
   validates every field again, works only below `XT_SITES_DIR` and runs git/compose with a minimal environment.
   Tokens reach git through environment variables, not the command line or `.git/config`. Whoever may deploy a
-  website (operator) can run arbitrary code from that repository on the server – only give that role to people you trust.
+  website (permission *Deploy websites*, part of the operator role) can run arbitrary code from that repository on the server – only give that role to people you trust.
 - Cloudflare is read-only unless an admin allows changes; changes are limited to DNS records and tunnel routes.
 - Run X-TOOLS behind HTTPS or on a private connection. An additional login in front (Cloudflare Access, VPN) is
   recommended for anything with credentials in it.

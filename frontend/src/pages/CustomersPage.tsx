@@ -36,7 +36,7 @@ export function CustomersPage() {
   const [adding, setAdding] = useState(false);
   const [managing, setManaging] = useState(false);
   const navigate = useNavigate();
-  const edit = useCan()("operator");
+  const edit = useCan()("customers.edit");
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
   const byId = new Map((services.data ?? []).map((s) => [s.id, s]));
@@ -116,7 +116,8 @@ export function CustomerPage() {
   const [keys, setKeys] = useState<Service | null>(null);
   const checks = useSiteChecks();
   const runChecks = useRunSiteChecks();
-  const edit = useCan()("operator");
+  const can = useCan();
+  const edit = can("customers.edit");
   const categories = useCategories().data ?? [];
 
   if (!customers.data) return <Loading error={customers.error} retry={() => customers.refetch()} />;
@@ -196,7 +197,7 @@ export function CustomerPage() {
                   ))}
                 </div>
               </div>
-              {edit && (
+              {can("credentials.manage") && (
                 <button type="button" className="btn btn-ghost" title={t("credentials.show")}
                         onClick={(e) => { e.stopPropagation(); setKeys(s); }}>
                   <Icon name="credentials" size={16} />

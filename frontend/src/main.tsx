@@ -21,6 +21,7 @@ import { DomainsPage } from "./pages/DomainsPage";
 import { JobsPage } from "./pages/JobsPage";
 import { DockerPage, ProxmoxPage, ServerRedirect } from "./pages/FleetPages";
 import { ServerRoute, ServersPage } from "./pages/ServersPage";
+import { AdminPage } from "./pages/AdminPage";
 import { AssistantPage } from "./pages/AssistantPage";
 import { CloudflarePage } from "./pages/CloudflarePage";
 import { GuestPage } from "./pages/GuestPage";
@@ -59,6 +60,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/cloudflare" element={<CloudflarePage />} />
             <Route path="/credentials" element={<CredentialsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/help" element={<HelpPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

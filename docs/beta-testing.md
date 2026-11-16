@@ -72,7 +72,7 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 
 ## 8. Agents – Docker hosts
 
-- [ ] *Settings → Agents → Add server → Docker host*: the install command runs on an LXC/VM/server
+- [ ] *Administration → Agents → Add server → Docker host*: the install command runs on an LXC/VM/server
 - [ ] Until the first report the server is listed as *waiting for the first report*
 - [ ] The host appears on *Docker* within a minute with metrics and containers
 - [ ] Running the same install command twice is rejected ("already used")
@@ -99,7 +99,7 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 
 ## 11. Cloudflare (if you use it)
 
-- [ ] *Settings → Cloudflare*: a token with read permissions is accepted, a wrong one rejected
+- [ ] *Administration → Cloudflare*: a token with read permissions is accepted, a wrong one rejected
 - [ ] *Cloudflare* appears in the sidebar; zones, DNS records, tunnels and Access apps are correct
 - [ ] *Hostnames* show the right chain (DNS → tunnel → route → Access) and the matching service
 - [ ] A service port different from the tunnel route is shown as a problem (also on the overview)
@@ -165,7 +165,7 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] *End now* removes the banner; a problem that is still there is reported after the delay
 - [ ] *Jobs → Add job*: call the shown address with `curl`; the job is *on time*; stop calling and it turns *overdue* with a message
 - [ ] `…/fail` marks the job failed and sends a message; the next successful call says *back to normal*
-- [ ] *Settings → Backup → Automatic backup*: add a folder, set a passphrase, *Back up now* writes a file; an unwritable folder shows a problem
+- [ ] *Administration → Backup → Automatic backup*: add a folder, set a passphrase, *Back up now* writes a file; an unwritable folder shows a problem
 - [ ] A backup file from the folder can be restored with the passphrase (on a test instance)
 - [ ] *Settings → About → Updates* shows the check result; *Check now* works
 
@@ -184,16 +184,21 @@ Thank you for testing X-TOOLS! Pick the sections that fit your setup – nobody 
 - [ ] Turn on two-factor login (QR code); login asks for the code
 - [ ] A recovery code works once, then it is used up; turn two-factor login off again
 
-## 20. Users, roles, audit log
+## 20. Users, roles and permissions, audit log (area *Administration*, visible only with administration permissions)
 
-- [ ] **Viewer**: sees everything, no credentials, no container/Proxmox actions, no logs, only *Account* in settings
-- [ ] **Operator**: edits services and credentials, controls containers and guests; no users, agents, backups
+- [ ] **Viewer** sees everything but changes nothing and sees no *Administration* in the sidebar; *Settings* shows only *Account*
+- [ ] **Operator** edits services, customers, credentials and controls containers and servers; no users, agents, backups
+- [ ] *Administration → Roles & permissions*: create a role (e.g. Support) with a few permissions, assign it to a user – exactly those things work for that user (try one allowed and one forbidden action)
+- [ ] Changing a role's permissions takes effect for the user without logging in again; the built-in *Administrator* cannot be changed
+- [ ] A role that is still assigned cannot be deleted; nobody can give a role or a user more permissions than their own
+- [ ] The last user who can manage users cannot be disabled, deleted or demoted
 - [ ] Disable a user → logged out, cannot log in; reset the password → new password works
-- [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes
+- [ ] The audit log shows logins (also failed), viewed credentials, container/Proxmox actions, Cloudflare changes, role changes
+- [ ] Old links like `/settings?tab=agents` lead to the new place under *Administration*
 
 ## 21. Backup and update
 
-- [ ] *Settings → Backup*: download a backup with a passphrase
+- [ ] *Administration → Backup*: download a backup with a passphrase
 - [ ] Restore it (ideally on a test installation): data and credentials are back, everyone is logged out
 - [ ] `git pull && sudo sh deploy/setup.sh` keeps data, users and settings
 

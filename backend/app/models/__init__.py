@@ -21,6 +21,17 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class Role(Base):
+    """A role: a name and a set of permissions (core/permissions.py). viewer, operator and admin are built in."""
+
+    __tablename__ = "roles"
+
+    id: Mapped[str] = mapped_column(String(20), primary_key=True, default=new_id)  # "admin" … or 12 hex chars
+    name: Mapped[str] = mapped_column(String(40), unique=True)
+    permissions: Mapped[list] = mapped_column(JSON, default=list)
+    builtin: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -28,7 +39,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     # v1 has a single admin; the role column makes more users/roles a UI-only change later.
-    role: Mapped[str] = mapped_column(String(20), default="admin")  # admin | operator | viewer
+    role: Mapped[str] = mapped_column(String(20), default="admin")  # id of a Role
     disabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

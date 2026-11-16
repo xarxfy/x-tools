@@ -64,7 +64,7 @@ function ServerRow({ a, onTag }: { a: AgentSummary; onTag: (tag: string) => void
 /** Installs updates on several servers one after the other (they run in the background on each server). */
 function BulkUpdate({ servers }: { servers: AgentSummary[] }) {
   const { t } = useTranslation();
-  const canAdmin = useCan()("admin");
+  const canAdmin = useCan()("servers.manage");
   const eligible = servers.filter((s) => s.control && s.has_linux && s.updates);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Record<string, string>>({});
@@ -149,7 +149,8 @@ export function ServersPage() {
   const agents = useAgents();
   const groups = useServerGroups();
   const { hash } = useLocation();
-  const edit = useCan()("operator");
+  const can = useCan();
+  const edit = can("servers.organize");
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState("");
   const [managing, setManaging] = useState(false);
@@ -195,7 +196,7 @@ export function ServersPage() {
             <div className="section-row">
               <h2 className="section-title">{s.name ?? t("servers.list.noGroup")}<span className="muted srv-count">{t("servers.list.serverCount", { count: s.servers.length })}</span></h2>
               <div className="section-tools">
-                {edit && s.id && <button type="button" className="btn btn-ghost btn-small" onClick={() => setPause({ scope: "group", target: s.id })}>{t("servers.list.pause")}</button>}
+                {can("alerts.pause") && s.id && <button type="button" className="btn btn-ghost btn-small" onClick={() => setPause({ scope: "group", target: s.id })}>{t("servers.list.pause")}</button>}
                 <BulkUpdate servers={s.servers} />
               </div>
             </div>
@@ -267,7 +268,8 @@ export function ServerPage({ agent }: { agent: AgentSummary }) {
   const { t } = useTranslation();
   const detail = useAgent(agent.id);
   const [params, setParams] = useSearchParams();
-  const edit = useCan()("operator");
+  const can = useCan();
+  const edit = can("servers.organize");
   const groups = useServerGroups().data ?? [];
   const [editing, setEditing] = useState(false);
   const [pausing, setPausing] = useState(false);
@@ -288,7 +290,7 @@ export function ServerPage({ agent }: { agent: AgentSummary }) {
         {agent.tags.map((x) => <span key={x} className="tag">#{x}</span>)}
         <span className="spacer" />
         {edit && <button type="button" className="btn btn-ghost btn-small" onClick={() => setEditing(true)}>{t("servers.page.edit")}</button>}
-        {edit && <button type="button" className="btn btn-ghost btn-small" onClick={() => setPausing(true)}>{t("servers.list.pause")}</button>}
+        {can("alerts.pause") && <button type="button" className="btn btn-ghost btn-small" onClick={() => setPausing(true)}>{t("servers.list.pause")}</button>}
       </div>
       <div className="tabs server-tabs" role="tablist">
         {(["overview", "services", "network", "users"] as ServerTab[]).map((x) => (

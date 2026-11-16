@@ -13,7 +13,7 @@ export function SitesSection({ customerId }: { customerId: string }) {
   const { t } = useTranslation();
   const sites = useSites(customerId);
   const action = useSiteAction();
-  const edit = useCan()("operator");
+  const edit = useCan()("sites.deploy");
   const [editing, setEditing] = useState<Site | "new" | null>(null);
   const [log, setLog] = useState<Site | null>(null);
   const list = sites.data?.sites ?? [];

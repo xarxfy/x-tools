@@ -49,7 +49,7 @@ def read_customer(cid: str, db: Session = Depends(get_db)):
     return to_out(get_customer(db, cid))
 
 
-@router.post("", response_model=CustomerOut, status_code=201, dependencies=[Depends(require("operator"))])
+@router.post("", response_model=CustomerOut, status_code=201, dependencies=[Depends(require("customers.edit"))])
 def create_customer(body: CustomerIn, db: Session = Depends(get_db)):
     customer = Customer()
     db.add(customer)
@@ -59,7 +59,7 @@ def create_customer(body: CustomerIn, db: Session = Depends(get_db)):
     return to_out(customer)
 
 
-@router.put("/{cid}", response_model=CustomerOut, dependencies=[Depends(require("operator"))])
+@router.put("/{cid}", response_model=CustomerOut, dependencies=[Depends(require("customers.edit"))])
 def update_customer(cid: str, body: CustomerIn, db: Session = Depends(get_db)):
     customer = get_customer(db, cid)
     apply(customer, body, db)
@@ -68,7 +68,7 @@ def update_customer(cid: str, body: CustomerIn, db: Session = Depends(get_db)):
     return to_out(customer)
 
 
-@router.delete("/{cid}", status_code=204, dependencies=[Depends(require("operator"))])
+@router.delete("/{cid}", status_code=204, dependencies=[Depends(require("customers.edit"))])
 def delete_customer(cid: str, db: Session = Depends(get_db)):
     customer = get_customer(db, cid)
     db.delete(customer)  # services stay, customer_id becomes NULL
@@ -98,7 +98,7 @@ def unique_name(db: Session, name: str, own: str = "") -> None:
             raise HTTPException(409, "A category with this name already exists")
 
 
-@categories.post("", status_code=201, dependencies=[Depends(require("operator"))])
+@categories.post("", status_code=201, dependencies=[Depends(require("customers.edit"))])
 def create_category(body: CategoryIn, db: Session = Depends(get_db)):
     unique_name(db, body.name)
     last = db.scalars(select(CustomerCategory.position).order_by(CustomerCategory.position.desc())).first()
@@ -113,7 +113,7 @@ class OrderIn(BaseModel):
     ids: list[str] = Field(max_length=100)
 
 
-@categories.put("/order", dependencies=[Depends(require("operator"))])
+@categories.put("/order", dependencies=[Depends(require("customers.edit"))])
 def order_categories(body: OrderIn, db: Session = Depends(get_db)):
     found = {c.id: c for c in db.scalars(select(CustomerCategory))}
     if set(body.ids) != set(found):
@@ -124,7 +124,7 @@ def order_categories(body: OrderIn, db: Session = Depends(get_db)):
     return [category_out(found[cid]) for cid in body.ids]
 
 
-@categories.put("/{cid}", dependencies=[Depends(require("operator"))])
+@categories.put("/{cid}", dependencies=[Depends(require("customers.edit"))])
 def rename_category(cid: str, body: CategoryIn, db: Session = Depends(get_db)):
     category = db.get(CustomerCategory, cid)
     if category is None:
@@ -136,7 +136,7 @@ def rename_category(cid: str, body: CategoryIn, db: Session = Depends(get_db)):
     return category_out(category)
 
 
-@categories.delete("/{cid}", status_code=204, dependencies=[Depends(require("operator"))])
+@categories.delete("/{cid}", status_code=204, dependencies=[Depends(require("customers.edit"))])
 def delete_category(cid: str, db: Session = Depends(get_db)):
     category = db.get(CustomerCategory, cid)
     if category is None:

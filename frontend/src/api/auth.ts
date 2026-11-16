@@ -11,6 +11,8 @@ export interface User {
   id: number;
   username: string;
   role: string;
+  role_name: string;
+  permissions: string[];
 }
 
 export interface Credentials {

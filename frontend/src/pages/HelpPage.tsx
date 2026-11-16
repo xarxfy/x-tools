@@ -23,8 +23,8 @@ const DOCS: Doc[] = [
       <li>Add your <Link to="/services">services</Link> – name, ports, domains and folder are enough.</li>
       <li>Optional: switch on <Link to="/settings">customers</Link> if you host sites for others; their websites are
         checked from outside.</li>
-      <li>Set up <Link to="/settings?tab=notifications">notifications</Link> so you hear about problems.</li>
-      <li>Connect more servers with an <Link to="/settings?tab=agents">agent</Link>.</li>
+      <li>Set up <Link to="/admin?tab=notifications">notifications</Link> so you hear about problems.</li>
+      <li>Connect more servers with an <Link to="/admin?tab=agents">agent</Link>.</li>
     </ol>
   </>, "start first steps services customers notifications agent", [
     doc("start-overview", "Overview", <>
@@ -130,7 +130,7 @@ const DOCS: Doc[] = [
   </>, "agents servers home outbound", [
     doc("agents-setup", "Set up an agent", <>
       <ol>
-        <li><Link to="/settings?tab=agents">Settings → Agents</Link> → <em>Add server</em>. Choose
+        <li><Link to="/admin?tab=agents">Administration → Agents</Link> → <em>Add server</em>. Choose
           <em>Linux server</em> (any server, VM or LXC: services, ports, disks, updates), <em>Proxmox host</em>
           (enter the API token) or <em>Docker host</em> (a server, LXC or VM with Docker).
           Docker containers are only visible to an agent on the same machine, so install one on the Proxmox host and
@@ -144,7 +144,7 @@ const DOCS: Doc[] = [
       <p>Agents of the predecessor Server-Info keep working after the import – just point their URL to X-TOOLS.</p>
     </>, "setup agent key env compose"),
     doc("agents-remove", "Remove an agent", <>
-      <p>Delete the agent under <Link to="/settings?tab=agents">Settings → Agents</Link> – X-TOOLS then rejects its
+      <p>Delete the agent under <Link to="/admin?tab=agents">Administration → Agents</Link> – X-TOOLS then rejects its
         reports – and run this as root on that server (works for the systemd service and the Docker variant):</p>
       <pre className="code command">{"systemctl disable --now x-tools-agent 2>/dev/null; rm -rf /opt/x-tools-agent " +
         "/etc/x-tools-agent /etc/systemd/system/x-tools-agent.service; systemctl daemon-reload 2>/dev/null; " +
@@ -184,7 +184,7 @@ const DOCS: Doc[] = [
     </>, "proxmox token pveauditor lxc vm"),
   ]),
   doc("cloudflare", "Cloudflare", <>
-    <p>Read-only: under <Link to="/settings?tab=cloudflare">Settings → Cloudflare</Link> you store an API token with read
+    <p>Read-only: under <Link to="/admin?tab=cloudflare">Administration → Cloudflare</Link> you store an API token with read
       permissions (Zone, DNS, Cloudflare Tunnel, Access: Apps and Policies). The <em>Cloudflare</em> page then shows
       per hostname the chain DNS record → tunnel → route → Access app and the service using it, and marks problems:
       no DNS record, a tunnel without route for the hostname, a route to a different port than the service uses,
@@ -211,18 +211,23 @@ const DOCS: Doc[] = [
         server, add an access token.</p>
     </>, "ntfy topic push"),
   ]),
-  doc("users", "Users & roles", <>
-    <p>Under <Link to="/settings?tab=users">Settings → Users</Link> admins add users and give them a role:</p>
+  doc("users", "Users, roles & permissions", <>
+    <p>Under <Link to="/admin?tab=users">Administration</Link> (visible only to people with administration permissions)
+      admins add users and give each a <strong>role</strong>. A role is a set of permissions that you choose yourself
+      under <Link to="/admin?tab=roles">Roles &amp; permissions</Link>, for example &ldquo;Support&rdquo; may restart
+      containers but not see credentials. Three roles are built in:</p>
     <ul>
-      <li><strong>Viewer</strong> – sees everything, changes nothing; no credentials, no container logs.</li>
-      <li><strong>Operator</strong> – maintains services, customers and credentials, starts/stops containers.</li>
-      <li><strong>Admin</strong> – everything, including users, settings, agents, backups and the audit log.</li>
+      <li><strong>Viewer</strong> – sees everything, changes nothing (preset without permissions).</li>
+      <li><strong>Operator</strong> – maintains services, customers, credentials, containers and servers (preset).</li>
+      <li><strong>Administrator</strong> – everything, including users, roles, agents, settings, backups and the audit
+        log. Cannot be changed.</li>
     </ul>
-    <p>Disabling a user or resetting the password logs them out everywhere. There is always at least one active
-      admin. Users change their own password and two-factor login under Settings → Account.</p>
-  </>, "users roles viewer operator admin", [
+    <p>Nobody can give a role (or a user) more permissions than they have themselves. Disabling a user or resetting
+      the password logs them out everywhere. There is always at least one active user who can manage users. Users change
+      their own password and two-factor login under Settings → Account.</p>
+  </>, "users roles permissions rights viewer operator admin administration", [
     doc("users-audit", "Audit log", <>
-      <p><Link to="/settings?tab=audit">Settings → Audit log</Link> shows who did what and when, with IP address:
+      <p><Link to="/admin?tab=audit">Administration → Audit log</Link> shows who did what and when, with IP address:
         logins (also failed ones), viewed and changed credentials, container actions, changes to services,
         customers, users, agents and settings, backups. Entries are kept for one year. Passwords never appear in it.</p>
     </>, "audit log who what when"),
@@ -238,7 +243,7 @@ const DOCS: Doc[] = [
         wrong logins are slowed down.</li>
       <li>Credentials and notification tokens are encrypted with the secret key (<code>secret.key</code> in the data
         volume or <code>XT_SECRET_KEY</code>).</li>
-      <li><strong>Back up regularly:</strong> <Link to="/settings?tab=backup">Settings → Backup</Link> downloads an
+      <li><strong>Back up regularly:</strong> <Link to="/admin?tab=backup">Administration → Backup</Link> downloads an
         encrypted file with database and secret key; the same page restores it.</li>
       <li>Turn on two-factor login under <Link to="/settings?tab=account">Settings → Account</Link>. Keep the recovery
         codes – each one replaces a code once if you lose your phone.</li>

@@ -34,12 +34,12 @@ export function CloudflarePage() {
     return (
       <>
         <PageHead title="Cloudflare" />
-        <Empty>{t("cloudflare.notSetUp")} {can("admin") && <Link to="/settings?tab=cloudflare">{t("cloudflare.setUp")}</Link>}</Empty>
+        <Empty>{t("cloudflare.notSetUp")} {can("admin.settings") && <Link to="/admin?tab=cloudflare">{t("cloudflare.setUp")}</Link>}</Empty>
       </>
     );
   }
   const snap = cf.data.snapshot;
-  const edit = can("operator") && cf.data.allow_write;
+  const edit = can("cloudflare.edit") && cf.data.allow_write;
   const remoteTunnels = snap.tunnels.filter((tn) => tn.remote_config);
   const problems = cf.data.hosts.filter((h) => h.problems.length);
   const errors = Object.entries(snap.errors ?? {});
@@ -48,7 +48,7 @@ export function CloudflarePage() {
     <>
       <PageHead title="Cloudflare" sub={t("cloudflare.sub", { zones: snap.zones.length, tunnels: snap.tunnels.length, when: ago(snap.fetched_at) })}>
         <SearchField value={query} onChange={setQuery} />
-        {can("operator") && (
+        {can("cloudflare.edit") && (
           <button type="button" className="btn" disabled={refresh.isPending} onClick={() => refresh.mutate()}>
             <Icon name="refresh" size={16} />
             {refresh.isPending ? t("cloudflare.refreshing") : t("cloudflare.refresh")}

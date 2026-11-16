@@ -8,25 +8,26 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.api.auth import USERNAME_PATTERN
-from app.api.deps import ROLES, require
+from app.api.deps import permissions_of, require
+from app.core.permissions import ALL
 from app.core.audit import audit
 from app.core.db import get_db
 from app.core.security import hash_password, validate_new_password
-from app.models import AuditLog, User, UserSession
+from app.models import AuditLog, Role, User, UserSession
 
 router = APIRouter(prefix="/api", tags=["users"])
-ADMIN = [Depends(require("admin"))]
-ROLE_PATTERN = "^(" + "|".join(ROLES) + ")$"
+ADMIN = [Depends(require("admin.users"))]
+AUDIT = [Depends(require("admin.audit"))]
 
 
 class UserIn(BaseModel):
     username: str = Field(pattern=USERNAME_PATTERN)
-    role: str = Field(pattern=ROLE_PATTERN)
+    role: str = Field(min_length=1, max_length=20)
     password: str = Field(max_length=256)
 
 
 class UserUpdate(BaseModel):
-    role: str | None = Field(default=None, pattern=ROLE_PATTERN)
+    role: str | None = Field(default=None, max_length=20)
     disabled: bool | None = None
 
 
@@ -50,9 +51,20 @@ def get_user(db: Session, uid: int) -> User:
     return user
 
 
+def user_admin_roles(db: Session) -> set[str]:
+    """Ids of the roles that may manage users (the built-in admin always can)."""
+    return {"admin"} | {r.id for r in db.scalars(select(Role)) if "admin.users" in (r.permissions or [])}
+
+
 def active_admins(db: Session) -> int:
-    return db.scalar(select(func.count()).select_from(User).where(User.role == "admin",
+    """Active users who can manage users – the last one must never be removed or demoted."""
+    return db.scalar(select(func.count()).select_from(User).where(User.role.in_(user_admin_roles(db)),
                                                                    User.disabled.is_(False))) or 0
+
+
+def check_role(db: Session, role_id: str) -> None:
+    if db.get(Role, role_id) is None:
+        raise HTTPException(422, "Unknown role")
 
 
 def logout_everywhere(db: Session, user: User) -> None:
@@ -64,8 +76,21 @@ def list_users(db: Session = Depends(get_db)):
     return [out(u) for u in db.scalars(select(User).order_by(User.username))]
 
 
-@router.post("/users", status_code=201, dependencies=ADMIN)
-def create_user(body: UserIn, db: Session = Depends(get_db)):
+def role_permissions(db: Session, role_id: str) -> frozenset[str]:
+    role = db.get(Role, role_id)
+    return ALL if role is not None and role.id == "admin" else frozenset(role.permissions or []) if role else frozenset()
+
+
+def check_assignable(db: Session, actor: User, role_id: str) -> None:
+    """Whoever manages users may only hand out roles that do not exceed their own permissions."""
+    check_role(db, role_id)
+    if not role_permissions(db, role_id) <= permissions_of(actor, db):
+        raise HTTPException(403, "You cannot assign a role with more permissions than your own")
+
+
+@router.post("/users", status_code=201)
+def create_user(body: UserIn, me: User = Depends(require("admin.users")), db: Session = Depends(get_db)):
+    check_assignable(db, me, body.role)
     try:
         validate_new_password(body.password)
     except ValueError as error:
@@ -80,18 +105,20 @@ def create_user(body: UserIn, db: Session = Depends(get_db)):
 
 
 @router.put("/users/{uid}")
-def update_user(uid: int, body: UserUpdate, me: User = Depends(require("admin")), db: Session = Depends(get_db)):
+def update_user(uid: int, body: UserUpdate, me: User = Depends(require("admin.users")), db: Session = Depends(get_db)):
     user = get_user(db, uid)
     changes = []
     if body.role is not None and body.role != user.role:
-        if user.role == "admin" and body.role != "admin" and active_admins(db) <= 1:
+        check_assignable(db, me, body.role)
+        admin_roles = user_admin_roles(db)
+        if user.role in admin_roles and body.role not in admin_roles and not user.disabled and active_admins(db) <= 1:
             raise HTTPException(409, "At least one active admin is needed")
         changes.append(f"role {user.role} → {body.role}")
         user.role = body.role
     if body.disabled is not None and body.disabled != user.disabled:
         if body.disabled and user.id == me.id:
             raise HTTPException(409, "You cannot disable yourself")
-        if body.disabled and user.role == "admin" and active_admins(db) <= 1:
+        if body.disabled and user.role in user_admin_roles(db) and not user.disabled and active_admins(db) <= 1:
             raise HTTPException(409, "At least one active admin is needed")
         user.disabled = body.disabled
         changes.append("disabled" if body.disabled else "enabled")
@@ -129,11 +156,11 @@ def reset_2fa(uid: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/users/{uid}", status_code=204)
-def delete_user(uid: int, me: User = Depends(require("admin")), db: Session = Depends(get_db)):
+def delete_user(uid: int, me: User = Depends(require("admin.users")), db: Session = Depends(get_db)):
     user = get_user(db, uid)
     if user.id == me.id:
         raise HTTPException(409, "You cannot delete yourself")
-    if user.role == "admin" and not user.disabled and active_admins(db) <= 1:
+    if user.role in user_admin_roles(db) and not user.disabled and active_admins(db) <= 1:
         raise HTTPException(409, "At least one active admin is needed")
     name = user.username
     db.delete(user)
@@ -142,7 +169,7 @@ def delete_user(uid: int, me: User = Depends(require("admin")), db: Session = De
     return Response(status_code=204)
 
 
-@router.get("/audit", dependencies=ADMIN)
+@router.get("/audit", dependencies=AUDIT)
 def audit_log(limit: int = Query(100, ge=1, le=500), before: int | None = Query(None, ge=1),
               user: str = Query("", max_length=64), action: str = Query("", max_length=60),
               db: Session = Depends(get_db)):
@@ -158,12 +185,12 @@ def audit_log(limit: int = Query(100, ge=1, le=500), before: int | None = Query(
              "detail": a.detail, "ip": a.ip} for a in db.scalars(q)]
 
 
-@router.get("/audit/actions", dependencies=ADMIN)
+@router.get("/audit/actions", dependencies=AUDIT)
 def audit_actions(db: Session = Depends(get_db)):
     return sorted({a.split(".")[0] for a in db.scalars(select(AuditLog.action).distinct())})
 
 
-@router.get("/users/names", dependencies=ADMIN)
+@router.get("/users/names", dependencies=AUDIT)
 def user_names(db: Session = Depends(get_db)):
     return sorted({n for n in db.scalars(select(AuditLog.username).distinct()) if n}
                   | {u.username for u in db.scalars(select(User))})

@@ -49,13 +49,13 @@ port forwarding, and X-TOOLS needs no access to them.
 2. **Open X-TOOLS** and create the admin account with that code. Turn on two-factor login under *Settings → Account*.
 3. **Add services** (*Services → Add*): name, ports, domains, folder. Ports are checked every minute. The
    *assistant* creates compose file, `.env` and proxy config for new services from templates.
-4. **Connect more servers** (*Settings → Agents → Add server*): choose the kind, copy the one-line install command and
+4. **Connect more servers** (*Administration → Agents → Add server*): choose the kind, copy the one-line install command and
    run it as root on that server. It is valid for one hour and works once.
-5. **Turn on notifications** (*Settings → Notifications*): Telegram and/or ntfy, press *Send test*, then switch the
+5. **Turn on notifications** (*Administration → Notifications*): Telegram and/or ntfy, press *Send test*, then switch the
    main switch on. (Forgetting the main switch is the most common reason for “no message arrives”.)
 6. Optional: **Customers** (*Settings → General*) for sites you host for others; **Cloudflare** (*Settings →
    Cloudflare*) to compare your domains with DNS, tunnels and Access; **Jobs** for cron jobs and backups;
-   **automatic backup** (*Settings → Backup*).
+   **automatic backup** (*Administration → Backup*).
 
 ## Daily use
 
@@ -103,7 +103,7 @@ Step by step for the agents:
 2. Access → Applications → *Add an application* → *Self-hosted*: hostname `tools.example.com`, **path
    `api/agent/`**. Policy: action **Service Auth**, include the service token. (More specific paths win over the
    application for the whole hostname, so this one is evaluated first.)
-3. In X-TOOLS, *Settings → Agents → Add server* (or *Install command*): switch on **X-TOOLS is behind Cloudflare
+3. In X-TOOLS, *Administration → Agents → Add server* (or *Install command*): switch on **X-TOOLS is behind Cloudflare
    Access** and enter Client ID and Secret. The install command then carries the headers, and the agent sends them
    with every report. The secret is stored encrypted, so the next install command is pre-filled.
 
@@ -124,7 +124,7 @@ For heartbeats add a second application (path `api/heartbeat/`, action **Bypass*
 
 ### 4. The Cloudflare integration (optional, read-only by default)
 
-*Settings → Cloudflare*: an API token with **read** permissions (Zone, DNS, Tunnel, Access) lets the *Cloudflare* page
+*Administration → Cloudflare*: an API token with **read** permissions (Zone, DNS, Tunnel, Access) lets the *Cloudflare* page
 compare your service domains with DNS records, tunnel routes and Access applications and report mismatches
 (“DNS points to a tunnel without a route”, “tunnel down”, 502/530 explained). An admin can allow changes to DNS
 records and tunnel routes. Details and the exact permissions: [cloudflare.md](cloudflare.md).
@@ -146,9 +146,9 @@ website unless you want it private; the check would then see the login page.
 | Server shows “does not report” | Agent stopped, wrong URL, or firewall blocks outbound HTTPS | On that server: `journalctl -u x-tools-agent -n 30` |
 | Job turns *overdue* although it runs | The job's call is blocked (Access/WAF) or uses an old address | `curl -i <address>` from the job's machine must answer `{"ok":true,…}` |
 | Login works but the audit log shows Cloudflare IPs | `XT_TRUST_PROXY=false` | Set `true` when X-TOOLS is behind Cloudflare/a proxy |
-| Lost the admin password or the phone with the 2FA codes (and the recovery codes) | – | On the server: `sudo x-tools-ctl reset-admin` (several admins: add the name; `--generate` prints a random password). Another admin can also reset you under *Settings → Users* |
+| Lost the admin password or the phone with the 2FA codes (and the recovery codes) | – | On the server: `sudo x-tools-ctl reset-admin` (several admins: add the name; `--generate` prints a random password). Another admin can also reset you under *Administration → Users* |
 | Notification links point to the wrong address | `XT_BASE_URL` not set | Set it to the public `https://…` address |
 | Cloudflare page: “530” / tunnel down | `cloudflared` not running or wrong service URL | `systemctl status cloudflared`, check the route points to `localhost:8080` |
-| No message although a problem is shown | Main notification switch off, problem paused, or the event type switched off | *Settings → Notifications*; overview shows *paused* badges |
+| No message although a problem is shown | Main notification switch off, problem paused, or the event type switched off | *Administration → Notifications*; overview shows *paused* badges |
 
 More: [agents.md](agents.md#troubleshooting) · [installation.md](installation.md) · the *Help* page inside X-TOOLS.

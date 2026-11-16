@@ -13,7 +13,7 @@ def test_status_before_and_after_setup(client):
 def test_setup_creates_admin_and_logs_in(client):
     r = client.post("/api/setup", json={"username": "admin", "password": PASSWORD, "code": setup_code()})
     assert r.status_code == 200
-    assert r.json() == {"id": 1, "username": "admin", "role": "admin"}
+    assert r.json()["role"] == "admin" and r.json()["username"] == "admin" and "admin.users" in r.json()["permissions"]
     assert client.get("/api/auth/me").json()["username"] == "admin"
 
 

@@ -18,7 +18,7 @@ appears once a token is stored.
 - **Access** – applications and their domains/paths.
 
 Unhealthy tunnels and problems with service domains also appear on the overview and can be notified
-(*Settings → Notifications → Cloudflare*).
+(*Administration → Notifications → Cloudflare*).
 
 ## Token
 
@@ -31,13 +31,13 @@ Cloudflare dashboard → My Profile → API Tokens → *Create Token* → *Custo
 | Account | Cloudflare Tunnel → Read |
 | Account | Access: Apps and Policies → Read |
 
-Resources: the account(s) and zones X-TOOLS may see. Paste the token under *Settings → Cloudflare*; it is checked,
+Resources: the account(s) and zones X-TOOLS may see. Paste the token under *Administration → Cloudflare*; it is checked,
 stored encrypted and data is fetched every 10 minutes (*Refresh* fetches immediately). Missing permissions are shown
 per area – the rest still works.
 
 ## Changes
 
-*Settings → Cloudflare → Allow changes* (admins). Then operators and admins can:
+*Administration → Cloudflare → Allow changes* (admins). Then operators and admins can:
 
 - add, edit and delete DNS records (A, AAAA, CNAME, TXT) on the *DNS* tab,
 - add, edit and delete tunnel routes on the *Tunnels* tab – for tunnels managed in the dashboard. New routes are put

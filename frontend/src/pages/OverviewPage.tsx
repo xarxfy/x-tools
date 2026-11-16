@@ -16,8 +16,8 @@ export function OverviewPage() {
   const { t } = useTranslation();
   const overview = useOverview();
   const customersOn = useFeatures().data?.customers ?? false;
-  const isAdmin = useCan()("admin");
-  const canPause = useCan()("operator");
+  const isAdmin = useCan()("admin.settings");
+  const canPause = useCan()("alerts.pause");
   const [pausing, setPausing] = useState(false);
   const update = useUpdateInfo(isAdmin);
   if (!overview.data) return <Loading error={overview.error} retry={() => overview.refetch()} />;
@@ -64,7 +64,7 @@ export function OverviewPage() {
             <h2>{live.length ? t("overview.attention", { count: live.length }) : t("overview.nothingToDo")}</h2>
             <p className="muted">
               {notifications ? t("overview.notifyOn") : !isAdmin ? t("overview.notifyOff") : (
-                <>{t("overview.notifyOff")} <Link to="/settings?tab=notifications">{t("overview.setUp")}</Link></>
+                <>{t("overview.notifyOff")} <Link to="/admin?tab=notifications">{t("overview.setUp")}</Link></>
               )}
             </p>
           </div>
@@ -138,7 +138,7 @@ export function OverviewPage() {
               <span>{!jobs.total ? t("overview.jobsNone") : jobs.late ? t("overview.jobsLate", { count: jobs.late }) : t("overview.jobsAllOk", { ok: jobs.ok, total: jobs.total - jobs.paused })}</span>
               {jobs.paused > 0 && <span className="badge">{t("overview.jobsPaused", { count: jobs.paused })}</span>}
             </Link>
-            <Link to="/settings?tab=backup" className="side-row">
+            <Link to="/admin?tab=backup" className="side-row">
               <Dot state={!backup.enabled ? "off" : backup.last_ok === false ? "down" : backup.last_at ? "up" : "warn"} />
               <span>{!backup.enabled ? t("overview.backupOff") : backup.last_ok === false ? t("overview.backupFail")
                 : backup.last_at ? t("overview.backupOk", { when: ago(backup.last_at) }) : t("overview.backupWait")}</span>
@@ -171,8 +171,8 @@ export function OverviewPage() {
           <ol>
             <li><Link to="/services">{t("overview.start1")}</Link></li>
             {customersOn && <li><Link to="/customers">{t("overview.start2")}</Link></li>}
-            <li><Link to="/settings?tab=notifications">{t("overview.start3")}</Link></li>
-            <li><Link to="/settings?tab=agents">{t("overview.start4")}</Link></li>
+            <li><Link to="/admin?tab=notifications">{t("overview.start3")}</Link></li>
+            <li><Link to="/admin?tab=agents">{t("overview.start4")}</Link></li>
           </ol>
         </div>
       )}

@@ -14,13 +14,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.api.deps import require
+from app.api.deps import current_user, permissions_of, require
 from app.collector import linux_admin
 from app.collector.linux import PROTECTED as PROTECTED_UNITS
 from app.collector.proxmox import DISK_KEY, validate_changes
 from app.core.audit import audit
 from app.core.db import get_db
-from app.models import Agent
+from app.models import Agent, User
 
 COMMAND_TTL = 60
 WAIT_RESULT = 75
@@ -90,13 +90,19 @@ class ActionIn(BaseModel):
     add_gb: int = Field(default=0, ge=0, le=4096)
 
 
-@router.post("/{aid}/action", dependencies=[Depends(require("operator"))])
-def agent_action(aid: str, body: ActionIn, db: Session = Depends(get_db)):
+PERMISSION_OF = {"docker": "docker.control", "proxmox": "proxmox.control", "systemd": "servers.control",
+                 "system": "servers.control"}
+
+
+@router.post("/{aid}/action")
+def agent_action(aid: str, body: ActionIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     agent = db.get(Agent, aid)
     if agent is None:
         raise HTTPException(404, "Agent not found")
     if body.action not in ACTIONS:
         raise HTTPException(422, "Unknown action")
+    if PERMISSION_OF[body.action.split(".")[0]] not in permissions_of(user, db):
+        raise HTTPException(403, "You are not allowed to do this")
     report = agent.last_report or {}
     if agent.disabled or not report.get("control"):
         raise HTTPException(409, "Control is not switched on for this agent – create a new install command with "
@@ -172,7 +178,7 @@ class ManageIn(BaseModel):
     args: dict = Field(default_factory=dict)
 
 
-@router.post("/{aid}/manage", dependencies=[Depends(require("admin"))])
+@router.post("/{aid}/manage", dependencies=[Depends(require("servers.manage"))])
 def agent_manage(aid: str, body: ManageIn, db: Session = Depends(get_db)):
     """Server administration (updates, users and SSH keys, ufw firewall) – administrators only."""
     agent = db.get(Agent, aid)

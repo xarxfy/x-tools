@@ -47,7 +47,7 @@ def list_services(db: Session = Depends(get_db)):
     return [to_out(s) for s in db.scalars(select(Service).order_by(Service.name))]
 
 
-@router.post("", response_model=ServiceOut, status_code=201, dependencies=[Depends(require("operator"))])
+@router.post("", response_model=ServiceOut, status_code=201, dependencies=[Depends(require("services.edit"))])
 def create_service(body: ServiceIn, db: Session = Depends(get_db)):
     service = Service()
     apply(service, body, db)
@@ -57,7 +57,7 @@ def create_service(body: ServiceIn, db: Session = Depends(get_db)):
     return to_out(service)
 
 
-@router.put("/{sid}", response_model=ServiceOut, dependencies=[Depends(require("operator"))])
+@router.put("/{sid}", response_model=ServiceOut, dependencies=[Depends(require("services.edit"))])
 def update_service(sid: str, body: ServiceIn, db: Session = Depends(get_db)):
     service = get_service(db, sid)
     apply(service, body, db)
@@ -66,7 +66,7 @@ def update_service(sid: str, body: ServiceIn, db: Session = Depends(get_db)):
     return to_out(service)
 
 
-@router.delete("/{sid}", status_code=204, dependencies=[Depends(require("operator"))])
+@router.delete("/{sid}", status_code=204, dependencies=[Depends(require("services.edit"))])
 def delete_service(sid: str, db: Session = Depends(get_db)):
     service = get_service(db, sid)
     db.delete(service)
@@ -87,7 +87,7 @@ def port_status(db: Session = Depends(get_db)):
 # --- Credentials ----------------------------------------------------------------
 
 
-@router.get("/{sid}/credentials", response_model=list[Credential], dependencies=[Depends(require("operator"))])
+@router.get("/{sid}/credentials", response_model=list[Credential], dependencies=[Depends(require("credentials.manage"))])
 def get_credentials(sid: str, db: Session = Depends(get_db)):
     service = get_service(db, sid)
     if not service.credentials:
@@ -99,7 +99,7 @@ def get_credentials(sid: str, db: Session = Depends(get_db)):
         raise HTTPException(500, "Credentials cannot be decrypted – was the secret key changed?") from None
 
 
-@router.put("/{sid}/credentials", response_model=list[Credential], dependencies=[Depends(require("operator"))])
+@router.put("/{sid}/credentials", response_model=list[Credential], dependencies=[Depends(require("credentials.manage"))])
 def set_credentials(sid: str, body: list[Credential], db: Session = Depends(get_db)):
     service = get_service(db, sid)
     items = [c.model_dump() for c in body if any(c.model_dump().values())]

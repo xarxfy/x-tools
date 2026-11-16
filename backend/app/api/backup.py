@@ -29,7 +29,7 @@ from app.core.config import VERSION, get_settings
 from app.core.security import encrypt_json
 from app.monitor import autobackup
 
-router = APIRouter(prefix="/api/backup", tags=["backup"], dependencies=[Depends(require("admin"))])
+router = APIRouter(prefix="/api/backup", tags=["backup"], dependencies=[Depends(require("admin.backup"))])
 
 MAGIC = b"XTB1"
 MAX_BACKUP = 200 * 1024 * 1024

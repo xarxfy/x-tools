@@ -28,7 +28,7 @@ export function ServicesPage() {
   const ports = usePortStatus();
   const uptime = useUptime();
   const can = useCan();
-  const edit = can("operator");
+  const edit = can("services.edit");
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Service | "new" | null>(null);
@@ -108,7 +108,7 @@ export function ServicesPage() {
                     {uptime.data[s.id] >= 99.995 ? "100" : uptime.data[s.id].toFixed(2)} %
                   </span>
                 )}
-                {edit && (
+                {can("credentials.manage") && (
                   <button type="button" className="btn btn-ghost" title={t("credentials.show")}
                           onClick={(e) => { e.stopPropagation(); setKeys(s); }}>
                     <Icon name="credentials" size={16} />

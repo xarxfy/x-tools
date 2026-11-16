@@ -30,7 +30,7 @@ export function GuestPage() {
   const details = px?.details?.guests?.[`${node}/${vmid}`];
   const cfg = details?.config;
   const backups = (px?.details?.backups ?? []).filter((b) => String(b.vmid) === vmid);
-  const control = agent.data.control && can("operator");
+  const control = agent.data.control && can("proxmox.control");
   const on = guest.status === "running";
 
   return (

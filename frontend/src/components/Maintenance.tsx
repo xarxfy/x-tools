@@ -19,7 +19,7 @@ export function MaintenanceBanner() {
   const { t } = useTranslation();
   const windows = useMaintenance();
   const end = useEndMaintenance();
-  const edit = useCan()("operator");
+  const edit = useCan()("alerts.pause");
   if (!windows.data?.length) return null;
   return (
     <div className="card card-pad maintenance-banner">

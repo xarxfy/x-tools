@@ -86,9 +86,9 @@ export type ServerTab = "overview" | "services" | "network" | "users";
 /** The content of one tab on the page of a server. */
 export function LinuxTab({ agent, info, tab }: { agent: AgentSummary; info: LinuxInfo; tab: ServerTab }) {
   const { t } = useTranslation();
-  const canOperate = useCan()("operator");
+  const canOperate = useCan()("servers.control");
   const control = canOperate && agent.control;
-  const canManage = useCan()("admin") && agent.control;
+  const canManage = useCan()("servers.manage") && agent.control;
   const [query, setQuery] = useState("");
   const [onlyFailed, setOnlyFailed] = useState(false);
   const [allPorts, setAllPorts] = useState(false);
